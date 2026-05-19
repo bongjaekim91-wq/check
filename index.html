@@ -339,8 +339,11 @@
 
             for (let i = 0; i < studentsData.length; i++) {
                 const student = studentsData[i];
-                const directLink = `${API_URL}?id=${student.id}`;
-
+                
+// 선생님의 현재 깃허브 접속 주소를 자동으로 파악해서 scan.html을 연결합니다.
+let baseUrl = window.location.href.split('index.html')[0];
+if (!baseUrl.endsWith('/')) baseUrl += '/';
+const directLink = `${baseUrl}scan.html?id=${student.id}`;
                 const qrDiv = document.createElement('div');
                 container.appendChild(qrDiv);
                 
