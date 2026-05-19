@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글마루 출결 통계 대시보드</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #81c784;
+            --primary-dark: #558b2f;
+            --bg-color: #f1f8e9;
+            --text-main: #33691e;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color);
+            margin: 0; padding: 20px; color: #333;
+        }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: white; padding: 20px 30px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(85, 139, 47, 0.08); margin-bottom: 20px;
+        }
+        .header h1 { margin: 0; color: var(--text-main); font-size: 1.5em; }
+        .back-btn { text-decoration: none; background: var(--text-main); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; transition: 0.2s; }
+        .back-btn:hover { background: var(--primary-dark); }
+
+        /* 탭 버튼 스타일 */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; padding: 15px; font-size: 1.2em; font-weight: bold; border: none;
+            border-radius: 12px; cursor: pointer; background: white; color: var(--text-main);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.3s;
+        }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+
+        .card {
+            background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px; display: none; /* 기본적으로 숨김 */
+        }
+        .card.active { display: block; } /* 활성화된 탭만 표시 */
+
+        .controls { text-align: center; margin-bottom: 20px; }
+        input[type="date"], input[type="month"] {
+            padding: 10px; font-size: 1.2em; border: 2px solid var(--primary-color); border-radius: 8px; 
+            outline: none; font-family: inherit; color: var(--primary-dark); font-weight: bold;
+        }
+
+        /* 테이블 스타일 (일일 출석부) */
+        table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; }
+        th { background-color: #e8f5e9; color: var(--text-main); font-weight: bold; }
+        tr:nth-child(even) { background-color: #fcfdfa; }
+        .status-o { color: #2e7d32; font-weight: bold; }
+        .status-x { color: #c62828; font-weight: bold; font-size: 0.9em; }
+
+        .print-btn {
+            background-color: #4caf50; color: white; border: none; padding: 15px; font-size: 1.1em;
+            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px;
+        }
+
+        /* 통계 요약 그리드 */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-box { background: #f1f8e9; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #c8e6c9; }
+        .stat-box .title { font-size: 1em; color: #558b2f; margin-bottom: 10px; font-weight: bold; }
+        .stat-box .value { font-size: 1.8em; font-weight: 900; color: #2e7d32; }
+
+        .loading { text-align: center; font-size: 1.2em; color: var(--text-main); padding: 50px; font-weight: bold; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .header, .tabs, .controls, .print-btn, #tab-stats { display: none !important; }
+            .card { box-shadow: none; padding: 0; border: none; display: block !important; }
+            table { border: 2px solid #000; }
+            th, td { border: 1px solid #000; color: #000; }
+            th { background-color: #e0e0e0 !important; color: #000; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📊 서현고 글마루 출결 대시보드</h1>
+        <a href="index.html" class="back-btn">⬅️ 메인으로 돌아가기</a>
+    </div>
+
+    <div id="loading-screen" class="loading">
+        데이터를 서버에서 동기화 중입니다... ⏳
+    </div>
+
+    <div id="dashboard-content" style="display: none;">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('daily')">📅 일일 출석부 (조회/인쇄)</button>
+            <button class="tab-btn" onclick="switchTab('stats')">📈 종합 통계 (주간/월간/년간)</button>
+        </div>
+
+        <div id="tab-daily" class="card active">
+            <div class="controls">
+                <label style="font-weight: bold; margin-right: 10px;">조회 날짜:</label>
+                <input type="date" id="date-picker" onchange="renderDaily()">
+            </div>
+            <h2 style="color: var(--text-main); text-align: center;" id="daily-title">출석부</h2>
+            <div style="overflow-x: auto;">
+                <table id="roster-table">
+                    <thead>
+                        <tr><th>학번</th><th>이름</th><th>1교시</th><th>2교시</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="print-btn" onclick="window.print()">🖨️ 현재 출석부 인쇄 (PDF 저장)</button>
+        </div>
+
+        <div id="tab-stats" class="card">
+            <h2 style="color: var(--text-main); margin-top: 0;">기간별 평균 출석률 요약</h2>
+            <div class="stat-grid">
+                <div class="stat-box"><div class="title">오늘 출석률</div><div class="value" id="stat-today">-</div></div>
+                <div class="stat-box"><div class="title">이번 주 평균</div><div class="value" id="stat-week">-</div></div>
+                <div class="stat-box"><div class="title">이번 달 평균</div><div class="value" id="stat-month">-</div></div>
+                <div class="stat-box"><div class="title">올해 전체 평균</div><div class="value" id="stat-year">-</div></div>
+            </div>
+
+            <div class="controls" style="margin-top: 30px; text-align: left;">
+                <h3 style="color: var(--text-main); display: inline-block; margin-right: 15px;">📉 월별 출석 추이 그래프</h3>
+                <input type="month" id="month-picker" onchange="renderChart()">
+            </div>
+            <canvas id="trendChart" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
+        
+        let allStudents = [];
+        let allLogs = [];
+        let chartInstance = null;
+
+        window.onload = async function() {
+            // 오늘 날짜 및 이번 달 기본 세팅
+            const now = new Date();
+            document.getElementById('date-picker').valueAsDate = now;
+            
+            const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('month-picker').value = monthStr;
+
+            await fetchData();
+        };
+
+        // 탭 전환 로직
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            
+            if(tabName === 'daily') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('tab-daily').classList.add('active');
+                renderDaily();
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('tab-stats').classList.add('active');
+                renderStats();
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const resStudents = await fetch(`${API_URL}?action=getStudents`);
+                allStudents = await resStudents.json();
+
+                const resLogs = await fetch(`${API_URL}?action=getLogs`);
+                allLogs = await resLogs.json();
+
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+
+                renderDaily(); // 기본으로 일일 출석부 렌더링
+            } catch (error) {
+                document.getElementById('loading-screen').innerText = "데이터 통신에 실패했습니다. API 주소를 확인해주세요.";
+            }
+        }
+
+        // ==========================================
+        // 📅 일일 출석부 렌더링
+        // ==========================================
+        function renderDaily() {
+            const selectedDate = document.getElementById('date-picker').value;
+            if(!selectedDate || allStudents.length === 0) return;
+
+            document.getElementById('daily-title').innerText = `${selectedDate} 글마루 출석부`;
+            const tbody = document.querySelector('#roster-table tbody');
+            tbody.innerHTML = ''; 
+
+            allStudents.forEach(student => {
+                const studentLogs = allLogs.filter(log => log.timestamp.startsWith(selectedDate) && log.id === student.id);
+                
+                let p1 = "미출석"; let p1Time = "";
+                let p2 = "미출석"; let p2Time = "";
+
+                studentLogs.forEach(log => {
+                    const timeOnly = log.timestamp.split(" ")[1].substring(0, 5); 
+                    if(log.period === "1교시") { p1 = "출석"; p1Time = timeOnly; }
+                    if(log.period === "2교시") { p2 = "출석"; p2Time = timeOnly; }
+                });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td class="${p1 === '출석' ? 'status-o' : 'status-x'}">${p1 === '출석' ? `⭕ (${p1Time})` : '미출석'}</td>
+                    <td class="${p2 === '출석' ? 'status-o' : 'status-x'}">${p2 === '출석' ? `⭕ (${p2Time})` : '미출석'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // 📈 종합 통계 계산 및 차트 렌더링
+        // ==========================================
+        function renderStats() {
+            if(allStudents.length === 0) return;
+            const totalS = allStudents.length;
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const currentYear = now.getFullYear().toString();
+            const currentMonth = currentYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+            // 1. 오늘 출석률 (1, 2교시 합쳐서 한 번이라도 오면 출석 인정)
+            const todayLogs = allLogs.filter(l => l.timestamp.startsWith(todayStr));
+            const todayPresentCount = new Set(todayLogs.map(l => l.id)).size;
+            document.getElementById('stat-today').innerText = Math.round((todayPresentCount / totalS) * 100) + '%';
+
+            // 2. 올해 출석률
+            const yearLogs = allLogs.filter(l => l.timestamp.startsWith(currentYear));
+            const yearActiveDays = new Set(yearLogs.map(l => l.timestamp.split(" ")[0])).size;
+            if(yearActiveDays > 0) {
+                const yearTotalPresents = new Set(yearLogs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
+                document.getElementById('stat-year').innerText = Math.round((yearTotalPresents / (totalS * yearActiveDays)) * 100) + '%';
+            } else { document.getElementById('stat-year').innerText = '0%'; }
+
+            // 3. 이번 달 출석률
+            const monthLogs = allLogs.filter(l => l.timestamp.startsWith(currentMonth));
+            const monthActiveDays = new Set(monthLogs.map(l => l.timestamp.split(" ")[0])).size;
+            if(monthActiveDays > 0) {
+                const monthTotalPresents = new Set(monthLogs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
+                document.getElementById('stat-month').innerText = Math.round((monthTotalPresents / (totalS * monthActiveDays)) * 100) + '%';
+            } else { document.getElementById('stat-month').innerText = '0%'; }
+
+            // 4. 주간 평균 (간이 계산: 최근 7일치 기록)
+            const lastWeek = new Date(now); lastWeek.setDate(now.getDate() - 7);
+            const weekLogs = allLogs.filter(l => new Date(l.timestamp.split(" ")[0]) >= lastWeek);
+            const weekActiveDays = new Set(weekLogs.map(l => l.timestamp.split(" ")[0])).size;
+            if(weekActiveDays > 0) {
+                const weekTotalPresents = new Set(weekLogs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
+                document.getElementById('stat-week').innerText = Math.round((weekTotalPresents / (totalS * weekActiveDays)) * 100) + '%';
+            } else { document.getElementById('stat-week').innerText = '0%'; }
+
+            renderChart();
+        }
+
+        // 월별 추이 차트 (막대 그래프)
+        function renderChart() {
+            const selectedMonth = document.getElementById('month-picker').value; // YYYY-MM
+            if(!selectedMonth) return;
+
+            // 해당 월의 출결 기록만 필터링
+            const logsInMonth = allLogs.filter(l => l.timestamp.startsWith(selectedMonth));
+            
+            // 날짜별 출석 인원 집계
+            const dailyCounts = {};
+            logsInMonth.forEach(log => {
+                const date = log.timestamp.split(" ")[0].substring(8, 10) + '일'; // "05일"
+                if(!dailyCounts[date]) dailyCounts[date] = new Set();
+                dailyCounts[date].add(log.id); // 한 학생이 1,2교시 다 와도 1명으로 집계
+            });
+
+            // 날짜순 정렬
+            const sortedDates = Object.keys(dailyCounts).sort();
+            const countsData = sortedDates.map(date => dailyCounts[date].size);
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedDates.length > 0 ? sortedDates : ['데이터 없음'],
+                    datasets: [{
+                        label: '일별 실제 출석 인원',
+                        data: countsData.length > 0 ? countsData : [0],
+                        backgroundColor: '#a5d6a7',
+                        borderColor: '#4caf50',
+                        borderWidth: 2,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, suggestedMax: allStudents.length || 10 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
