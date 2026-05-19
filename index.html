@@ -102,15 +102,12 @@
             text-decoration: none;
         }
 
-        /* 스타일별 버튼 */
         .btn-outline {
             background-color: white;
             border: 2px solid var(--primary-color);
             color: var(--primary-dark);
         }
-        .btn-outline:hover {
-            background-color: var(--bg-color);
-        }
+        .btn-outline:hover { background-color: var(--bg-color); }
         
         .btn-solid {
             background-color: var(--primary-color);
@@ -118,16 +115,8 @@
             color: white;
             box-shadow: 0 4px 10px rgba(129, 199, 132, 0.3);
         }
-        .btn-solid:hover {
-            background-color: #66bb6a;
-            transform: translateY(-2px);
-        }
-        .btn-solid:disabled {
-            background-color: #e0e0e0;
-            box-shadow: none;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-solid:hover { background-color: #66bb6a; transform: translateY(-2px); }
+        .btn-solid:disabled { background-color: #e0e0e0; box-shadow: none; cursor: not-allowed; transform: none; }
 
         input[type="file"] { display: none; }
 
@@ -177,6 +166,8 @@
         <input type="file" id="excel-upload" accept=".xlsx, .xls">
         
         <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ QR코드 PDF 다운로드</button>
+        
+        <a href="dashboard.html" class="btn btn-outline" style="background-color: #e8f5e9; border-color: #4caf50;">📊 기간별 출결 통계 및 명단 조회하기</a>
 
         <div id="student-list"></div>
     </div>
@@ -185,11 +176,12 @@
 
     <script>
         // ==========================================
-        // ⚙️ 기본 설정
+        // ⚙️ 기본 설정 (선생님의 API 주소 탑재 완료)
         // ==========================================
-        const ADMIN_ID = "admin";    // 원하는 아이디로 변경하세요
-        const ADMIN_PW = "1234";     // 원하는 비밀번호로 변경하세요
+        const ADMIN_ID = "admin";    // 원하는 아이디로 변경 가능
+        const ADMIN_PW = "1234";     // 원하는 비밀번호로 변경 가능
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
+        
         let studentsData = [];
 
         // ==========================================
@@ -207,17 +199,15 @@
             }
         }
 
-        // 엔터키로 로그인 가능하게 처리
         document.getElementById('admin-pw').addEventListener('keyup', function(e) {
             if (e.key === 'Enter') checkLogin();
         });
 
         // ==========================================
-        // 📥 출석부 양식 다운로드 (브라우저에서 즉시 엑셀 생성)
+        // 📥 출석부 양식 다운로드
         // ==========================================
         function downloadTemplate() {
             const wb = XLSX.utils.book_new();
-            // 제공해주셨던 사진과 동일한 양식 구성
             const ws_data = [
                 ['2026 꿈꾸는 글마루 명단(월요일)', null, null, null, null],
                 ['학년', '학번', '성명', '1교시', '2교시'],
@@ -226,10 +216,7 @@
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            
-            // 첫 번째 줄 셀 병합
             ws['!merges'] = [ { s: {r:0, c:0}, e: {r:0, c:4} } ];
-            // 열 너비 조절
             ws['!cols'] = [ {wpx: 50}, {wpx: 80}, {wpx: 100}, {wpx: 60}, {wpx: 60} ];
 
             XLSX.utils.book_append_sheet(wb, ws, "학생명단");
@@ -254,7 +241,7 @@
                 studentsData = [];
                 let htmlStr = "<strong>✅ 명단 인식 성공:</strong><ul style='margin-top:5px; padding-left:20px;'>";
                 
-                // 3행(인덱스 2)부터 학번과 성명 추출
+                // 3행(인덱스 2)부터 추출
                 for(let i = 2; i < json.length; i++) {
                     let row = json[i];
                     if (row[1] && row[2]) {
@@ -279,16 +266,16 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // 읽어들인 명단을 구글 시트로 전송
         function uploadToGoogleSheet(students) {
-            if(API_URL.includes("선생님의_웹앱_주소")) return;
             fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "uploadStudents", students: students })
             }).catch(e => console.log("구글 시트 연동 에러", e));
         }
 
-       // ==========================================
-        // 🖨️ QR코드 PDF 다운로드 (한글 깨짐 완벽 해결)
+        // ==========================================
+        // 🖨️ QR코드 PDF 다운로드 (한글 폰트 깨짐 완벽 해결 버전)
         // ==========================================
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
@@ -297,7 +284,7 @@
             container.innerHTML = ''; 
 
             const margin = 20;
-            const qrSize = 45; // QR 이미지 너비
+            const qrSize = 45; 
             const xSpacing = 60;
             const ySpacing = 70;
             let xPos = margin;
@@ -321,40 +308,30 @@
                     correctLevel : QRCode.CorrectLevel.H
                 });
 
-                await new Promise(r => setTimeout(r, 50)); // 렌더링 대기
+                await new Promise(r => setTimeout(r, 50)); 
                 
                 const qrCanvas = qrDiv.querySelector('canvas');
                 if(qrCanvas) {
-                    // 💡 핵심 해결책: 글씨까지 통째로 도화지(Canvas)에 그려서 이미지로 만듭니다.
                     const combineCanvas = document.createElement('canvas');
                     const ctx = combineCanvas.getContext('2d');
                     
-                    // 캔버스 크기 설정 (QR코드 높이에 글씨 쓸 공간 50px 추가)
                     combineCanvas.width = qrCanvas.width;
                     combineCanvas.height = qrCanvas.height + 50; 
 
-                    // 하얀색 배경 칠하기
                     ctx.fillStyle = "#ffffff";
                     ctx.fillRect(0, 0, combineCanvas.width, combineCanvas.height);
-
-                    // 1. 위쪽에 QR코드 도장 찍기
                     ctx.drawImage(qrCanvas, 0, 0);
 
-                    // 2. 아래쪽에 한글 이름 예쁘게 적기
-                    ctx.fillStyle = "#33691e"; // 글씨 색상
+                    ctx.fillStyle = "#33691e"; 
                     ctx.font = "bold 28px 'Noto Sans KR', sans-serif";
                     ctx.textAlign = "center";
-                    // 학번과 이름을 가운데 정렬로 그립니다.
                     ctx.fillText(`${student.id} ${student.name}`, combineCanvas.width / 2, combineCanvas.height - 15);
 
-                    // 완성된 'QR+글씨' 이미지를 PDF에 추가
                     const imgData = combineCanvas.toDataURL('image/png');
-                    // 비율에 맞게 PDF 삽입 높이 계산
                     const imgHeight = qrSize * (combineCanvas.height / combineCanvas.width); 
                     
                     pdf.addImage(imgData, 'PNG', xPos, yPos, qrSize, imgHeight);
 
-                    // 위치 계산 (1줄에 3명씩)
                     xPos += xSpacing;
                     if ((i + 1) % 3 === 0) { xPos = margin; yPos += ySpacing; }
                     if (yPos > 250 && i < studentsData.length - 1) {
