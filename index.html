@@ -14,7 +14,7 @@
         :root {
             --primary-color: #81c784;
             --primary-dark: #558b2f;
-            --bg-color: #f1f8e9; /* 연한 잔디밭 느낌 */
+            --bg-color: #f1f8e9; 
             --text-main: #33691e;
             --text-sub: #689f38;
         }
@@ -47,7 +47,6 @@
         .school-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .school-name { font-size: 1.2em; font-weight: 700; color: var(--primary-dark); }
 
-        /* ⏰ 오늘 서현 스타일의 큼직한 시계 디스플레이 */
         .clock-container {
             background: #e8f5e9;
             padding: 20px;
@@ -55,18 +54,8 @@
             margin-bottom: 25px;
             border: 1px solid #c8e6c9;
         }
-        .date-text {
-            font-size: 1.1em;
-            color: #558b2f;
-            margin-bottom: 5px;
-            font-weight: 700;
-        }
-        .time-text {
-            font-size: 2.4em;
-            font-weight: 900;
-            color: #2e7d32;
-            letter-spacing: 1px;
-        }
+        .date-text { font-size: 1.1em; color: #558b2f; margin-bottom: 5px; font-weight: 700; }
+        .time-text { font-size: 2.4em; font-weight: 900; color: #2e7d32; letter-spacing: 1px; }
 
         h1 { font-size: 1.5em; margin-bottom: 20px; color: var(--text-main); word-break: keep-all; }
 
@@ -76,10 +65,11 @@
         }
         input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary-color); }
 
+        /* 공통 버튼 설정 */
         .btn {
             padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer;
-            transition: all 0.2s ease; width: 100%; display: block; box-sizing: border-box; margin-bottom: 12px;
-            text-align: center; text-decoration: none;
+            transition: all 0.2s ease; width: 100%; box-sizing: border-box; text-align: center; text-decoration: none;
+            display: flex; justify-content: center; align-items: center;
         }
         .btn-outline { background-color: white; border: 2px solid var(--primary-color); color: var(--primary-dark); }
         .btn-outline:hover { background-color: var(--bg-color); }
@@ -91,14 +81,15 @@
         .btn-danger { background-color: white; border: 2px solid #e57373; color: #c62828; }
         .btn-danger:hover { background-color: #ffebee; }
 
-        .btn-group { display: flex; gap: 10px; }
-        .btn-group .btn { margin-bottom: 0; }
+        /* 💡 버튼 그룹을 1:1 비율로 동일하게 분할 */
+        .btn-group { display: flex; gap: 10px; margin-bottom: 12px; }
+        .btn-group .btn, .btn-group label { flex: 1; margin-bottom: 0; }
 
         input[type="file"] { display: none; }
 
         #student-list {
-            margin-top: 20px; text-align: left; max-height: 150px; overflow-y: auto;
-            border-radius: 10px; background: #fafafa; padding: 15px; font-size: 0.9em; display: none; border: 1px solid #eee;
+            margin-top: 20px; text-align: center; border-radius: 10px; background: #fafafa; 
+            padding: 20px; font-size: 1em; display: none; border: 1px solid #eee;
         }
         #qr-canvas-container { display: none; }
     </style>
@@ -115,7 +106,7 @@
         <div class="login-form">
             <input type="text" id="admin-id" placeholder="아이디를 입력하세요" autocomplete="off">
             <input type="password" id="admin-pw" placeholder="비밀번호를 입력하세요">
-            <button class="btn btn-solid" onclick="checkLogin()">로그인</button>
+            <button class="btn btn-solid" style="margin-top: 10px;" onclick="checkLogin()">로그인</button>
         </div>
     </div>
 
@@ -126,18 +117,18 @@
             <div id="current-time" class="time-text"></div>
         </div>
 
-        <div class="btn-group" style="margin-bottom: 12px;">
+        <div class="btn-group">
             <button class="btn btn-outline" onclick="downloadTemplate()">📥 빈 양식 받기</button>
             <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 기존 명단 받기</button>
         </div>
         
-        <div class="btn-group" style="margin-bottom: 12px;">
-            <label class="btn btn-outline" for="excel-upload" style="flex: 2;">📤 새 명단 업로드</label>
+        <div class="btn-group">
+            <label class="btn btn-outline" for="excel-upload" style="cursor: pointer;">📤 새 명단 업로드</label>
             <input type="file" id="excel-upload" accept=".xlsx, .xls">
-            <button class="btn btn-danger" onclick="deleteExistingRoster()" style="flex: 1;">🗑️ 전체 삭제</button>
+            <button class="btn btn-danger" onclick="deleteExistingRoster()">🗑️ 전체 삭제</button>
         </div>
         
-        <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()" style="padding: 18px; font-size: 1.2em;">🖨️ QR코드 PDF 다운로드</button>
+        <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()" style="padding: 18px; font-size: 1.2em; margin-bottom: 12px; margin-top: 10px;">🖨️ QR코드 PDF 다운로드</button>
         
         <a href="dashboard.html" class="btn btn-outline" style="background-color: #e8f5e9; border-color: #4caf50;">📊 기간별 출결 통계 및 출석부 인쇄</a>
 
@@ -154,12 +145,11 @@
         let studentsData = [];
 
         // ==========================================
-        // ⏰ 실시간 시계 업데이트 함수
+        // ⏰ 실시간 시계 업데이트 
         // ==========================================
         function updateClock() {
             const now = new Date();
             const days = ['일', '월', '화', '수', '목', '금', '토'];
-            
             const year = now.getFullYear();
             const month = now.getMonth() + 1;
             const date = now.getDate();
@@ -189,7 +179,7 @@
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-screen').style.display = 'block';
                 updateClock();
-                await loadExistingStudents(); // 💡 로그인 성공 시 기존 명단 불러오기
+                await loadExistingStudents(); 
             } else {
                 alert("아이디 또는 비밀번호가 일치하지 않습니다.");
             }
@@ -202,7 +192,7 @@
         // 🌐 서버에서 기존 명단 가져오기
         async function loadExistingStudents() {
             const listDiv = document.getElementById('student-list');
-            listDiv.innerHTML = "서버에서 기존 명단을 확인하는 중입니다... ⏳";
+            listDiv.innerHTML = "서버에서 명단을 확인하는 중입니다... ⏳";
             listDiv.style.display = 'block';
             
             try {
@@ -211,7 +201,7 @@
                 
                 if (data && data.length > 0) {
                     studentsData = data;
-                    renderStudentListHTML("✅ 저장된 기존 명단 불러오기 완료:");
+                    renderSuccessMessage("✅ 기존 명단 불러오기 완료");
                     document.getElementById('pdf-btn').disabled = false;
                 } else {
                     listDiv.innerHTML = "등록된 명단이 없습니다. [새 명단 업로드]를 진행해주세요.";
@@ -221,15 +211,27 @@
             }
         }
 
-        // 명단 HTML 그리기 공통 함수
-        function renderStudentListHTML(titleMsg) {
-            let htmlStr = `<strong>${titleMsg}</strong><ul style='margin-top:5px; padding-left:20px;'>`;
-            studentsData.forEach(s => {
-                htmlStr += `<li>${s.id} ${s.name}</li>`;
-            });
-            htmlStr += "</ul>";
+        // 💡 깔끔한 상태 메시지 출력 함수 (이름 대신 날짜/시간 표시)
+        function renderSuccessMessage(titleMsg) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? '오후' : '오전';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            
+            const timeStr = `${year}년 ${month}월 ${date}일 ${ampm} ${hours}:${minutes}:${seconds}`;
+            
             const listDiv = document.getElementById('student-list');
-            listDiv.innerHTML = htmlStr;
+            listDiv.innerHTML = `
+                <strong style="font-size: 1.1em; color: var(--text-main);">${titleMsg}</strong>
+                <div style="margin-top: 15px; color: #4caf50; font-weight: 900; font-size: 1.3em;">🕒 ${timeStr}</div>
+                <div style="margin-top: 10px; color: #7f8c8d; font-size: 0.95em;">총 ${studentsData.length}명의 데이터가 로드되었습니다.</div>
+            `;
             listDiv.style.display = 'block';
         }
 
@@ -241,9 +243,8 @@
             
             studentsData = [];
             document.getElementById('pdf-btn').disabled = true;
-            document.getElementById('student-list').innerHTML = "명단이 모두 삭제되었습니다.";
+            document.getElementById('student-list').innerHTML = "🗑️ 명단이 모두 삭제되었습니다.";
             
-            // 빈 배열을 보내서 시트를 덮어쓰기(=초기화) 합니다.
             fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "uploadStudents", students: [] })
@@ -275,7 +276,6 @@
                 ['2026 꿈꾸는 글마루 명단(월요일)', null, null, null, null],
                 ['학년', '학번', '성명', '1교시', '2교시']
             ];
-            // 저장된 데이터를 바탕으로 엑셀 행 추가
             studentsData.forEach(s => {
                 ws_data.push([1, s.id, s.name, '☐', '☐']);
             });
@@ -309,7 +309,7 @@
                 }
                 
                 if(studentsData.length > 0) {
-                    renderStudentListHTML("✅ 새 명단 업로드 성공:");
+                    renderSuccessMessage("✅ 새 명단 업로드 성공");
                     document.getElementById('pdf-btn').disabled = false;
                     
                     fetch(API_URL, {
@@ -322,7 +322,7 @@
         });
 
         // ==========================================
-        // 🖨️ QR코드 PDF 다운로드 (한글 폰트 적용)
+        // 🖨️ QR코드 PDF 다운로드 
         // ==========================================
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
