@@ -4,134 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>꿈꾸는 글마루 출석 관리 시스템</title>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --primary-color: #81c784;
-            --primary-dark: #558b2f;
-            --bg-color: #f1f8e9; 
-            --text-main: #33691e;
-            --text-sub: #689f38;
-        }
-
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: var(--text-main);
-        }
-
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(85, 139, 47, 0.08);
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-        }
-
-        .school-header {
-            display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;
-        }
+        :root { --primary-color: #81c784; --primary-dark: #558b2f; --bg-color: #f1f8e9; --text-main: #33691e; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-main); }
+        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 30px rgba(85, 139, 47, 0.08); width: 100%; max-width: 500px; text-align: center; }
+        .school-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .school-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .school-name { font-size: 1.2em; font-weight: 700; color: var(--primary-dark); }
-
-        .clock-container {
-            background: #e8f5e9;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            border: 1px solid #c8e6c9;
-        }
+        .clock-container { background: #e8f5e9; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #c8e6c9; }
         .date-text { font-size: 1.1em; color: #558b2f; margin-bottom: 5px; font-weight: 700; }
         .time-text { font-size: 2.4em; font-weight: 900; color: #2e7d32; letter-spacing: 1px; }
-
-        h1 { font-size: 1.5em; margin-bottom: 20px; color: var(--text-main); word-break: keep-all; }
-
+        h1 { font-size: 1.5em; margin-bottom: 20px; color: var(--text-main); }
         .login-form { display: flex; flex-direction: column; gap: 15px; }
-        input[type="text"], input[type="password"] {
-            padding: 15px; font-size: 1em; border: 2px solid #c8e6c9; border-radius: 10px; outline: none; transition: 0.3s;
-        }
-        input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary-color); }
-
-        /* 공통 버튼 설정 */
-        .btn {
-            padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer;
-            transition: all 0.2s ease; width: 100%; box-sizing: border-box; text-align: center; text-decoration: none;
-            display: flex; justify-content: center; align-items: center;
-        }
+        input[type="text"], input[type="password"] { padding: 15px; font-size: 1em; border: 2px solid #c8e6c9; border-radius: 10px; outline: none; }
+        .btn { padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; box-sizing: border-box; text-align: center; display: flex; justify-content: center; align-items: center; height: 55px; }
         .btn-outline { background-color: white; border: 2px solid var(--primary-color); color: var(--primary-dark); }
-        .btn-outline:hover { background-color: var(--bg-color); }
-        
-        .btn-solid { background-color: var(--primary-color); border: none; color: white; box-shadow: 0 4px 10px rgba(129, 199, 132, 0.3); }
-        .btn-solid:hover { background-color: #66bb6a; transform: translateY(-2px); }
-        .btn-solid:disabled { background-color: #e0e0e0; box-shadow: none; cursor: not-allowed; transform: none; }
-
+        .btn-solid { background-color: var(--primary-color); border: none; color: white; }
         .btn-danger { background-color: white; border: 2px solid #e57373; color: #c62828; }
-        .btn-danger:hover { background-color: #ffebee; }
-
-        /* 💡 버튼 그룹을 1:1 비율로 동일하게 분할 */
         .btn-group { display: flex; gap: 10px; margin-bottom: 12px; }
         .btn-group .btn, .btn-group label { flex: 1; margin-bottom: 0; }
-
         input[type="file"] { display: none; }
-
-        #student-list {
-            margin-top: 20px; text-align: center; border-radius: 10px; background: #fafafa; 
-            padding: 20px; font-size: 1em; display: none; border: 1px solid #eee;
-        }
+        #student-list { margin-top: 20px; text-align: center; border-radius: 10px; background: #fafafa; padding: 20px; font-size: 1em; display: none; border: 1px solid #eee; }
         #qr-canvas-container { display: none; }
     </style>
 </head>
 <body>
-
     <div class="container" id="login-screen">
         <div class="school-header">
             <img src="https://cdn-icons-png.flaticon.com/512/2941/2941582.png" alt="학교 마크" class="school-logo">
             <span class="school-name">서현고등학교</span>
         </div>
         <h1>관리자 로그인</h1>
-        
         <div class="login-form">
-            <input type="text" id="admin-id" placeholder="아이디를 입력하세요" autocomplete="off">
+            <input type="text" id="admin-id" placeholder="아이디를 입력하세요">
             <input type="password" id="admin-pw" placeholder="비밀번호를 입력하세요">
             <button class="btn btn-solid" style="margin-top: 10px;" onclick="checkLogin()">로그인</button>
         </div>
     </div>
 
     <div class="container" id="main-screen" style="display: none;">
-        
         <div class="clock-container">
             <div id="current-date" class="date-text"></div>
             <div id="current-time" class="time-text"></div>
         </div>
-
         <div class="btn-group">
-            <button class="btn btn-outline" onclick="downloadTemplate()">📥 빈 양식 받기</button>
-            <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 기존 명단 받기</button>
+            <button class="btn btn-outline" onclick="downloadTemplate()">📥 기본 양식 다운로드</button>
+            <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 기존 출석 명단 다운로드</button>
         </div>
-        
         <div class="btn-group">
-            <label class="btn btn-outline" for="excel-upload" style="cursor: pointer;">📤 새 명단 업로드</label>
+            <label class="btn btn-outline" for="excel-upload" style="cursor: pointer;">📤 새로운 출석 명단 업로드</label>
             <input type="file" id="excel-upload" accept=".xlsx, .xls">
             <button class="btn btn-danger" onclick="deleteExistingRoster()">🗑️ 전체 삭제</button>
         </div>
-        
-        <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()" style="padding: 18px; font-size: 1.2em; margin-bottom: 12px; margin-top: 10px;">🖨️ QR코드 PDF 다운로드</button>
-        
+        <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()" style="padding: 18px; font-size: 1.2em; margin-bottom: 12px; margin-top: 10px;">🖨️ QR코드 다운로드</button>
         <a href="dashboard.html" class="btn btn-outline" style="background-color: #e8f5e9; border-color: #4caf50;">📊 기간별 출결 통계 및 출석부 인쇄</a>
-
         <div id="student-list"></div>
     </div>
 
@@ -141,253 +71,140 @@
         const ADMIN_ID = "admin";
         const ADMIN_PW = "1234";
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
-        
         let studentsData = [];
 
-        // ==========================================
-        // ⏰ 실시간 시계 업데이트 
-        // ==========================================
         function updateClock() {
-            const now = new Date();
-            const days = ['일', '월', '화', '수', '목', '금', '토'];
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            const date = now.getDate();
-            const day = days[now.getDay()];
-            
-            let hours = now.getHours();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const ampm = hours >= 12 ? '오후' : '오전';
-            
-            hours = hours % 12;
-            hours = hours ? hours : 12; 
-            
-            document.getElementById('current-date').innerText = `${year}년 ${month}월 ${date}일 (${day})`;
-            document.getElementById('current-time').innerText = `${ampm} ${hours}:${minutes}:${seconds}`;
+            const now = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
+            let hours = now.getHours(); const ampm = hours >= 12 ? '오후' : '오전'; hours = hours % 12 || 12; 
+            document.getElementById('current-date').innerText = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+            document.getElementById('current-time').innerText = `${ampm} ${hours}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
         }
         setInterval(updateClock, 1000);
 
-        // ==========================================
-        // 🔐 로그인 및 초기 데이터 로드
-        // ==========================================
         async function checkLogin() {
-            const id = document.getElementById('admin-id').value;
-            const pw = document.getElementById('admin-pw').value;
-
-            if(id === ADMIN_ID && pw === ADMIN_PW) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-screen').style.display = 'block';
-                updateClock();
-                await loadExistingStudents(); 
-            } else {
-                alert("아이디 또는 비밀번호가 일치하지 않습니다.");
-            }
+            if(document.getElementById('admin-id').value === ADMIN_ID && document.getElementById('admin-pw').value === ADMIN_PW) {
+                document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-screen').style.display = 'block';
+                updateClock(); await loadExistingStudents(); 
+            } else alert("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
 
-        document.getElementById('admin-pw').addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') checkLogin();
-        });
-
-        // 🌐 서버에서 기존 명단 가져오기
         async function loadExistingStudents() {
             const listDiv = document.getElementById('student-list');
-            listDiv.innerHTML = "서버에서 명단을 확인하는 중입니다... ⏳";
-            listDiv.style.display = 'block';
-            
+            listDiv.innerHTML = "서버에서 명단을 확인하는 중입니다... ⏳"; listDiv.style.display = 'block';
             try {
-                const response = await fetch(`${API_URL}?action=getStudents`);
-                const data = await response.json();
-                
-                if (data && data.length > 0) {
-                    studentsData = data;
-                    renderSuccessMessage("✅ 기존 명단 불러오기 완료");
+                const res = await (await fetch(`${API_URL}?action=getStudents`)).json();
+                studentsData = Array.isArray(res) ? res : (res.list || []);
+                if (studentsData.length > 0) {
+                    renderSuccessMessage("✅ 기존 명단 불러오기 완료", res.lastUploadTime || "기록 없음");
                     document.getElementById('pdf-btn').disabled = false;
-                } else {
-                    listDiv.innerHTML = "등록된 명단이 없습니다. [새 명단 업로드]를 진행해주세요.";
-                }
-            } catch (error) {
-                listDiv.innerHTML = "명단을 불러오지 못했습니다. 네트워크를 확인해주세요.";
-            }
+                } else listDiv.innerHTML = "등록된 명단이 없습니다. [새로운 출석 명단 업로드]를 진행해주세요.";
+            } catch (e) { listDiv.innerHTML = "명단을 불러오지 못했습니다."; }
         }
 
-        // 💡 깔끔한 상태 메시지 출력 함수 (이름 대신 날짜/시간 표시)
-        function renderSuccessMessage(titleMsg) {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            const date = now.getDate();
-            let hours = now.getHours();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const ampm = hours >= 12 ? '오후' : '오전';
-            hours = hours % 12;
-            hours = hours ? hours : 12; 
-            
-            const timeStr = `${year}년 ${month}월 ${date}일 ${ampm} ${hours}:${minutes}:${seconds}`;
-            
-            const listDiv = document.getElementById('student-list');
-            listDiv.innerHTML = `
-                <strong style="font-size: 1.1em; color: var(--text-main);">${titleMsg}</strong>
-                <div style="margin-top: 15px; color: #4caf50; font-weight: 900; font-size: 1.3em;">🕒 ${timeStr}</div>
-                <div style="margin-top: 10px; color: #7f8c8d; font-size: 0.95em;">총 ${studentsData.length}명의 데이터가 로드되었습니다.</div>
-            `;
-            listDiv.style.display = 'block';
+        function renderSuccessMessage(titleMsg, timeStr) {
+            document.getElementById('student-list').innerHTML = `<strong style="font-size: 1.1em;">${titleMsg}</strong>
+                <div style="margin-top: 15px; color: #4caf50; font-weight: 900; font-size: 1.2em;">🕒 마지막 파일 업로드 시각</div>
+                <div style="margin-top: 5px; color: #2e7d32; font-weight: 700; font-size: 1.1em;">${timeStr}</div>
+                <div style="margin-top: 12px; color: #7f8c8d; font-size: 0.95em;">총 ${studentsData.length}명의 데이터가 세팅되었습니다.</div>`;
         }
 
-        // ==========================================
-        // 🗑️ 명단 삭제 기능
-        // ==========================================
         function deleteExistingRoster() {
-            if(!confirm("정말 기존 명단을 모두 삭제하시겠습니까? (출결 기록은 유지되며, 학생 명단만 삭제됩니다)")) return;
-            
-            studentsData = [];
-            document.getElementById('pdf-btn').disabled = true;
+            if(!confirm("기존 명단을 삭제하시겠습니까?")) return;
+            studentsData = []; document.getElementById('pdf-btn').disabled = true;
             document.getElementById('student-list').innerHTML = "🗑️ 명단이 모두 삭제되었습니다.";
-            
-            fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "uploadStudents", students: [] })
-            }).then(() => alert("명단 삭제가 완료되었습니다."));
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "uploadStudents", students: [] }) });
         }
 
-        // ==========================================
-        // 📥 엑셀 다운로드 (빈 양식 & 기존 명단)
-        // ==========================================
         function downloadTemplate() {
             const wb = XLSX.utils.book_new();
-            const ws_data = [
-                ['2026 꿈꾸는 글마루 명단(월요일)', null, null, null, null],
-                ['학년', '학번', '성명', '1교시', '2교시']
-            ];
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            ws['!merges'] = [ { s: {r:0, c:0}, e: {r:0, c:4} } ];
-            ws['!cols'] = [ {wpx: 50}, {wpx: 80}, {wpx: 100}, {wpx: 60}, {wpx: 60} ];
-            XLSX.utils.book_append_sheet(wb, ws, "학생명단");
-            XLSX.writeFile(wb, "꿈꾸는글마루_출석부_빈양식.xlsx");
+            ['월','화','수','목','금'].forEach(day => {
+                const ws = XLSX.utils.aoa_to_sheet([[`2026 꿈꾸는 글마루 명단(${day}요일)`, null, null, null, null], ['학년', '학번', '이름/교시', '1교시', '2교시']]);
+                ws['!merges'] = [{ s: {r:0, c:0}, e: {r:0, c:4} }]; ws['!cols'] = [{wpx: 50}, {wpx: 80}, {wpx: 100}, {wpx: 60}, {wpx: 60}];
+                XLSX.utils.book_append_sheet(wb, ws, day);
+            });
+            XLSX.writeFile(wb, "꿈꾸는글마루_출석부_양식.xlsx");
         }
 
         function downloadExistingRoster() {
-            if(studentsData.length === 0) {
-                alert("현재 서버에 등록된 명단이 없습니다."); return;
-            }
+            if(studentsData.length === 0) return alert("등록된 명단이 없습니다.");
             const wb = XLSX.utils.book_new();
-            const ws_data = [
-                ['2026 꿈꾸는 글마루 명단(월요일)', null, null, null, null],
-                ['학년', '학번', '성명', '1교시', '2교시']
-            ];
-            studentsData.forEach(s => {
-                ws_data.push([1, s.id, s.name, '☐', '☐']);
+            ['월','화','수','목','금'].forEach(day => {
+                const ws_data = [[`2026 꿈꾸는 글마루 명단(${day}요일)`, null, null, null, null], ['학년', '학번', '이름/교시', '1교시', '2교시']];
+                studentsData.filter(s => s.day === day).forEach(s => ws_data.push([1, s.id, s.name, '☐', '☐']));
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                ws['!merges'] = [{ s: {r:0, c:0}, e: {r:0, c:4} }]; ws['!cols'] = [{wpx: 50}, {wpx: 80}, {wpx: 100}, {wpx: 60}, {wpx: 60}];
+                XLSX.utils.book_append_sheet(wb, ws, day);
             });
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            ws['!merges'] = [ { s: {r:0, c:0}, e: {r:0, c:4} } ];
-            ws['!cols'] = [ {wpx: 50}, {wpx: 80}, {wpx: 100}, {wpx: 60}, {wpx: 60} ];
-            XLSX.utils.book_append_sheet(wb, ws, "학생명단");
             XLSX.writeFile(wb, "꿈꾸는글마루_현재명단.xlsx");
         }
 
-        // ==========================================
-        // 📤 새 명단 업로드
-        // ==========================================
+        // ✨ 엑셀 다중 탭(요일) 인식 로직
         document.getElementById('excel-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
+            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
                 studentsData = [];
-                for(let i = 2; i < json.length; i++) {
-                    let row = json[i];
-                    if (row[1] && row[2]) {
-                        studentsData.push({ id: String(row[1]).trim(), name: String(row[2]).trim() });
+                const days = ['월', '화', '수', '목', '금'];
+                
+                workbook.SheetNames.forEach(sheetName => {
+                    let matchedDay = days.find(d => sheetName.includes(d));
+                    if (matchedDay) {
+                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
+                        for(let i = 2; i < json.length; i++) {
+                            if (json[i] && json[i][1] && json[i][2]) {
+                                studentsData.push({ id: String(json[i][1]).trim(), name: String(json[i][2]).trim(), day: matchedDay });
+                            }
+                        }
                     }
-                }
+                });
                 
                 if(studentsData.length > 0) {
-                    renderSuccessMessage("✅ 새 명단 업로드 성공");
                     document.getElementById('pdf-btn').disabled = false;
-                    
-                    fetch(API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: "uploadStudents", students: studentsData })
-                    });
-                }
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "uploadStudents", students: studentsData }) })
+                        .then(res => res.json()).then(resData => renderSuccessMessage("✅ 새 명단 업로드 성공", resData.lastUploadTime));
+                } else alert("엑셀 파일에서 명단을 찾을 수 없습니다. 양식을 확인해주세요.");
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // ==========================================
-        // 🖨️ QR코드 PDF 다운로드 
-        // ==========================================
         async function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const container = document.getElementById('qr-canvas-container');
-            container.innerHTML = ''; 
-
+            const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4');
+            const container = document.getElementById('qr-canvas-container'); container.innerHTML = ''; 
             const margin = 20; const qrSize = 45; const xSpacing = 60; const ySpacing = 70;
             let xPos = margin; let yPos = margin;
 
             const btn = document.getElementById('pdf-btn');
-            btn.innerText = "⏳ PDF 생성 중...";
-            btn.disabled = true;
+            btn.innerText = "⏳ PDF 생성 중..."; btn.disabled = true;
+
+            let baseUrl = window.location.href.split('index.html')[0];
+            if (!baseUrl.endsWith('/')) baseUrl += '/';
 
             for (let i = 0; i < studentsData.length; i++) {
                 const student = studentsData[i];
-                
-// 선생님의 현재 깃허브 접속 주소를 자동으로 파악해서 scan.html을 연결합니다.
-let baseUrl = window.location.href.split('index.html')[0];
-if (!baseUrl.endsWith('/')) baseUrl += '/';
-const directLink = `${baseUrl}scan.html?id=${student.id}`;
-                const qrDiv = document.createElement('div');
-                container.appendChild(qrDiv);
-                
-                const qrcode = new QRCode(qrDiv, {
-                    text: directLink, width: 256, height: 256,
-                    colorDark : "#33691e", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
-                });
+                // QR코드 스캔 시 바로 scan.html로 연결
+                const directLink = `${baseUrl}scan.html?id=${student.id}`;
+
+                const qrDiv = document.createElement('div'); container.appendChild(qrDiv);
+                new QRCode(qrDiv, { text: directLink, width: 256, height: 256, colorDark : "#33691e", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
 
                 await new Promise(r => setTimeout(r, 50)); 
-                
-                const qrCanvas = qrDiv.querySelector('canvas');
-                if(qrCanvas) {
-                    const combineCanvas = document.createElement('canvas');
-                    const ctx = combineCanvas.getContext('2d');
-                    
-                    combineCanvas.width = qrCanvas.width;
-                    combineCanvas.height = qrCanvas.height + 50; 
+                const combineCanvas = document.createElement('canvas'); const ctx = combineCanvas.getContext('2d');
+                combineCanvas.width = 256; combineCanvas.height = 306; 
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 306);
+                ctx.drawImage(qrDiv.querySelector('canvas'), 0, 0);
+                ctx.fillStyle = "#33691e"; ctx.font = "bold 28px 'Noto Sans KR', sans-serif"; ctx.textAlign = "center";
+                ctx.fillText(`${student.id} ${student.name} (${student.day})`, 128, 291); // 요일도 함께 표기
 
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, combineCanvas.width, combineCanvas.height);
-                    ctx.drawImage(qrCanvas, 0, 0);
+                const imgHeight = qrSize * (306 / 256); 
+                pdf.addImage(combineCanvas.toDataURL('image/png'), 'PNG', xPos, yPos, qrSize, imgHeight);
 
-                    ctx.fillStyle = "#33691e"; 
-                    ctx.font = "bold 28px 'Noto Sans KR', sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.fillText(`${student.id} ${student.name}`, combineCanvas.width / 2, combineCanvas.height - 15);
-
-                    const imgData = combineCanvas.toDataURL('image/png');
-                    const imgHeight = qrSize * (combineCanvas.height / combineCanvas.width); 
-                    
-                    pdf.addImage(imgData, 'PNG', xPos, yPos, qrSize, imgHeight);
-
-                    xPos += xSpacing;
-                    if ((i + 1) % 3 === 0) { xPos = margin; yPos += ySpacing; }
-                    if (yPos > 250 && i < studentsData.length - 1) {
-                        pdf.addPage();
-                        xPos = margin; yPos = margin;
-                    }
-                }
+                xPos += xSpacing;
+                if ((i + 1) % 3 === 0) { xPos = margin; yPos += ySpacing; }
+                if (yPos > 250 && i < studentsData.length - 1) { pdf.addPage(); xPos = margin; yPos = margin; }
             }
-
             pdf.save('글마루_스마트_출석QR.pdf');
-            btn.innerText = "🖨️ QR코드 PDF 다운로드";
-            btn.disabled = false;
+            btn.innerText = "🖨️ QR코드 다운로드"; btn.disabled = false;
         }
     </script>
 </body>
