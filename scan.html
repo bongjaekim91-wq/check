@@ -12,9 +12,11 @@
         h1 { font-size: 1.4em; color: #2e7d32; margin-bottom: 20px; word-break: keep-all; }
         input[type="text"], input[type="password"] { width: 100%; padding: 15px; font-size: 1.1em; border: 2px solid #c8e6c9; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; text-align: center; }
         .btn { background-color: #4caf50; color: white; border: none; padding: 15px; font-size: 1.1em; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn-camera { background-color: #1976d2; margin-bottom: 15px; }
         .stats-box { background: #e8f5e9; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; font-size: 1.05em; line-height: 1.6; border: 1px solid #c8e6c9; }
         .highlight { color: #c62828; font-weight: bold; }
-        #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 15px; overflow: hidden; display: none; }
+        /* 커스텀 카메라 영역 */
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; margin: 0 auto; display: none; }
     </style>
 </head>
 <body>
@@ -23,65 +25,66 @@
         <h1>🔐 감독교사 인증</h1>
         <input type="text" id="teacher-name" placeholder="감독교사 성함 입력">
         <input type="password" id="shared-pw" placeholder="공동 비밀번호 입력">
-        <button class="btn" onclick="loginTeacher()">인증 및 스캔 시작</button>
+        <button class="btn" onclick="loginTeacher()">인증 완료</button>
     </div>
 
     <div class="card" id="scan-screen" style="display: none;">
-        <h1>📷 QR코드 스캔 (연속 모드)</h1>
-        <p style="color: #666; font-size: 0.95em; margin-bottom: 20px;">학생의 QR코드를 카메라에 비춰주세요. 출석과 동시에 현재 통계가 갱신됩니다.</p>
+        <h1>📷 출석 스캐너 (한글 UI)</h1>
+        <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">학생의 QR코드를 비춰주세요.</p>
+        
+        <button class="btn btn-camera" id="start-btn" onclick="startScanner()">🚀 카메라 켜기 (스캔 시작)</button>
         <div id="reader"></div>
         
         <div id="result-box" style="display: none; margin-top: 20px;">
-            <h2 id="result-msg" style="color: #2e7d32; margin-bottom: 10px;">✅ 홍길동 출석 완료</h2>
-            <div class="stats-box" id="stats-content">
-                </div>
+            <h2 id="result-msg" style="color: #2e7d32; margin-bottom: 10px;">-</h2>
+            <div class="stats-box" id="stats-content">데이터 대기 중...</div>
         </div>
     </div>
 
     <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
     <script>
-        const SHARED_PASSWORD = "1234"; // 💡 여기서 공동 비밀번호를 설정하세요!
+        const SHARED_PASSWORD = "1234"; 
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
         
-        let html5QrcodeScanner;
+        let html5QrCode;
         let isScanning = false;
 
-        // 로그인 시 세션 스토리지에 교사 이름 임시 저장
         function loginTeacher() {
             const tName = document.getElementById('teacher-name').value;
             const tPw = document.getElementById('shared-pw').value;
-
             if(!tName) return alert("교사 성함을 입력해주세요.");
             if(tPw !== SHARED_PASSWORD) return alert("공동 비밀번호가 틀렸습니다.");
 
             sessionStorage.setItem('teacherName', tName);
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('scan-screen').style.display = 'block';
-            
-            // 안내 메시지와 함께 웹 카메라 켜기
-            startScanner();
         }
 
-        // 카메라 시작 (연속 스캔 모드)
+        // ✨ 핵심: 영어 메뉴를 없애고 후면 카메라를 강제(environment) 구동하는 코드
         function startScanner() {
+            document.getElementById('start-btn').style.display = 'none';
             document.getElementById('reader').style.display = 'block';
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250}, facingMode: "environment" });
             
-            html5QrcodeScanner.render(onScanSuccess);
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                (errorMessage) => { /* 무시 */ }
+            ).catch(err => {
+                alert("카메라 권한을 허용해주세요!");
+                document.getElementById('start-btn').style.display = 'block';
+            });
             isScanning = true;
         }
 
         function onScanSuccess(decodedText) {
             if (!isScanning) return; 
-            isScanning = false; // 중복 스캔 방지 락
-
+            isScanning = false; 
             document.getElementById('beep').play().catch(e => {});
             
-            // QR코드에 담긴 URL에서 학번(id)만 추출
-            let studentId = decodedText;
-            if (decodedText.includes('?id=')) studentId = decodedText.split('?id=')[1];
-
+            let studentId = decodedText.includes('?id=') ? decodedText.split('?id=')[1] : decodedText;
             processAttendance(studentId);
         }
 
@@ -91,43 +94,29 @@
             const resultMsg = document.getElementById('result-msg');
             const statsContent = document.getElementById('stats-content');
 
-            resultBox.style.display = 'block';
-            resultMsg.style.color = '#f57c00';
+            resultBox.style.display = 'block'; resultMsg.style.color = '#f57c00';
             resultMsg.innerText = "⏳ 출석 처리 중...";
-            statsContent.innerHTML = "데이터를 동기화하고 있습니다...";
+            statsContent.innerHTML = "데이터 동기화 중...";
 
             try {
-                // 깃허브가 백그라운드로 구글 서버에 요청을 보냅니다
                 const response = await fetch(`${API_URL}?action=attend&id=${studentId}&teacher=${encodeURIComponent(tName)}`);
                 const result = await response.json();
 
-                if(result.success) {
-                    resultMsg.style.color = '#2e7d32';
-                    resultMsg.innerText = result.message;
-                } else {
-                    resultMsg.style.color = '#c62828';
-                    resultMsg.innerText = "⚠️ " + result.message;
-                }
+                resultMsg.style.color = result.success ? '#2e7d32' : '#c62828';
+                resultMsg.innerText = (result.success ? "✅ " : "⚠️ ") + result.message;
 
-                // 4. 통계 렌더링 (오늘 요일에 해당하는 통계)
                 if(result.stats) {
                     statsContent.innerHTML = `
                         <strong>📅 오늘(${result.stats.period}) 통계 현황</strong><br>
-                        • 대상 인원: ${result.stats.total}명<br>
-                        • 현재 출석: <span style="color:#2e7d32; font-weight:bold;">${result.stats.present}명</span><br>
-                        • 현재 결석: <span class="highlight">${result.stats.absent}명</span><br>
+                        • 현재 출석: <span style="color:#2e7d32; font-weight:bold;">${result.stats.present}명</span> / ${result.stats.total}명<br>
                         <div style="margin-top:10px; font-size:0.9em; color:#666;">
                             [결석자 명단]<br>${result.stats.absentNames}
-                        </div>
-                    `;
+                        </div>`;
                 }
             } catch (error) {
-                resultMsg.style.color = '#c62828';
                 resultMsg.innerText = "❌ 서버 접속 실패";
             }
-
-            // 2.5초 후 락을 풀고 다음 사람 스캔 대기
-            setTimeout(() => { isScanning = true; }, 2500);
+            setTimeout(() => { isScanning = true; }, 2000); // 2초 후 락 해제
         }
     </script>
 </body>
