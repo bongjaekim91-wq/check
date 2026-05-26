@@ -41,9 +41,9 @@
 
         .card {
             background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px; display: none; /* 기본적으로 숨김 */
+            margin-bottom: 20px; display: none; 
         }
-        .card.active { display: block; } /* 활성화된 탭만 표시 */
+        .card.active { display: block; } 
 
         .controls { text-align: center; margin-bottom: 20px; }
         input[type="date"], input[type="month"] {
@@ -51,13 +51,11 @@
             outline: none; font-family: inherit; color: var(--primary-dark); font-weight: bold;
         }
 
-        /* 테이블 스타일 (일일 출석부) */
+        /* 테이블 스타일 */
         table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 12px; }
+        th, td { border: 1px solid #ddd; padding: 12px; vertical-align: middle; }
         th { background-color: #e8f5e9; color: var(--text-main); font-weight: bold; }
         tr:nth-child(even) { background-color: #fcfdfa; }
-        .status-o { color: #2e7d32; font-weight: bold; }
-        .status-x { color: #c62828; font-weight: bold; font-size: 0.9em; }
 
         .print-btn {
             background-color: #4caf50; color: white; border: none; padding: 15px; font-size: 1.1em;
@@ -72,13 +70,15 @@
 
         .loading { text-align: center; font-size: 1.2em; color: var(--text-main); padding: 50px; font-weight: bold; }
 
+        /* 🖨️ 인쇄 전용 스타일 (수동 버튼 숨김 및 체크박스 표시) */
         @media print {
             body { background: white; padding: 0; }
-            .header, .tabs, .controls, .print-btn, #tab-stats { display: none !important; }
+            .header, .tabs, .controls, .print-btn, #tab-stats, .attend-btn { display: none !important; }
             .card { box-shadow: none; padding: 0; border: none; display: block !important; }
             table { border: 2px solid #000; }
-            th, td { border: 1px solid #000; color: #000; }
+            th, td { border: 1px solid #000; color: #000; padding: 8px; }
             th { background-color: #e0e0e0 !important; color: #000; -webkit-print-color-adjust: exact; }
+            .print-only { display: inline-block !important; }
         }
     </style>
 </head>
@@ -95,7 +95,7 @@
 
     <div id="dashboard-content" style="display: none;">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('daily')">📅 일일 출석부 (조회/인쇄)</button>
+            <button class="tab-btn active" onclick="switchTab('daily')">📅 일일 출석부 (조회/수동체크/인쇄)</button>
             <button class="tab-btn" onclick="switchTab('stats')">📈 종합 통계 (주간/월간/년간)</button>
         </div>
 
@@ -113,7 +113,7 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button class="print-btn" onclick="window.print()">🖨️ 현재 출석부 인쇄 (PDF 저장)</button>
+            <button class="print-btn" onclick="window.print()">🖨️ 현재 빈 양식 인쇄 (PDF 저장)</button>
         </div>
 
         <div id="tab-stats" class="card">
@@ -141,17 +141,13 @@
         let chartInstance = null;
 
         window.onload = async function() {
-            // 오늘 날짜 및 이번 달 기본 세팅
             const now = new Date();
             document.getElementById('date-picker').valueAsDate = now;
-            
             const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
             document.getElementById('month-picker').value = monthStr;
-
             await fetchData();
         };
 
-        // 탭 전환 로직
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
@@ -170,7 +166,8 @@
         async function fetchData() {
             try {
                 const resStudents = await fetch(`${API_URL}?action=getStudents`);
-                allStudents = await resStudents.json();
+                const studentData = await resStudents.json();
+                allStudents = Array.isArray(studentData) ? studentData : (studentData.list || []);
 
                 const resLogs = await fetch(`${API_URL}?action=getLogs`);
                 allLogs = await resLogs.json();
@@ -178,14 +175,14 @@
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('dashboard-content').style.display = 'block';
 
-                renderDaily(); // 기본으로 일일 출석부 렌더링
+                renderDaily(); 
             } catch (error) {
-                document.getElementById('loading-screen').innerText = "데이터 통신에 실패했습니다. API 주소를 확인해주세요.";
+                document.getElementById('loading-screen').innerText = "데이터 통신에 실패했습니다. 네트워크를 확인해주세요.";
             }
         }
 
         // ==========================================
-        // 📅 일일 출석부 렌더링
+        // 📅 일일 출석부 렌더링 (수동 체크 기능 포함)
         // ==========================================
         function renderDaily() {
             const selectedDate = document.getElementById('date-picker').value;
@@ -207,15 +204,43 @@
                     if(log.period === "2교시") { p2 = "출석"; p2Time = timeOnly; }
                 });
 
+                // 웹에서는 클릭 버튼, 인쇄 시에는 빈칸으로 나오는 CSS 적용
+                const btnStyle = "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:0.2s;";
+                const p1Btn = p1 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','1교시',this)">⭕ (${p1Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','1교시',this)">수동 출석</button>`;
+                const p2Btn = p2 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','2교시',this)">⭕ (${p2Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','2교시',this)">수동 출석</button>`;
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${student.id}</td>
                     <td>${student.name}</td>
-                    <td class="${p1 === '출석' ? 'status-o' : 'status-x'}">${p1 === '출석' ? `⭕ (${p1Time})` : '미출석'}</td>
-                    <td class="${p2 === '출석' ? 'status-o' : 'status-x'}">${p2 === '출석' ? `⭕ (${p2Time})` : '미출석'}</td>
+                    <td>${p1Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold; color:#000;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
+                    <td>${p2Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold; color:#000;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // 수동 출석/취소 토글 서버 요청 함수
+        async function toggleManual(studentId, period, btnElement) {
+            btnElement.innerText = "⏳ 처리중";
+            try {
+                const response = await fetch(`${API_URL}?action=manualAttend&id=${studentId}&period=${period}`);
+                const result = await response.json();
+                
+                if(result.status === "출석") {
+                    btnElement.style.background = "#e8f5e9"; btnElement.style.color = "#2e7d32";
+                    btnElement.innerText = "⭕ 수동";
+                } else {
+                    btnElement.style.background = "#ffebee"; btnElement.style.color = "#c62828";
+                    btnElement.innerText = "수동 출석";
+                }
+                
+                // 데이터 재조회하여 통계 업데이트
+                fetchData();
+            } catch(e) {
+                alert("처리 실패");
+                renderDaily(); // 원래 상태로 복귀
+            }
         }
 
         // ==========================================
@@ -229,12 +254,10 @@
             const currentYear = now.getFullYear().toString();
             const currentMonth = currentYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
-            // 1. 오늘 출석률 (1, 2교시 합쳐서 한 번이라도 오면 출석 인정)
             const todayLogs = allLogs.filter(l => l.timestamp.startsWith(todayStr));
             const todayPresentCount = new Set(todayLogs.map(l => l.id)).size;
             document.getElementById('stat-today').innerText = Math.round((todayPresentCount / totalS) * 100) + '%';
 
-            // 2. 올해 출석률
             const yearLogs = allLogs.filter(l => l.timestamp.startsWith(currentYear));
             const yearActiveDays = new Set(yearLogs.map(l => l.timestamp.split(" ")[0])).size;
             if(yearActiveDays > 0) {
@@ -242,7 +265,6 @@
                 document.getElementById('stat-year').innerText = Math.round((yearTotalPresents / (totalS * yearActiveDays)) * 100) + '%';
             } else { document.getElementById('stat-year').innerText = '0%'; }
 
-            // 3. 이번 달 출석률
             const monthLogs = allLogs.filter(l => l.timestamp.startsWith(currentMonth));
             const monthActiveDays = new Set(monthLogs.map(l => l.timestamp.split(" ")[0])).size;
             if(monthActiveDays > 0) {
@@ -250,7 +272,6 @@
                 document.getElementById('stat-month').innerText = Math.round((monthTotalPresents / (totalS * monthActiveDays)) * 100) + '%';
             } else { document.getElementById('stat-month').innerText = '0%'; }
 
-            // 4. 주간 평균 (간이 계산: 최근 7일치 기록)
             const lastWeek = new Date(now); lastWeek.setDate(now.getDate() - 7);
             const weekLogs = allLogs.filter(l => new Date(l.timestamp.split(" ")[0]) >= lastWeek);
             const weekActiveDays = new Set(weekLogs.map(l => l.timestamp.split(" ")[0])).size;
@@ -262,23 +283,18 @@
             renderChart();
         }
 
-        // 월별 추이 차트 (막대 그래프)
         function renderChart() {
-            const selectedMonth = document.getElementById('month-picker').value; // YYYY-MM
+            const selectedMonth = document.getElementById('month-picker').value; 
             if(!selectedMonth) return;
 
-            // 해당 월의 출결 기록만 필터링
             const logsInMonth = allLogs.filter(l => l.timestamp.startsWith(selectedMonth));
-            
-            // 날짜별 출석 인원 집계
             const dailyCounts = {};
             logsInMonth.forEach(log => {
-                const date = log.timestamp.split(" ")[0].substring(8, 10) + '일'; // "05일"
+                const date = log.timestamp.split(" ")[0].substring(8, 10) + '일'; 
                 if(!dailyCounts[date]) dailyCounts[date] = new Set();
-                dailyCounts[date].add(log.id); // 한 학생이 1,2교시 다 와도 1명으로 집계
+                dailyCounts[date].add(log.id); 
             });
 
-            // 날짜순 정렬
             const sortedDates = Object.keys(dailyCounts).sort();
             const countsData = sortedDates.map(date => dailyCounts[date].size);
 
