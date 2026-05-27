@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>감독교사 출석 스캐너</title>
+    <title>서현고등학교 꿈꾸는 글마루 출석 스캐너</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f8e9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: #333; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f8e9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #333; }
         .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 8px 30px rgba(85, 139, 47, 0.1); width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; box-sizing: border-box; }
-        h1 { font-size: 1.4em; color: #2e7d32; margin-bottom: 20px; word-break: keep-all; }
+        h1 { font-size: 1.4em; color: #2e7d32; margin-bottom: 20px; word-break: keep-all; line-height: 1.4; }
         input[type="text"], input[type="password"] { width: 100%; padding: 15px; font-size: 1.1em; border: 2px solid #c8e6c9; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; text-align: center; }
         .btn { background-color: #4caf50; color: white; border: none; padding: 15px; font-size: 1.1em; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.2s; }
         .btn-outline { background-color: white; border: 2px solid #4caf50; color: #2e7d32; }
@@ -20,15 +20,18 @@
         
         .test-panel { display: none; background: #fff3e0; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ffcc80; }
         .test-panel select { width: 100%; padding: 10px; font-size: 1.1em; border-radius: 8px; border: 1px solid #ff9800; }
+        
+        /* 💡 저작권 푸터 스타일 */
+        .footer { margin-top: 10px; font-size: 0.85em; color: #7f8c8d; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="card" id="auth-screen">
-        <h1>🔐 감독교사 인증</h1>
-        <input type="text" id="teacher-name" placeholder="감독교사 성함 입력">
-        <input type="password" id="shared-pw" placeholder="공동 비밀번호 입력">
-        <button class="btn" onclick="loginTeacher()">인증 완료</button>
+        <h1>🔐 서현고등학교 꿈꾸는 글마루<br>출석 스캐너 로그인</h1>
+        <input type="text" id="teacher-name" placeholder="아이디 (감독자 이름) 입력" autocomplete="off">
+        <input type="password" id="shared-pw" placeholder="비밀번호 (기본: 1234)">
+        <button class="btn" onclick="loginTeacher()">로그인 및 스캔 시작</button>
     </div>
 
     <div class="card" id="scan-screen" style="display: none;">
@@ -54,10 +57,11 @@
         </div>
     </div>
 
+    <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
+
     <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
     <script>
-        const SHARED_PASSWORD = "1234"; 
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
         
         let html5QrCode;
@@ -65,10 +69,10 @@
         let isTestMode = false;
 
         function loginTeacher() {
-            const tName = document.getElementById('teacher-name').value;
+            const tName = document.getElementById('teacher-name').value.trim();
             const tPw = document.getElementById('shared-pw').value;
-            if(!tName) return alert("교사 성함을 입력해주세요.");
-            if(tPw !== SHARED_PASSWORD) return alert("공동 비밀번호가 틀렸습니다.");
+            if(!tName) return alert("아이디(감독자 이름)를 입력해주세요.");
+            if(tPw !== "1234") return alert("비밀번호가 틀렸습니다.");
 
             sessionStorage.setItem('teacherName', tName);
             document.getElementById('auth-screen').style.display = 'none';
