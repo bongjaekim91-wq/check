@@ -131,7 +131,6 @@
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "uploadStudents", students: [] }) });
         }
 
-        // 💡 1. 엑셀 다운로드 (사진과 완벽하게 동일한 양식 구축)
         function downloadTemplate() {
             const wb = XLSX.utils.book_new();
             ['월','화','수','목','금'].forEach(day => {
@@ -143,9 +142,9 @@
                 ];
                 const ws = XLSX.utils.aoa_to_sheet(ws_data);
                 ws['!merges'] = [
-                    { s: {r:0, c:0}, e: {r:0, c:12} }, // 타이틀 병합
-                    { s: {r:1, c:3}, e: {r:1, c:4} }, { s: {r:1, c:5}, e: {r:1, c:6} }, { s: {r:1, c:7}, e: {r:1, c:8} }, { s: {r:1, c:9}, e: {r:1, c:10} }, { s: {r:1, c:11}, e: {r:1, c:12} }, // 날짜 병합
-                    { s: {r:2, c:3}, e: {r:2, c:4} }, { s: {r:2, c:5}, e: {r:2, c:6} }, { s: {r:2, c:7}, e: {r:2, c:8} }, { s: {r:2, c:9}, e: {r:2, c:10} }, { s: {r:2, c:11}, e: {r:2, c:12} }  // 감독교사 병합
+                    { s: {r:0, c:0}, e: {r:0, c:12} }, 
+                    { s: {r:1, c:3}, e: {r:1, c:4} }, { s: {r:1, c:5}, e: {r:1, c:6} }, { s: {r:1, c:7}, e: {r:1, c:8} }, { s: {r:1, c:9}, e: {r:1, c:10} }, { s: {r:1, c:11}, e: {r:1, c:12} },
+                    { s: {r:2, c:3}, e: {r:2, c:4} }, { s: {r:2, c:5}, e: {r:2, c:6} }, { s: {r:2, c:7}, e: {r:2, c:8} }, { s: {r:2, c:9}, e: {r:2, c:10} }, { s: {r:2, c:11}, e: {r:2, c:12} } 
                 ];
                 ws['!cols'] = [{wpx: 40}, {wpx: 60}, {wpx: 80}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}];
                 XLSX.utils.book_append_sheet(wb, ws, day);
@@ -181,7 +180,6 @@
             XLSX.writeFile(wb, "꿈꾸는글마루_현재명단.xlsx");
         }
 
-        // 💡 2. 엑셀 업로드 파싱 (X 표시 완벽 인식)
         document.getElementById('excel-upload').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -194,10 +192,8 @@
                     let matchedDay = days.find(d => sheetName.includes(d));
                     if (matchedDay) {
                         const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
-                        // 엑셀의 5번째 줄(인덱스 4)부터 데이터 시작
                         for(let i = 4; i < json.length; i++) {
                             if (json[i] && json[i][1] && json[i][2]) {
-                                // 대문자 X, 소문자 x, 곱하기 기호 ✕ 모두 X로 인식합니다
                                 let rawP1 = String(json[i][3] || '').trim().toUpperCase();
                                 let rawP2 = String(json[i][4] || '').trim().toUpperCase();
                                 let p1_exc = (rawP1 === 'X' || rawP1 === '✕' || rawP1 === '❌') ? 'X' : 'O';
@@ -235,18 +231,37 @@
             new QRCode(qrDiv, { text: loginUrl, width: 256, height: 256, colorDark: "#1976d2", correctLevel: QRCode.CorrectLevel.H });
             
             setTimeout(() => {
-                const canvas = qrDiv.querySelector('canvas');
-                pdf.setFont("Noto Sans KR", "bold"); pdf.setFontSize(20);
-                pdf.text("👨‍🏫 감독교사 스캐너 로그인용 QR코드", 105, 40, {align: 'center'});
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 55, 60, 100, 100);
-                pdf.save('감독교사_전용QR.pdf');
+                const qrCanvas = qrDiv.querySelector('canvas');
+                if(qrCanvas) {
+                    const combineCanvas = document.createElement('canvas');
+                    const ctx = combineCanvas.getContext('2d');
+                    
+                    combineCanvas.width = 350;
+                    combineCanvas.height = 400;
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, combineCanvas.width, combineCanvas.height);
+
+                    ctx.fillStyle = "#1976d2";
+                    ctx.font = "bold 24px 'Noto Sans KR', sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText("👨‍🏫 감독교사 스캐너 로그인용 QR코드", combineCanvas.width / 2, 50);
+
+                    const qrX = (combineCanvas.width - 256) / 2;
+                    ctx.drawImage(qrCanvas, qrX, 80);
+
+                    const imgData = combineCanvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 45, 30, 120, (120 * combineCanvas.height / combineCanvas.width));
+                    
+                    pdf.save('감독교사_전용QR.pdf');
+                }
             }, 100);
         }
 
         async function generatePDF() {
             const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4');
             const container = document.getElementById('qr-canvas-container'); container.innerHTML = ''; 
-            const margin = 20; const qrSize = 45; const xSpacing = 60; const ySpacing = 70;
+            const margin = 20; const qrSize = 45; const xSpacing = 60; const ySpacing = 75; // y간격을 약간 더 벌림
             let xPos = margin; let yPos = margin;
 
             const btn = document.getElementById('pdf-btn');
@@ -275,14 +290,24 @@
 
                 await new Promise(r => setTimeout(r, 50)); 
                 const combineCanvas = document.createElement('canvas'); const ctx = combineCanvas.getContext('2d');
-                combineCanvas.width = 256; combineCanvas.height = 306; 
-                ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 306);
-                ctx.drawImage(qrDiv.querySelector('canvas'), 0, 0);
-                ctx.fillStyle = "#33691e"; ctx.font = "bold 28px 'Noto Sans KR', sans-serif"; ctx.textAlign = "center";
                 
-                ctx.fillText(`${student.id} ${student.name} (${student.day})`, 128, 291); 
+                // 💡 도화지 세로 길이를 늘려서 두 줄을 안전하게 그릴 수 있게 수정했습니다.
+                combineCanvas.width = 256; combineCanvas.height = 330; 
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 330);
+                ctx.drawImage(qrDiv.querySelector('canvas'), 0, 0);
+                
+                ctx.fillStyle = "#33691e"; 
+                ctx.textAlign = "center";
+                
+                // 첫 번째 줄: 학번과 이름
+                ctx.font = "bold 26px 'Noto Sans KR', sans-serif"; 
+                ctx.fillText(`${student.id} ${student.name}`, 128, 285); 
 
-                const imgHeight = qrSize * (306 / 256); 
+                // 두 번째 줄: 요일 (조금 더 작고 깔끔하게)
+                ctx.font = "bold 20px 'Noto Sans KR', sans-serif"; 
+                ctx.fillText(`(${student.day})`, 128, 315); 
+
+                const imgHeight = qrSize * (330 / 256); 
                 pdf.addImage(combineCanvas.toDataURL('image/png'), 'PNG', xPos, yPos, qrSize, imgHeight);
 
                 xPos += xSpacing;
