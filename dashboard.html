@@ -192,15 +192,20 @@
             }
         }
 
+        // 💡 1. 일일 출석부 렌더링 (X 표시 제외 기능 탑재)
         function renderDaily() {
             const selectedDate = document.getElementById('date-picker').value;
             if(!selectedDate || allStudents.length === 0) return;
+
+            // 선택된 날짜의 '요일'을 구합니다 (예: '수')
+            const selectedDayStr = ['일','월','화','수','목','금','토'][new Date(selectedDate).getDay()];
 
             document.getElementById('daily-title').innerText = `${selectedDate} 글마루 출석부`;
             const tbody = document.querySelector('#roster-table tbody');
             tbody.innerHTML = ''; 
 
-            allStudents.forEach(student => {
+            // 해당 요일에 해당하는 학생들만 표시
+            allStudents.filter(s => s.day === selectedDayStr).forEach(student => {
                 const studentLogs = allLogs.filter(log => log.timestamp.startsWith(selectedDate) && log.id === student.id);
                 
                 let p1 = "미출석"; let p1Time = ""; let p2 = "미출석"; let p2Time = "";
@@ -212,15 +217,25 @@
                 });
 
                 const btnStyle = "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:0.2s;";
-                const p1Btn = p1 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','1교시',this)">⭕ (${p1Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','1교시',this)">수동 출석</button>`;
-                const p2Btn = p2 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','2교시',this)">⭕ (${p2Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','2교시',this)">수동 출석</button>`;
+                
+                // 💡 엑셀에서 X로 표시된 학생은 '제외됨' 문구가 뜹니다
+                let p1Btn = student.p1_exc === 'X' 
+                    ? `<span style="color:#9e9e9e; font-weight:bold;">제외됨</span>` 
+                    : (p1 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','1교시',this)">⭕ (${p1Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','1교시',this)">수동 출석</button>`);
+                
+                let p2Btn = student.p2_exc === 'X' 
+                    ? `<span style="color:#9e9e9e; font-weight:bold;">제외됨</span>` 
+                    : (p2 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','2교시',this)">⭕ (${p2Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','2교시',this)">수동 출석</button>`);
+
+                let p1Print = student.p1_exc === 'X' ? `<span class="print-only" style="display:none; color:#9e9e9e; font-weight:bold;">X</span>` : `<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold;">[ &nbsp;&nbsp;&nbsp; ]</span>`;
+                let p2Print = student.p2_exc === 'X' ? `<span class="print-only" style="display:none; color:#9e9e9e; font-weight:bold;">X</span>` : `<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold;">[ &nbsp;&nbsp;&nbsp; ]</span>`;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${student.id}</td>
                     <td>${student.name}</td>
-                    <td>${p1Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
-                    <td>${p2Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
+                    <td>${p1Btn}${p1Print}</td>
+                    <td>${p2Btn}${p2Print}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -278,19 +293,25 @@
 
         function renderStats() {
             if(allStudents.length === 0) return;
-            const totalS = allStudents.length;
+            const totalS = allStudents.length; // (모든 요일 학생 총합, 여기서는 단순 비율 계산용)
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
             const currentYear = now.getFullYear().toString();
             const currentMonth = currentYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
             const todayLogs = allLogs.filter(l => l.timestamp.startsWith(todayStr));
-            document.getElementById('stat-today').innerText = Math.round((new Set(todayLogs.map(l => l.id)).size / totalS) * 100) + '%';
+            // 오늘 요일에 등록된 '실제 대상자' 수만 추출하여 정확한 출석률 계산
+            const currentDayStr = ['일','월','화','수','목','금','토'][now.getDay()];
+            let todayTargetCount = allStudents.filter(s => s.day === currentDayStr).length;
+            if(todayTargetCount === 0) todayTargetCount = 1; // 0으로 나누기 방지
+            
+            document.getElementById('stat-today').innerText = Math.round((new Set(todayLogs.map(l => l.id)).size / todayTargetCount) * 100) + '%';
 
             const calcAvg = (logs) => {
                 const activeDays = new Set(logs.map(l => l.timestamp.split(" ")[0])).size;
                 if(activeDays === 0) return '0%';
                 const totalPresents = new Set(logs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
+                // 러프한 평균 계산 (정확한 모수는 일별 대상자 수에 따라 달라짐)
                 return Math.round((totalPresents / (totalS * activeDays)) * 100) + '%';
             };
 
