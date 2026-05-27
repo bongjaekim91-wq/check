@@ -4,26 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>서현고등학교 꿈꾸는 글마루 출석관리 시스템</title>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
         :root { --primary-color: #81c784; --primary-dark: #558b2f; --bg-color: #f1f8e9; --text-main: #33691e; }
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-main); }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; color: var(--text-main); }
         .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 30px rgba(85, 139, 47, 0.08); width: 100%; max-width: 500px; text-align: center; }
-        .school-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        .school-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .school-name { font-size: 1.2em; font-weight: 700; color: var(--primary-dark); }
         .clock-container { background: #e8f5e9; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #c8e6c9; }
-        .date-text { font-size: 1.1em; color: #558b2f; margin-bottom: 5px; font-weight: 700; }
-        .time-text { font-size: 2.4em; font-weight: 900; color: #2e7d32; letter-spacing: 1px; }
-        h1 { font-size: 1.5em; margin-bottom: 20px; color: var(--text-main); line-height: 1.4; word-break: keep-all; }
-        .login-form { display: flex; flex-direction: column; gap: 15px; }
-        input[type="text"], input[type="password"] { padding: 15px; font-size: 1em; border: 2px solid #c8e6c9; border-radius: 10px; outline: none; text-align: center; }
-        .btn { padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; box-sizing: border-box; text-align: center; display: flex; justify-content: center; align-items: center; height: 55px; transition: 0.2s; }
+        .date-text { font-size: 1.1em; color: #558b2f; font-weight: 700; }
+        .time-text { font-size: 2.4em; font-weight: 900; color: #2e7d32; }
+        .btn { padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; display: flex; justify-content: center; align-items: center; height: 55px; transition: 0.2s; }
         .btn-outline { background-color: white; border: 2px solid var(--primary-color); color: var(--primary-dark); }
         .btn-solid { background-color: var(--primary-color); border: none; color: white; }
         .btn-danger { background-color: white; border: 2px solid #e57373; color: #c62828; }
@@ -33,330 +25,160 @@
         #student-list { margin-top: 20px; text-align: center; border-radius: 10px; background: #fafafa; padding: 20px; font-size: 1em; display: none; border: 1px solid #eee; }
         #qr-canvas-container { display: none; }
         .btn-disabled { background-color: #f5f5f5 !important; border-color: #ddd !important; color: #aaa !important; cursor: not-allowed !important; }
-        
-        /* 💡 저작권 푸터 스타일 */
-        .footer { margin-top: 30px; font-size: 0.85em; color: #7f8c8d; text-align: center; }
+        .footer { margin-top: 30px; font-size: 0.85em; color: #7f8c8d; }
     </style>
 </head>
 <body>
-
     <div class="container" id="login-screen">
-        <div class="school-header">
-            <img src="https://cdn-icons-png.flaticon.com/512/2941/2941582.png" alt="학교 마크" class="school-logo">
-            <span class="school-name">서현고등학교</span>
-        </div>
         <h1>서현고등학교 꿈꾸는 글마루 출석관리 시스템</h1>
         <div class="login-form">
-            <input type="text" id="admin-id" placeholder="아이디 (admin 또는 감독자 이름)" autocomplete="off">
+            <input type="text" id="admin-id" placeholder="아이디 (admin 또는 감독자 이름)">
             <input type="password" id="admin-pw" placeholder="비밀번호 (기본: 1234)">
-            <button class="btn btn-solid" style="margin-top: 10px;" onclick="checkLogin()">로그인</button>
+            <button class="btn btn-solid" onclick="checkLogin()">로그인</button>
         </div>
     </div>
-
     <div class="container" id="main-screen" style="display: none;">
         <div class="clock-container">
             <div id="current-date" class="date-text"></div>
             <div id="current-time" class="time-text"></div>
         </div>
-
         <div class="btn-group">
             <button class="btn btn-outline" onclick="downloadTemplate()">📥 기본 양식 다운로드</button>
             <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 기존 출석 명단 다운로드</button>
         </div>
-        
         <div class="btn-group">
             <label class="btn btn-outline" for="excel-upload" style="cursor: pointer;">📤 새로운 출석 명단 업로드</label>
             <input type="file" id="excel-upload" accept=".xlsx, .xls">
             <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
         </div>
-        
         <div class="btn-group" style="margin-top: 10px;">
-            <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 로그인 QR 발급</button>
-            <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR코드 다운로드</button>
+            <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 로그인 QR</button>
+            <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
         </div>
-        
         <a href="dashboard.html" class="btn btn-outline" style="background-color: #e8f5e9; border-color: #4caf50;">📊 기간별 출결 통계 및 출석부 인쇄</a>
-
         <div id="student-list"></div>
     </div>
-
-    <div id="qr-canvas-container"></div>
-    
     <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
-
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
         let studentsData = [];
-
         window.onload = function() {
-            const role = sessionStorage.getItem('userRole');
-            if(role) {
+            if(sessionStorage.getItem('userRole')) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-screen').style.display = 'block';
-                applyRoleUI(role);
-                updateClock();
-                loadExistingStudents();
+                applyRoleUI(sessionStorage.getItem('userRole'));
+                updateClock(); loadExistingStudents();
             }
         };
-
         function updateClock() {
             const now = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
-            let hours = now.getHours(); const ampm = hours >= 12 ? '오후' : '오전'; hours = hours % 12 || 12; 
+            let h = now.getHours(); const ampm = h >= 12 ? '오후' : '오전'; h = h % 12 || 12; 
             document.getElementById('current-date').innerText = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
-            document.getElementById('current-time').innerText = `${ampm} ${hours}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+            document.getElementById('current-time').innerText = `${ampm} ${h}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
         }
         setInterval(updateClock, 1000);
-
         function applyRoleUI(role) {
             const delBtn = document.getElementById('delete-all-btn');
-            if(role === 'admin') {
-                delBtn.disabled = false;
-                delBtn.classList.remove('btn-disabled');
-                delBtn.innerHTML = "🗑️ 명단 초기화";
-            } else {
-                delBtn.disabled = true;
-                delBtn.classList.add('btn-disabled');
-                delBtn.innerHTML = "🚫 관리자 전용";
-            }
+            if(role === 'admin') { delBtn.disabled = false; delBtn.classList.remove('btn-disabled'); }
+            else { delBtn.disabled = true; delBtn.classList.add('btn-disabled'); }
         }
-
         async function checkLogin() {
             const id = document.getElementById('admin-id').value.trim();
             const pw = document.getElementById('admin-pw').value;
-
-            if(!id) return alert("아이디를 입력해주세요.");
-            if(pw !== "1234") return alert("비밀번호가 일치하지 않습니다.");
-
+            if(!id || pw !== "1234") return alert("아이디/비밀번호 확인");
             const role = (id === "admin") ? "admin" : "supervisor";
             sessionStorage.setItem('userRole', role);
-            
-            document.getElementById('login-screen').style.display = 'none'; 
-            document.getElementById('main-screen').style.display = 'block';
-            
-            applyRoleUI(role);
-            updateClock(); 
-            await loadExistingStudents(); 
+            location.reload();
         }
-
-        document.getElementById('admin-pw').addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') checkLogin();
-        });
-
         async function loadExistingStudents() {
-            const listDiv = document.getElementById('student-list');
-            listDiv.innerHTML = "서버에서 명단을 확인하는 중입니다... ⏳"; listDiv.style.display = 'block';
-            try {
-                const res = await (await fetch(`${API_URL}?action=getStudents`)).json();
-                studentsData = Array.isArray(res) ? res : (res.list || []);
-                if (studentsData.length > 0) {
-                    renderSuccessMessage("✅ 기존 명단 불러오기 완료", res.lastUploadTime || "기록 없음");
-                    document.getElementById('pdf-btn').disabled = false;
-                } else listDiv.innerHTML = "등록된 명단이 없습니다. [새로운 출석 명단 업로드]를 진행해주세요.";
-            } catch (e) { listDiv.innerHTML = "명단을 불러오지 못했습니다."; }
-        }
-
-        function renderSuccessMessage(titleMsg, timeStr) {
-            document.getElementById('student-list').innerHTML = `<strong style="font-size: 1.1em;">${titleMsg}</strong>
-                <div style="margin-top: 15px; color: #4caf50; font-weight: 900; font-size: 1.2em;">🕒 마지막 파일 업로드 시각</div>
-                <div style="margin-top: 5px; color: #2e7d32; font-weight: 700; font-size: 1.1em;">${timeStr}</div>
-                <div style="margin-top: 12px; color: #7f8c8d; font-size: 0.95em;">총 ${studentsData.length}건의 명단 데이터가 세팅되었습니다.</div>`;
-        }
-
-        // 💡 [핵심 수정] 경고 문구를 변경하고 통계를 유지함을 강조합니다.
-        function deleteExistingRoster() {
-            if(sessionStorage.getItem('userRole') !== 'admin') {
-                return alert("관리자(admin) 권한으로 로그인해야 삭제할 수 있습니다.");
+            const res = await (await fetch(`${API_URL}?action=getStudents`)).json();
+            studentsData = Array.isArray(res) ? res : (res.list || []);
+            if(studentsData.length > 0) {
+                renderSuccessMessage("✅ 불러오기 완료", res.lastUploadTime);
+                document.getElementById('pdf-btn').disabled = false;
             }
-            if(!confirm("⚠️ 해당일 출석부(학생 명단)가 모두 삭제됩니다.\n(※ 기존의 누적 통계자료는 그대로 안전하게 유지됩니다.)\n정말 명단을 초기화하시겠습니까?")) return;
-            
-            studentsData = []; document.getElementById('pdf-btn').disabled = true;
-            document.getElementById('student-list').innerHTML = "🗑️ 명단이 초기화되었습니다.";
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "resetAll" }) })
-                .then(() => alert("명단 초기화가 완료되었습니다."));
         }
-
+        function renderSuccessMessage(m, t) { document.getElementById('student-list').innerHTML = `<strong>${m}</strong><br>🕒 마지막 업로드: ${t}<br>총 ${studentsData.length}건 세팅 완료`; document.getElementById('student-list').style.display = 'block'; }
+        function deleteExistingRoster() {
+            if(!confirm("⚠️ 명단만 초기화됩니다. (통계는 유지)")) return;
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "resetAll" }) }).then(() => location.reload());
+        }
         function downloadTemplate() {
             const wb = XLSX.utils.book_new();
             ['월','화','수','목','금'].forEach(day => {
-                const ws_data = [
-                    [`2026 꿈꾸는 글마루 명단(${day}요일)`, null, null, null, null, null, null, null, null, null, null, null, null],
-                    [null, null, '날짜', '', '', '', '', '', '', '', '', '', ''],
-                    [null, null, '감독교사', '', '', '', '', '', '', '', '', '', ''],
-                    ['학년', '학번', '이름/교시', '1교시', '2교시', '1교시', '2교시', '1교시', '2교시', '1교시', '2교시', '1교시', '2교시']
-                ];
-                const ws = XLSX.utils.aoa_to_sheet(ws_data);
-                ws['!merges'] = [
-                    { s: {r:0, c:0}, e: {r:0, c:12} }, 
-                    { s: {r:1, c:3}, e: {r:1, c:4} }, { s: {r:1, c:5}, e: {r:1, c:6} }, { s: {r:1, c:7}, e: {r:1, c:8} }, { s: {r:1, c:9}, e: {r:1, c:10} }, { s: {r:1, c:11}, e: {r:1, c:12} },
-                    { s: {r:2, c:3}, e: {r:2, c:4} }, { s: {r:2, c:5}, e: {r:2, c:6} }, { s: {r:2, c:7}, e: {r:2, c:8} }, { s: {r:2, c:9}, e: {r:2, c:10} }, { s: {r:2, c:11}, e: {r:2, c:12} } 
-                ];
-                ws['!cols'] = [{wpx: 40}, {wpx: 60}, {wpx: 80}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}];
+                const ws = XLSX.utils.aoa_to_sheet([[`2026 명단(${day}요일)`,null,null,null,null,null,null,null,null,null,null,null,null], [null,null,'날짜','','','','','','','','','',''], [null,null,'감독교사','','','','','','','','','',''], ['학년','학번','성명','요일','1교시','2교시','1교시','2교시','1교시','2교시','1교시','2교시','1교시','2교시']]);
                 XLSX.utils.book_append_sheet(wb, ws, day);
             });
-            XLSX.writeFile(wb, "꿈꾸는글마루_출석부_양식.xlsx");
+            XLSX.writeFile(wb, "출석부_양식.xlsx");
         }
-
         function downloadExistingRoster() {
-            if(studentsData.length === 0) return alert("등록된 명단이 없습니다.");
+            if(studentsData.length === 0) return alert("데이터 없음");
             const wb = XLSX.utils.book_new();
             ['월','화','수','목','금'].forEach(day => {
-                const ws_data = [
-                    [`2026 꿈꾸는 글마루 명단(${day}요일)`, null, null, null, null, null, null, null, null, null, null, null, null],
-                    [null, null, '날짜', '', '', '', '', '', '', '', '', '', ''],
-                    [null, null, '감독교사', '', '', '', '', '', '', '', '', '', ''],
-                    ['학년', '학번', '이름/교시', '1교시', '2교시', '1교시', '2교시', '1교시', '2교시', '1교시', '2교시', '1교시', '2교시']
-                ];
-                studentsData.filter(s => s.day === day).forEach(s => {
-                    const grade = s.id ? s.id.charAt(0) : '';
-                    const p1 = s.p1_exc === 'X' ? 'X' : '';
-                    const p2 = s.p2_exc === 'X' ? 'X' : '';
-                    ws_data.push([grade, s.id, s.name, p1, p2, '', '', '', '', '', '', '', '']);
-                });
-                const ws = XLSX.utils.aoa_to_sheet(ws_data);
-                ws['!merges'] = [
-                    { s: {r:0, c:0}, e: {r:0, c:12} }, 
-                    { s: {r:1, c:3}, e: {r:1, c:4} }, { s: {r:1, c:5}, e: {r:1, c:6} }, { s: {r:1, c:7}, e: {r:1, c:8} }, { s: {r:1, c:9}, e: {r:1, c:10} }, { s: {r:1, c:11}, e: {r:1, c:12} },
-                    { s: {r:2, c:3}, e: {r:2, c:4} }, { s: {r:2, c:5}, e: {r:2, c:6} }, { s: {r:2, c:7}, e: {r:2, c:8} }, { s: {r:2, c:9}, e: {r:2, c:10} }, { s: {r:2, c:11}, e: {r:2, c:12} } 
-                ];
-                ws['!cols'] = [{wpx: 40}, {wpx: 60}, {wpx: 80}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}, {wpx: 40}];
-                XLSX.utils.book_append_sheet(wb, ws, day);
+                const ws_data = [['학년','학번','성명','요일','1교시','2교시']];
+                studentsData.filter(s => s.day === day).forEach(s => ws_data.push([s.id.charAt(0), s.id, s.name, s.day, s.p1_exc, s.p2_exc]));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws_data), day);
             });
-            XLSX.writeFile(wb, "꿈꾸는글마루_현재명단.xlsx");
+            XLSX.writeFile(wb, "현재_출석명단.xlsx");
         }
-
         document.getElementById('excel-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                const wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
                 studentsData = [];
-                const days = ['월', '화', '수', '목', '금'];
-                
-                workbook.SheetNames.forEach(sheetName => {
-                    let matchedDay = days.find(d => sheetName.includes(d));
-                    if (matchedDay) {
-                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
-                        for(let i = 4; i < json.length; i++) {
-                            if (json[i] && json[i][1] && json[i][2]) {
-                                let rawP1 = String(json[i][3] || '').trim().toUpperCase();
-                                let rawP2 = String(json[i][4] || '').trim().toUpperCase();
-                                let p1_exc = (rawP1 === 'X' || rawP1 === '✕' || rawP1 === '❌') ? 'X' : 'O';
-                                let p2_exc = (rawP2 === 'X' || rawP2 === '✕' || rawP2 === '❌') ? 'X' : 'O';
-
-                                studentsData.push({ 
-                                    id: String(json[i][1]).trim(), 
-                                    name: String(json[i][2]).trim(), 
-                                    day: matchedDay,
-                                    p1_exc: p1_exc,
-                                    p2_exc: p2_exc
-                                });
-                            }
-                        }
+                wb.SheetNames.forEach(sn => {
+                    const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header: 1});
+                    for(let i=3; i<json.length; i++) {
+                        if(json[i][1] && json[i][2]) studentsData.push({ id: String(json[i][1]), name: String(json[i][2]), day: sn.replace(/[^월화수목금]/g, ''), p1_exc: json[i][3], p2_exc: json[i][4] });
                     }
                 });
-                
-                if(studentsData.length > 0) {
-                    document.getElementById('pdf-btn').disabled = false;
-                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "uploadStudents", students: studentsData }) })
-                        .then(res => res.json()).then(resData => renderSuccessMessage("✅ 새 명단 업로드 성공", resData.lastUploadTime));
-                } else alert("엑셀 파일에서 명단을 찾을 수 없습니다. 양식을 확인해주세요.");
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "uploadStudents", students: studentsData }) }).then(() => location.reload());
             };
-            reader.readAsArrayBuffer(file);
+            reader.readAsArrayBuffer(e.target.files[0]);
         });
-
         function downloadTeacherQR() {
             let baseUrl = window.location.href.split('index.html')[0];
             if (!baseUrl.endsWith('/')) baseUrl += '/';
-            let loginUrl = `${baseUrl}scan.html`; 
-            
-            const { jsPDF } = window.jspdf; 
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4');
             const qrDiv = document.createElement('div');
-            new QRCode(qrDiv, { text: loginUrl, width: 256, height: 256, colorDark: "#1976d2", correctLevel: QRCode.CorrectLevel.H });
-            
+            new QRCode(qrDiv, { text: `${baseUrl}scan.html`, width: 256, height: 256, colorDark: "#1976d2", correctLevel: QRCode.CorrectLevel.H });
             setTimeout(() => {
-                const qrCanvas = qrDiv.querySelector('canvas');
-                if(qrCanvas) {
-                    const combineCanvas = document.createElement('canvas');
-                    const ctx = combineCanvas.getContext('2d');
-                    
-                    combineCanvas.width = 350;
-                    combineCanvas.height = 400;
-
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, combineCanvas.width, combineCanvas.height);
-
-                    ctx.fillStyle = "#1976d2";
-                    ctx.font = "bold 24px 'Noto Sans KR', sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.fillText("👨‍🏫 감독교사 스캐너 로그인용 QR코드", combineCanvas.width / 2, 50);
-
-                    const qrX = (combineCanvas.width - 256) / 2;
-                    ctx.drawImage(qrCanvas, qrX, 80);
-
-                    const imgData = combineCanvas.toDataURL('image/png');
-                    pdf.addImage(imgData, 'PNG', 45, 30, 120, (120 * combineCanvas.height / combineCanvas.width));
-                    
-                    pdf.save('감독교사_전용QR.pdf');
-                }
+                const ctx = document.createElement('canvas').getContext('2d');
+                ctx.canvas.width = 350; ctx.canvas.height = 400;
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,350,400);
+                ctx.fillStyle = "#1976d2"; ctx.font = "bold 24px Noto Sans KR"; ctx.textAlign = "center";
+                ctx.fillText("👨‍🏫 감독교사 로그인 QR", 175, 50);
+                ctx.drawImage(qrDiv.querySelector('canvas'), 47, 80);
+                pdf.addImage(ctx.canvas.toDataURL('image/png'), 'PNG', 45, 30, 120, 120);
+                pdf.save('감독교사_전용QR.pdf');
             }, 100);
         }
-
         async function generatePDF() {
             const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4');
-            const container = document.getElementById('qr-canvas-container'); container.innerHTML = ''; 
-            const margin = 20; const qrSize = 45; const xSpacing = 60; const ySpacing = 75; 
-            let xPos = margin; let yPos = margin;
-
-            const btn = document.getElementById('pdf-btn');
-            btn.innerText = "⏳ PDF 생성 중..."; btn.disabled = true;
-
             let baseUrl = window.location.href.split('index.html')[0];
             if (!baseUrl.endsWith('/')) baseUrl += '/';
-
-            const uniqueStudentsMap = new Map();
+            const uniqueMap = new Map();
             studentsData.forEach(s => {
-                if (uniqueStudentsMap.has(s.id)) {
-                    let existing = uniqueStudentsMap.get(s.id);
-                    if (!existing.day.includes(s.day)) existing.day += ", " + s.day;
-                } else {
-                    uniqueStudentsMap.set(s.id, { id: s.id, name: s.name, day: s.day });
-                }
+                if(uniqueMap.has(s.id)) uniqueMap.get(s.day.includes(s.day) ? null : s).day += ", "+s.day;
+                else uniqueMap.set(s.id, { ...s });
             });
-            const finalStudents = Array.from(uniqueStudentsMap.values());
-
-            for (let i = 0; i < finalStudents.length; i++) {
-                const student = finalStudents[i];
-                const directLink = `${baseUrl}scan.html?id=${student.id}`;
-
-                const qrDiv = document.createElement('div'); container.appendChild(qrDiv);
-                new QRCode(qrDiv, { text: directLink, width: 256, height: 256, colorDark : "#33691e", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
-
-                await new Promise(r => setTimeout(r, 50)); 
-                const combineCanvas = document.createElement('canvas'); const ctx = combineCanvas.getContext('2d');
-                
-                combineCanvas.width = 256; combineCanvas.height = 330; 
-                ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 330);
+            const final = Array.from(uniqueMap.values());
+            for(let i=0; i<final.length; i++) {
+                const s = final[i];
+                const qrDiv = document.createElement('div');
+                new QRCode(qrDiv, { text: `${baseUrl}scan.html?id=${s.id}`, width: 256, height: 256, colorDark: "#33691e", correctLevel: QRCode.CorrectLevel.H });
+                await new Promise(r => setTimeout(r, 50));
+                const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 330;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,256,330);
                 ctx.drawImage(qrDiv.querySelector('canvas'), 0, 0);
-                
-                ctx.fillStyle = "#33691e"; 
-                ctx.textAlign = "center";
-                
-                ctx.font = "bold 26px 'Noto Sans KR', sans-serif"; 
-                ctx.fillText(`${student.id} ${student.name}`, 128, 285); 
-
-                ctx.font = "bold 20px 'Noto Sans KR', sans-serif"; 
-                ctx.fillText(`(${student.day})`, 128, 315); 
-
-                const imgHeight = qrSize * (330 / 256); 
-                pdf.addImage(combineCanvas.toDataURL('image/png'), 'PNG', xPos, yPos, qrSize, imgHeight);
-
-                xPos += xSpacing;
-                if ((i + 1) % 3 === 0) { xPos = margin; yPos += ySpacing; }
-                if (yPos > 250 && i < finalStudents.length - 1) { pdf.addPage(); xPos = margin; yPos = margin; }
+                ctx.fillStyle = "#33691e"; ctx.textAlign = "center";
+                ctx.font = "bold 26px Noto Sans KR"; ctx.fillText(`${s.id} ${s.name}`, 128, 285);
+                ctx.font = "bold 20px Noto Sans KR"; ctx.fillText(`(${s.day})`, 128, 315);
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 20 + (i%3)*60, 20 + Math.floor(i/3)*75, 45, 58);
+                if((i+1)%9 === 0) pdf.addPage();
             }
-            pdf.save('학생_통합_출석QR명단.pdf');
-            btn.innerText = "🖨️ 학생 QR코드 다운로드"; btn.disabled = false;
+            pdf.save('학생_QR명단.pdf');
         }
     </script>
 </body>
