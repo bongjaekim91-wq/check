@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>글마루 출결 통계 대시보드</title>
+    <title>서현고등학교 글마루 출결 대시보드</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -40,10 +40,13 @@
         .stat-box .value { font-size: 1.8em; font-weight: 900; color: #2e7d32; }
 
         .loading { text-align: center; font-size: 1.2em; color: var(--text-main); padding: 50px; font-weight: bold; }
+        
+        /* 💡 저작권 푸터 스타일 */
+        .footer { margin-top: 20px; font-size: 0.85em; color: #7f8c8d; text-align: center; }
 
         @media print {
             body { background: white; padding: 0; }
-            .header, .tabs, .controls, .print-btn, .attend-btn { display: none !important; }
+            .header, .tabs, .controls, .print-btn, .attend-btn, .footer { display: none !important; }
             .card { box-shadow: none; padding: 0; border: none; display: block !important; }
             .card:not(.active) { display: none !important; } 
             table { border: 2px solid #000; }
@@ -56,7 +59,7 @@
 <body>
 
     <div class="header">
-        <h1>📊 서현고 글마루 출결 대시보드</h1>
+        <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
         <a href="index.html" class="back-btn">⬅️ 메인으로 돌아가기</a>
     </div>
 
@@ -130,6 +133,8 @@
             <canvas id="trendChart" style="max-height: 350px;"></canvas>
         </div>
     </div>
+    
+    <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
@@ -192,19 +197,16 @@
             }
         }
 
-        // 💡 1. 일일 출석부 렌더링 (X 표시 제외 기능 탑재)
         function renderDaily() {
             const selectedDate = document.getElementById('date-picker').value;
             if(!selectedDate || allStudents.length === 0) return;
 
-            // 선택된 날짜의 '요일'을 구합니다 (예: '수')
             const selectedDayStr = ['일','월','화','수','목','금','토'][new Date(selectedDate).getDay()];
 
             document.getElementById('daily-title').innerText = `${selectedDate} 글마루 출석부`;
             const tbody = document.querySelector('#roster-table tbody');
             tbody.innerHTML = ''; 
 
-            // 해당 요일에 해당하는 학생들만 표시
             allStudents.filter(s => s.day === selectedDayStr).forEach(student => {
                 const studentLogs = allLogs.filter(log => log.timestamp.startsWith(selectedDate) && log.id === student.id);
                 
@@ -218,7 +220,6 @@
 
                 const btnStyle = "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:0.2s;";
                 
-                // 💡 엑셀에서 X로 표시된 학생은 '제외됨' 문구가 뜹니다
                 let p1Btn = student.p1_exc === 'X' 
                     ? `<span style="color:#9e9e9e; font-weight:bold;">제외됨</span>` 
                     : (p1 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','1교시',this)">⭕ (${p1Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','1교시',this)">수동 출석</button>`);
@@ -293,17 +294,16 @@
 
         function renderStats() {
             if(allStudents.length === 0) return;
-            const totalS = allStudents.length; // (모든 요일 학생 총합, 여기서는 단순 비율 계산용)
+            const totalS = allStudents.length; 
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
             const currentYear = now.getFullYear().toString();
             const currentMonth = currentYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
             const todayLogs = allLogs.filter(l => l.timestamp.startsWith(todayStr));
-            // 오늘 요일에 등록된 '실제 대상자' 수만 추출하여 정확한 출석률 계산
             const currentDayStr = ['일','월','화','수','목','금','토'][now.getDay()];
             let todayTargetCount = allStudents.filter(s => s.day === currentDayStr).length;
-            if(todayTargetCount === 0) todayTargetCount = 1; // 0으로 나누기 방지
+            if(todayTargetCount === 0) todayTargetCount = 1; 
             
             document.getElementById('stat-today').innerText = Math.round((new Set(todayLogs.map(l => l.id)).size / todayTargetCount) * 100) + '%';
 
@@ -311,7 +311,6 @@
                 const activeDays = new Set(logs.map(l => l.timestamp.split(" ")[0])).size;
                 if(activeDays === 0) return '0%';
                 const totalPresents = new Set(logs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
-                // 러프한 평균 계산 (정확한 모수는 일별 대상자 수에 따라 달라짐)
                 return Math.round((totalPresents / (totalS * activeDays)) * 100) + '%';
             };
 
