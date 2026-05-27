@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>꿈꾸는 글마루 출석 관리 시스템</title>
+    <title>서현고등학교 꿈꾸는 글마루 출석관리 시스템</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,7 +12,7 @@
     
     <style>
         :root { --primary-color: #81c784; --primary-dark: #558b2f; --bg-color: #f1f8e9; --text-main: #33691e; }
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-main); }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-main); }
         .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 30px rgba(85, 139, 47, 0.08); width: 100%; max-width: 500px; text-align: center; }
         .school-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .school-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
@@ -20,10 +20,10 @@
         .clock-container { background: #e8f5e9; padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #c8e6c9; }
         .date-text { font-size: 1.1em; color: #558b2f; margin-bottom: 5px; font-weight: 700; }
         .time-text { font-size: 2.4em; font-weight: 900; color: #2e7d32; letter-spacing: 1px; }
-        h1 { font-size: 1.5em; margin-bottom: 20px; color: var(--text-main); }
+        h1 { font-size: 1.5em; margin-bottom: 20px; color: var(--text-main); line-height: 1.4; word-break: keep-all; }
         .login-form { display: flex; flex-direction: column; gap: 15px; }
         input[type="text"], input[type="password"] { padding: 15px; font-size: 1em; border: 2px solid #c8e6c9; border-radius: 10px; outline: none; text-align: center; }
-        .btn { padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; box-sizing: border-box; text-align: center; display: flex; justify-content: center; align-items: center; height: 55px; }
+        .btn { padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; box-sizing: border-box; text-align: center; display: flex; justify-content: center; align-items: center; height: 55px; transition: 0.2s; }
         .btn-outline { background-color: white; border: 2px solid var(--primary-color); color: var(--primary-dark); }
         .btn-solid { background-color: var(--primary-color); border: none; color: white; }
         .btn-danger { background-color: white; border: 2px solid #e57373; color: #c62828; }
@@ -32,6 +32,10 @@
         input[type="file"] { display: none; }
         #student-list { margin-top: 20px; text-align: center; border-radius: 10px; background: #fafafa; padding: 20px; font-size: 1em; display: none; border: 1px solid #eee; }
         #qr-canvas-container { display: none; }
+        .btn-disabled { background-color: #f5f5f5 !important; border-color: #ddd !important; color: #aaa !important; cursor: not-allowed !important; }
+        
+        /* 💡 저작권 푸터 스타일 */
+        .footer { margin-top: 30px; font-size: 0.85em; color: #7f8c8d; text-align: center; }
     </style>
 </head>
 <body>
@@ -41,10 +45,10 @@
             <img src="https://cdn-icons-png.flaticon.com/512/2941/2941582.png" alt="학교 마크" class="school-logo">
             <span class="school-name">서현고등학교</span>
         </div>
-        <h1>관리자 로그인</h1>
+        <h1>서현고등학교 꿈꾸는 글마루 출석관리 시스템</h1>
         <div class="login-form">
-            <input type="text" id="admin-id" placeholder="아이디를 입력하세요" autocomplete="off">
-            <input type="password" id="admin-pw" placeholder="비밀번호를 입력하세요">
+            <input type="text" id="admin-id" placeholder="아이디 (admin 또는 감독자 이름)" autocomplete="off">
+            <input type="password" id="admin-pw" placeholder="비밀번호 (기본: 1234)">
             <button class="btn btn-solid" style="margin-top: 10px;" onclick="checkLogin()">로그인</button>
         </div>
     </div>
@@ -63,7 +67,7 @@
         <div class="btn-group">
             <label class="btn btn-outline" for="excel-upload" style="cursor: pointer;">📤 새로운 출석 명단 업로드</label>
             <input type="file" id="excel-upload" accept=".xlsx, .xls">
-            <button class="btn btn-danger" onclick="deleteExistingRoster()">🗑️ 전체 삭제</button>
+            <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
         </div>
         
         <div class="btn-group" style="margin-top: 10px;">
@@ -77,13 +81,23 @@
     </div>
 
     <div id="qr-canvas-container"></div>
+    
+    <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
 
     <script>
-        const ADMIN_ID = "admin";
-        const ADMIN_PW = "1234";
         const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
-        
         let studentsData = [];
+
+        window.onload = function() {
+            const role = sessionStorage.getItem('userRole');
+            if(role) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-screen').style.display = 'block';
+                applyRoleUI(role);
+                updateClock();
+                loadExistingStudents();
+            }
+        };
 
         function updateClock() {
             const now = new Date(); const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -93,11 +107,35 @@
         }
         setInterval(updateClock, 1000);
 
+        function applyRoleUI(role) {
+            const delBtn = document.getElementById('delete-all-btn');
+            if(role === 'admin') {
+                delBtn.disabled = false;
+                delBtn.classList.remove('btn-disabled');
+                delBtn.innerHTML = "🗑️ 명단 초기화";
+            } else {
+                delBtn.disabled = true;
+                delBtn.classList.add('btn-disabled');
+                delBtn.innerHTML = "🚫 관리자 전용";
+            }
+        }
+
         async function checkLogin() {
-            if(document.getElementById('admin-id').value === ADMIN_ID && document.getElementById('admin-pw').value === ADMIN_PW) {
-                document.getElementById('login-screen').style.display = 'none'; document.getElementById('main-screen').style.display = 'block';
-                updateClock(); await loadExistingStudents(); 
-            } else alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+            const id = document.getElementById('admin-id').value.trim();
+            const pw = document.getElementById('admin-pw').value;
+
+            if(!id) return alert("아이디를 입력해주세요.");
+            if(pw !== "1234") return alert("비밀번호가 일치하지 않습니다.");
+
+            const role = (id === "admin") ? "admin" : "supervisor";
+            sessionStorage.setItem('userRole', role);
+            
+            document.getElementById('login-screen').style.display = 'none'; 
+            document.getElementById('main-screen').style.display = 'block';
+            
+            applyRoleUI(role);
+            updateClock(); 
+            await loadExistingStudents(); 
         }
 
         document.getElementById('admin-pw').addEventListener('keyup', function(e) {
@@ -124,11 +162,17 @@
                 <div style="margin-top: 12px; color: #7f8c8d; font-size: 0.95em;">총 ${studentsData.length}건의 명단 데이터가 세팅되었습니다.</div>`;
         }
 
+        // 💡 [핵심 수정] 경고 문구를 변경하고 통계를 유지함을 강조합니다.
         function deleteExistingRoster() {
-            if(!confirm("기존 명단을 삭제하시겠습니까?")) return;
+            if(sessionStorage.getItem('userRole') !== 'admin') {
+                return alert("관리자(admin) 권한으로 로그인해야 삭제할 수 있습니다.");
+            }
+            if(!confirm("⚠️ 해당일 출석부(학생 명단)가 모두 삭제됩니다.\n(※ 기존의 누적 통계자료는 그대로 안전하게 유지됩니다.)\n정말 명단을 초기화하시겠습니까?")) return;
+            
             studentsData = []; document.getElementById('pdf-btn').disabled = true;
-            document.getElementById('student-list').innerHTML = "🗑️ 명단이 모두 삭제되었습니다.";
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "uploadStudents", students: [] }) });
+            document.getElementById('student-list').innerHTML = "🗑️ 명단이 초기화되었습니다.";
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "resetAll" }) })
+                .then(() => alert("명단 초기화가 완료되었습니다."));
         }
 
         function downloadTemplate() {
@@ -261,7 +305,7 @@
         async function generatePDF() {
             const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4');
             const container = document.getElementById('qr-canvas-container'); container.innerHTML = ''; 
-            const margin = 20; const qrSize = 45; const xSpacing = 60; const ySpacing = 75; // y간격을 약간 더 벌림
+            const margin = 20; const qrSize = 45; const xSpacing = 60; const ySpacing = 75; 
             let xPos = margin; let yPos = margin;
 
             const btn = document.getElementById('pdf-btn');
@@ -291,7 +335,6 @@
                 await new Promise(r => setTimeout(r, 50)); 
                 const combineCanvas = document.createElement('canvas'); const ctx = combineCanvas.getContext('2d');
                 
-                // 💡 도화지 세로 길이를 늘려서 두 줄을 안전하게 그릴 수 있게 수정했습니다.
                 combineCanvas.width = 256; combineCanvas.height = 330; 
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 330);
                 ctx.drawImage(qrDiv.querySelector('canvas'), 0, 0);
@@ -299,11 +342,9 @@
                 ctx.fillStyle = "#33691e"; 
                 ctx.textAlign = "center";
                 
-                // 첫 번째 줄: 학번과 이름
                 ctx.font = "bold 26px 'Noto Sans KR', sans-serif"; 
                 ctx.fillText(`${student.id} ${student.name}`, 128, 285); 
 
-                // 두 번째 줄: 요일 (조금 더 작고 깔끔하게)
                 ctx.font = "bold 20px 'Noto Sans KR', sans-serif"; 
                 ctx.fillText(`(${student.day})`, 128, 315); 
 
