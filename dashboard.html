@@ -7,47 +7,295 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
-    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:20px; color:#333; }
-    .header { display:flex; justify-content:space-between; align-items:center; background:white; padding:20px 30px; border-radius:15px; box-shadow:0 4px 15px rgba(85,139,47,.08); margin-bottom:20px; gap:15px; }
-    .header h1 { margin:0; color:var(--text-main); font-size:1.5em; }
-    .back-btn { text-decoration:none; background:var(--text-main); color:white; padding:10px 20px; border-radius:8px; font-weight:bold; white-space:nowrap; }
-    .tabs { display:flex; gap:10px; margin-bottom:20px; }
-    .tab-btn { flex:1; padding:15px; font-size:1.1em; font-weight:bold; border:none; border-radius:12px; cursor:pointer; background:white; color:var(--text-main); box-shadow:0 4px 10px rgba(0,0,0,.05); }
-    .tab-btn.active { background:var(--primary-color); color:white; }
-    .card { background:white; padding:25px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,.05); margin-bottom:20px; display:none; }
-    .card.active { display:block; }
-    .controls { text-align:center; margin-bottom:20px; }
-    input[type="date"], input[type="month"], select { padding:10px; font-size:1.1em; border:2px solid var(--primary-color); border-radius:8px; outline:none; font-family:inherit; color:var(--primary-dark); font-weight:bold; }
-    .title-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #e8f5e9; padding-bottom:10px; gap:10px; }
-    .title-row h2 { margin:0; color:var(--text-main); }
-    .print-btn { background:#4caf50; color:white; border:none; padding:10px 20px; font-size:1em; border-radius:8px; cursor:pointer; font-weight:bold; white-space:nowrap; }
-    table { width:100%; border-collapse:collapse; text-align:center; margin-top:10px; }
-    th, td { border:1px solid #ddd; padding:12px; vertical-align:middle; }
-    th { background:#e8f5e9; color:var(--text-main); font-weight:bold; }
-    tr:nth-child(even) { background:#fcfdfa; }
-    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:30px; }
-    .stat-box { background:#f1f8e9; padding:20px; border-radius:12px; text-align:center; border:1px solid #c8e6c9; }
-    .stat-box .title { font-size:1em; color:#558b2f; margin-bottom:10px; font-weight:bold; }
-    .stat-box .value { font-size:1.8em; font-weight:900; color:#2e7d32; }
-    .loading { text-align:center; font-size:1.2em; color:var(--text-main); padding:50px; font-weight:bold; }
-    .notice { background:#fffde7; border:1px solid #fff59d; color:#795548; padding:12px; border-radius:10px; margin-bottom:15px; line-height:1.5; }
-    .footer { margin-top:20px; font-size:.85em; color:#7f8c8d; text-align:center; }
-    @media (max-width:700px) {
-      .header { flex-direction:column; align-items:flex-start; }
-      .tabs { flex-direction:column; }
-      .stat-grid { grid-template-columns:repeat(2,1fr); }
-      .title-row { flex-direction:column; align-items:flex-start; }
+    :root {
+      --primary-color:#81c784;
+      --primary-dark:#558b2f;
+      --bg-color:#f1f8e9;
+      --text-main:#33691e;
     }
+
+    body {
+      font-family:'Noto Sans KR',sans-serif;
+      background:var(--bg-color);
+      margin:0;
+      padding:20px;
+      color:#333;
+    }
+
+    .header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:white;
+      padding:20px 30px;
+      border-radius:15px;
+      box-shadow:0 4px 15px rgba(85,139,47,.08);
+      margin-bottom:20px;
+      gap:15px;
+    }
+
+    .header h1 {
+      margin:0;
+      color:var(--text-main);
+      font-size:1.5em;
+    }
+
+    .back-btn {
+      text-decoration:none;
+      background:var(--text-main);
+      color:white;
+      padding:10px 20px;
+      border-radius:8px;
+      font-weight:bold;
+      white-space:nowrap;
+    }
+
+    .tabs {
+      display:flex;
+      gap:10px;
+      margin-bottom:20px;
+    }
+
+    .tab-btn {
+      flex:1;
+      padding:15px;
+      font-size:1.1em;
+      font-weight:bold;
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
+      background:white;
+      color:var(--text-main);
+      box-shadow:0 4px 10px rgba(0,0,0,.05);
+    }
+
+    .tab-btn.active {
+      background:var(--primary-color);
+      color:white;
+    }
+
+    .card {
+      background:white;
+      padding:25px;
+      border-radius:15px;
+      box-shadow:0 4px 15px rgba(0,0,0,.05);
+      margin-bottom:20px;
+      display:none;
+    }
+
+    .card.active {
+      display:block;
+    }
+
+    .controls {
+      text-align:center;
+      margin-bottom:20px;
+    }
+
+    input[type="date"],
+    input[type="month"],
+    select {
+      padding:10px;
+      font-size:1.1em;
+      border:2px solid var(--primary-color);
+      border-radius:8px;
+      outline:none;
+      font-family:inherit;
+      color:var(--primary-dark);
+      font-weight:bold;
+    }
+
+    .title-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:15px;
+      border-bottom:2px solid #e8f5e9;
+      padding-bottom:10px;
+      gap:10px;
+    }
+
+    .title-row h2 {
+      margin:0;
+      color:var(--text-main);
+    }
+
+    .title-actions {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .print-btn {
+      background:#4caf50;
+      color:white;
+      border:none;
+      padding:10px 20px;
+      font-size:1em;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:bold;
+      white-space:nowrap;
+    }
+
+    .refresh-btn {
+      background:#1976d2;
+    }
+
+    .print-btn:disabled {
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      text-align:center;
+      margin-top:10px;
+    }
+
+    th, td {
+      border:1px solid #ddd;
+      padding:12px;
+      vertical-align:middle;
+    }
+
+    th {
+      background:#e8f5e9;
+      color:var(--text-main);
+      font-weight:bold;
+    }
+
+    tr:nth-child(even) {
+      background:#fcfdfa;
+    }
+
+    .stat-grid {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:15px;
+      margin-bottom:30px;
+    }
+
+    .stat-box {
+      background:#f1f8e9;
+      padding:20px;
+      border-radius:12px;
+      text-align:center;
+      border:1px solid #c8e6c9;
+    }
+
+    .stat-box .title {
+      font-size:1em;
+      color:#558b2f;
+      margin-bottom:10px;
+      font-weight:bold;
+    }
+
+    .stat-box .value {
+      font-size:1.8em;
+      font-weight:900;
+      color:#2e7d32;
+    }
+
+    .loading {
+      text-align:center;
+      font-size:1.2em;
+      color:var(--text-main);
+      padding:50px;
+      font-weight:bold;
+    }
+
+    .notice {
+      background:#fffde7;
+      border:1px solid #fff59d;
+      color:#795548;
+      padding:12px;
+      border-radius:10px;
+      margin-bottom:15px;
+      line-height:1.5;
+    }
+
+    .footer {
+      margin-top:20px;
+      font-size:.85em;
+      color:#7f8c8d;
+      text-align:center;
+    }
+
+    @media (max-width:700px) {
+      .header {
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .tabs {
+        flex-direction:column;
+      }
+
+      .stat-grid {
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .title-row {
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .title-actions {
+        width:100%;
+        justify-content:flex-start;
+      }
+    }
+
     @media print {
-      body { background:white; padding:0; }
-      .header, .tabs, .controls, .print-btn, .attend-btn, .footer, .notice { display:none!important; }
-      .card { box-shadow:none; padding:0; border:none; display:block!important; }
-      .card:not(.active) { display:none!important; }
-      table { border:2px solid #000; }
-      th, td { border:1px solid #000; color:#000; padding:8px; }
-      th { background:#e0e0e0!important; color:#000; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      .print-only { display:inline-block!important; }
+      body {
+        background:white;
+        padding:0;
+      }
+
+      .header,
+      .tabs,
+      .controls,
+      .print-btn,
+      .attend-btn,
+      .footer,
+      .notice {
+        display:none!important;
+      }
+
+      .card {
+        box-shadow:none;
+        padding:0;
+        border:none;
+        display:block!important;
+      }
+
+      .card:not(.active) {
+        display:none!important;
+      }
+
+      table {
+        border:2px solid #000;
+      }
+
+      th, td {
+        border:1px solid #000;
+        color:#000;
+        padding:8px;
+      }
+
+      th {
+        background:#e0e0e0!important;
+        color:#000;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
+      }
+
+      .print-only {
+        display:inline-block!important;
+      }
     }
   </style>
 </head>
@@ -57,7 +305,9 @@
     <a href="index.html" class="back-btn">⬅️ 메인으로 돌아가기</a>
   </div>
 
-  <div id="loading-screen" class="loading">데이터를 서버에서 동기화 중입니다... ⏳</div>
+  <div id="loading-screen" class="loading">
+    데이터를 서버에서 동기화 중입니다... ⏳
+  </div>
 
   <div id="dashboard-content" style="display:none;">
     <div class="notice">
@@ -75,10 +325,20 @@
         <label style="font-weight:bold; margin-right:10px;">조회 날짜:</label>
         <input type="date" id="date-picker" onchange="renderDaily()">
       </div>
+
       <div class="title-row">
         <h2 id="daily-title">글마루 출석부</h2>
-        <button class="print-btn" onclick="window.print()">🖨️ 일일 출석부 인쇄</button>
+
+        <div class="title-actions">
+          <button class="print-btn refresh-btn" onclick="refreshScanResults(this)">
+            🔄 QR 스캔 반영
+          </button>
+          <button class="print-btn" onclick="window.print()">
+            🖨️ 일일 출석부 인쇄
+          </button>
+        </div>
       </div>
+
       <div style="overflow-x:auto;">
         <table id="roster-table">
           <thead>
@@ -101,10 +361,12 @@
           <option value="">-- 학생을 선택하세요 --</option>
         </select>
       </div>
+
       <div class="title-row">
         <h2 id="individual-title">개인별 출결 기록</h2>
         <button class="print-btn" onclick="window.print()">🖨️ 개인 현황 인쇄</button>
       </div>
+
       <div style="overflow-x:auto;">
         <table id="individual-table">
           <thead>
@@ -127,14 +389,28 @@
       </div>
 
       <div class="stat-grid">
-        <div class="stat-box"><div class="title">오늘 출석률</div><div class="value" id="stat-today">-</div></div>
-        <div class="stat-box"><div class="title">최근 7일 평균</div><div class="value" id="stat-week">-</div></div>
-        <div class="stat-box"><div class="title">이번 달 평균</div><div class="value" id="stat-month">-</div></div>
-        <div class="stat-box"><div class="title">올해 전체 평균</div><div class="value" id="stat-year">-</div></div>
+        <div class="stat-box">
+          <div class="title">오늘 출석률</div>
+          <div class="value" id="stat-today">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="title">최근 7일 평균</div>
+          <div class="value" id="stat-week">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="title">이번 달 평균</div>
+          <div class="value" id="stat-month">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="title">올해 전체 평균</div>
+          <div class="value" id="stat-year">-</div>
+        </div>
       </div>
 
       <div class="controls" style="margin-top:30px; text-align:left;">
-        <h3 style="color:var(--text-main); display:inline-block; margin-right:15px;">📉 월별 출석률 추이 그래프</h3>
+        <h3 style="color:var(--text-main); display:inline-block; margin-right:15px;">
+          📉 월별 출석률 추이 그래프
+        </h3>
         <input type="month" id="month-picker" onchange="renderChart()">
       </div>
 
@@ -142,7 +418,9 @@
     </div>
   </div>
 
-  <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
+  <div class="footer">
+    Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
+  </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
@@ -153,9 +431,11 @@
 
     window.onload = async function() {
       const now = new Date();
+
       document.getElementById("date-picker").value = formatLocalDate(now);
       document.getElementById("month-picker").value =
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
       await fetchData();
     };
 
@@ -166,6 +446,14 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+    }
+
+    function jsString(value) {
+      return String(value ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "");
     }
 
     function formatLocalDate(date) {
@@ -181,14 +469,22 @@
     }
 
     function getKorDayByDateStr(dateStr) {
-      return ["일","월","화","수","목","금","토"][parseLocalDate(dateStr).getDay()];
+      return ["일", "월", "화", "수", "목", "금", "토"][parseLocalDate(dateStr).getDay()];
+    }
+
+    function normalizeDay(value) {
+      const s = String(value || "").trim();
+      const m = s.match(/[월화수목금토일]/);
+      return m ? m[0] : "";
     }
 
     function isExcluded(student, period) {
       const p1 = String(student.p1_exc || "").trim().toUpperCase();
       const p2 = String(student.p2_exc || "").trim().toUpperCase();
+
       if (period === "1교시") return p1 === "X";
       if (period === "2교시") return p2 === "X";
+
       return false;
     }
 
@@ -197,7 +493,7 @@
       const slots = [];
 
       allStudents
-        .filter(s => String(s.day).trim() === day)
+        .filter(s => normalizeDay(s.day) === day)
         .forEach(s => {
           if (!isExcluded(s, "1교시")) slots.push(`${dateStr}_${s.id}_1교시`);
           if (!isExcluded(s, "2교시")) slots.push(`${dateStr}_${s.id}_2교시`);
@@ -240,6 +536,7 @@
         const presentSet = getPresentSlotsForDate(dateStr);
 
         target += scheduled.length;
+
         for (const slot of scheduled) {
           if (presentSet.has(slot)) present++;
         }
@@ -270,11 +567,17 @@
 
     async function fetchData() {
       try {
-        const resStudents = await fetch(`${API_URL}?action=getStudents`);
+        const resStudents = await fetch(`${API_URL}?action=getStudents&t=${Date.now()}`);
         const studentData = await resStudents.json();
+
         allStudents = Array.isArray(studentData) ? studentData : (studentData.list || []);
 
-        const resLogs = await fetch(`${API_URL}?action=getLogs`);
+        allStudents = allStudents.map(s => ({
+          ...s,
+          day: normalizeDay(s.day)
+        }));
+
+        const resLogs = await fetch(`${API_URL}?action=getLogs&t=${Date.now()}`);
         allLogs = await resLogs.json();
 
         const selectBox = document.getElementById("student-select");
@@ -283,11 +586,11 @@
         const map = new Map();
 
         for (const s of allStudents) {
-          if (!map.has(s.id)) map.set(s.id, s);
+          if (!map.has(String(s.id))) map.set(String(s.id), s);
         }
 
         Array.from(map.values())
-          .sort((a,b) => String(a.id).localeCompare(String(b.id)))
+          .sort((a, b) => String(a.id).localeCompare(String(b.id)))
           .forEach(s => {
             const option = document.createElement("option");
             option.value = s.id;
@@ -299,8 +602,36 @@
         document.getElementById("dashboard-content").style.display = "block";
 
         renderDaily();
+
       } catch (error) {
-        document.getElementById("loading-screen").innerText = "데이터 통신 실패. 새로고침 해주세요.";
+        document.getElementById("loading-screen").innerText =
+          "데이터 통신 실패. 새로고침 해주세요.";
+      }
+    }
+
+    async function refreshScanResults(btn) {
+      const oldText = btn.innerText;
+
+      btn.disabled = true;
+      btn.innerText = "🔄 반영 중...";
+
+      try {
+        const resLogs = await fetch(`${API_URL}?action=getLogs&t=${Date.now()}`);
+        allLogs = await resLogs.json();
+
+        renderDaily();
+
+        btn.innerText = "✅ 반영 완료";
+
+        setTimeout(() => {
+          btn.innerText = oldText;
+          btn.disabled = false;
+        }, 1200);
+
+      } catch (e) {
+        alert("QR 스캔 결과를 불러오지 못했습니다. 다시 시도해주세요.");
+        btn.innerText = oldText;
+        btn.disabled = false;
       }
     }
 
@@ -319,8 +650,8 @@
       tbody.innerHTML = "";
 
       const targetStudents = allStudents
-        .filter(s => String(s.day).trim() === selectedDayStr)
-        .sort((a,b) => String(a.id).localeCompare(String(b.id)));
+        .filter(s => normalizeDay(s.day) === selectedDayStr)
+        .sort((a, b) => String(a.id).localeCompare(String(b.id)));
 
       if (targetStudents.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4">해당 요일 출석 대상 학생이 없습니다.</td></tr>';
@@ -329,50 +660,70 @@
 
       targetStudents.forEach(student => {
         const studentLogs = allLogs.filter(log =>
-          log.timestamp.startsWith(selectedDate) && String(log.id) === String(student.id)
+          log.timestamp &&
+          log.timestamp.startsWith(selectedDate) &&
+          String(log.id) === String(student.id)
         );
 
         let p1Time = "";
         let p2Time = "";
 
         studentLogs.forEach(log => {
+          if (!log.timestamp || !log.timestamp.includes(" ")) return;
+
           const timeOnly = log.timestamp.split(" ")[1].substring(0, 5);
+
           if (log.period === "1교시") p1Time = timeOnly;
           if (log.period === "2교시") p2Time = timeOnly;
         });
 
-        const btnStyle = "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:.2s;";
+        const btnStyle =
+          "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:.2s;";
 
         function cellHtml(period, time) {
           if (isExcluded(student, period)) {
-            return `<span style="color:#9e9e9e; font-weight:bold;">제외됨</span>
-                    <span class="print-only" style="display:none;">X</span>`;
+            return `
+              <span style="color:#9e9e9e; font-weight:bold;">제외됨</span>
+              <span class="print-only" style="display:none;">X</span>
+            `;
           }
 
           if (!isToday) {
             return time
-              ? `<span style="color:#2e7d32; font-weight:bold;">⭕ ${time}</span>`
+              ? `<span style="color:#2e7d32; font-weight:bold;">⭕ ${escapeHtml(time)}</span>`
               : `<span style="color:#c62828; font-weight:bold;">미출석</span>`;
           }
 
           if (time) {
-            return `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;"
-                      onclick="toggleManual('${escapeHtml(student.id)}','${period}',this)">⭕ ${time}</button>
-                    <span class="print-only" style="display:none;">O</span>`;
+            return `
+              <button class="attend-btn"
+                style="${btnStyle} background:#e8f5e9; color:#2e7d32;"
+                onclick="toggleManual('${jsString(student.id)}','${period}',this)">
+                ⭕ ${escapeHtml(time)}
+              </button>
+              <span class="print-only" style="display:none;">O</span>
+            `;
           }
 
-          return `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;"
-                    onclick="toggleManual('${escapeHtml(student.id)}','${period}',this)">수동 출석</button>
-                  <span class="print-only" style="display:none;">[　　　]</span>`;
+          return `
+            <button class="attend-btn"
+              style="${btnStyle} background:#ffebee; color:#c62828;"
+              onclick="toggleManual('${jsString(student.id)}','${period}',this)">
+              수동 출석
+            </button>
+            <span class="print-only" style="display:none;">[　　　]</span>
+          `;
         }
 
         const tr = document.createElement("tr");
+
         tr.innerHTML = `
           <td>${escapeHtml(student.id)}</td>
           <td>${escapeHtml(student.name)}</td>
           <td>${cellHtml("1교시", p1Time)}</td>
           <td>${cellHtml("2교시", p2Time)}</td>
         `;
+
         tbody.appendChild(tr);
       });
     }
@@ -392,7 +743,8 @@
         const response = await fetch(
           `${API_URL}?action=manualAttend` +
           `&id=${encodeURIComponent(studentId)}` +
-          `&period=${encodeURIComponent(period)}`
+          `&period=${encodeURIComponent(period)}` +
+          `&t=${Date.now()}`
         );
 
         const result = await response.json();
@@ -402,6 +754,7 @@
         }
 
         await fetchData();
+
       } catch (e) {
         alert("처리 실패");
         renderDaily();
@@ -411,8 +764,8 @@
     function renderIndividual() {
       const sid = document.getElementById("student-select").value;
       const tbody = document.querySelector("#individual-table tbody");
-      tbody.innerHTML = "";
 
+      tbody.innerHTML = "";
       document.getElementById("individual-title").innerText = "개인별 출결 기록";
 
       if (!sid) return;
@@ -427,6 +780,8 @@
       const grouped = {};
 
       sLogs.forEach(log => {
+        if (!log.timestamp || !log.timestamp.includes(" ")) return;
+
         const date = log.timestamp.split(" ")[0];
 
         if (!grouped[date]) {
@@ -443,7 +798,7 @@
         if (log.period === "2교시") grouped[date].p2 = "⭕ " + time;
       });
 
-      const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+      const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
       if (sortedDates.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4">출결 기록이 없습니다.</td></tr>';
@@ -480,14 +835,17 @@
 
       const weekStart = new Date(now);
       weekStart.setDate(now.getDate() - 6);
+
       document.getElementById("stat-week").innerText =
         calcAttendanceRate(getDatesBetween(weekStart, now));
 
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
       document.getElementById("stat-month").innerText =
         calcAttendanceRate(getDatesBetween(monthStart, now));
 
       const yearStart = new Date(now.getFullYear(), 0, 1);
+
       document.getElementById("stat-year").innerText =
         calcAttendanceRate(getDatesBetween(yearStart, now));
 
@@ -506,9 +864,9 @@
       const rates = [];
 
       for (let d = 1; d <= lastDay; d++) {
-        const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const dateStr =
+          `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
-        // 미래 날짜는 그래프에서 제외
         if (dateStr > todayStr) break;
 
         const scheduled = getScheduledSlotsForDate(dateStr);
@@ -552,7 +910,9 @@
             }
           },
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: false
+            },
             tooltip: {
               callbacks: {
                 label: ctx => ctx.raw + "%"
