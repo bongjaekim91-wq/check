@@ -11,9 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --primary-color: #81c784; --primary-dark: #558b2f; --bg-color: #f1f8e9; --text-main: #33691e;
-        }
+        :root { --primary-color: #81c784; --primary-dark: #558b2f; --bg-color: #f1f8e9; --text-main: #33691e; }
         body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-main); }
         .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 30px rgba(85, 139, 47, 0.08); width: 100%; max-width: 500px; text-align: center; }
         .school-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
@@ -172,9 +170,7 @@
                     if (matchedDay) {
                         const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
                         for(let i = 2; i < json.length; i++) {
-                            // json[i][1]: 학번, json[i][2]: 성명, json[i][3]: 요일
                             if (json[i] && json[i][1] && json[i][2]) {
-                                // 엑셀에 요일이 적혀있으면 그것을 사용하고, 없으면 탭 이름의 요일을 사용
                                 let dayVal = json[i][3] ? String(json[i][3]).trim() : matchedDay;
                                 studentsData.push({ id: String(json[i][1]).trim(), name: String(json[i][2]).trim(), day: dayVal });
                             }
@@ -222,14 +218,11 @@
             let baseUrl = window.location.href.split('index.html')[0];
             if (!baseUrl.endsWith('/')) baseUrl += '/';
 
-            // 중복된 학번을 병합하고 요일을 합칩니다.
             const uniqueStudentsMap = new Map();
             studentsData.forEach(s => {
                 if (uniqueStudentsMap.has(s.id)) {
                     let existing = uniqueStudentsMap.get(s.id);
-                    if (!existing.day.includes(s.day)) {
-                        existing.day += ", " + s.day;
-                    }
+                    if (!existing.day.includes(s.day)) existing.day += ", " + s.day;
                 } else {
                     uniqueStudentsMap.set(s.id, { id: s.id, name: s.name, day: s.day });
                 }
@@ -250,7 +243,6 @@
                 ctx.drawImage(qrDiv.querySelector('canvas'), 0, 0);
                 ctx.fillStyle = "#33691e"; ctx.font = "bold 28px 'Noto Sans KR', sans-serif"; ctx.textAlign = "center";
                 
-                // 학생 이름 및 병합된 요일 표기
                 ctx.fillText(`${student.id} ${student.name} (${student.day})`, 128, 291); 
 
                 const imgHeight = qrSize * (306 / 256); 
