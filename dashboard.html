@@ -4,65 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>글마루 출결 통계 대시보드</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --primary-color: #81c784;
-            --primary-dark: #558b2f;
-            --bg-color: #f1f8e9;
-            --text-main: #33691e;
-        }
-
-        body {
-            font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color);
-            margin: 0; padding: 20px; color: #333;
-        }
-
-        .header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: white; padding: 20px 30px; border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(85, 139, 47, 0.08); margin-bottom: 20px;
-        }
+        :root { --primary-color: #81c784; --primary-dark: #558b2f; --bg-color: #f1f8e9; --text-main: #33691e; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(85, 139, 47, 0.08); margin-bottom: 20px; }
         .header h1 { margin: 0; color: var(--text-main); font-size: 1.5em; }
         .back-btn { text-decoration: none; background: var(--text-main); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; transition: 0.2s; }
         .back-btn:hover { background: var(--primary-dark); }
 
-        /* 탭 버튼 스타일 */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn {
-            flex: 1; padding: 15px; font-size: 1.2em; font-weight: bold; border: none;
-            border-radius: 12px; cursor: pointer; background: white; color: var(--text-main);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.3s;
-        }
+        .tab-btn { flex: 1; padding: 15px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; background: white; color: var(--text-main); box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.3s; }
         .tab-btn.active { background: var(--primary-color); color: white; }
 
-        .card {
-            background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px; display: none; 
-        }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: none; }
         .card.active { display: block; } 
 
         .controls { text-align: center; margin-bottom: 20px; }
-        input[type="date"], input[type="month"] {
-            padding: 10px; font-size: 1.2em; border: 2px solid var(--primary-color); border-radius: 8px; 
-            outline: none; font-family: inherit; color: var(--primary-dark); font-weight: bold;
-        }
+        input[type="date"], input[type="month"], select { padding: 10px; font-size: 1.1em; border: 2px solid var(--primary-color); border-radius: 8px; outline: none; font-family: inherit; color: var(--primary-dark); font-weight: bold; }
 
-        /* 테이블 스타일 */
+        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e8f5e9; padding-bottom: 10px; }
+        .title-row h2 { margin: 0; color: var(--text-main); }
+        .print-btn { background-color: #4caf50; color: white; border: none; padding: 10px 20px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
         table { width: 100%; border-collapse: collapse; text-align: center; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 12px; vertical-align: middle; }
         th { background-color: #e8f5e9; color: var(--text-main); font-weight: bold; }
         tr:nth-child(even) { background-color: #fcfdfa; }
 
-        .print-btn {
-            background-color: #4caf50; color: white; border: none; padding: 15px; font-size: 1.1em;
-            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px;
-        }
-
-        /* 통계 요약 그리드 */
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
         .stat-box { background: #f1f8e9; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #c8e6c9; }
         .stat-box .title { font-size: 1em; color: #558b2f; margin-bottom: 10px; font-weight: bold; }
@@ -70,11 +41,11 @@
 
         .loading { text-align: center; font-size: 1.2em; color: var(--text-main); padding: 50px; font-weight: bold; }
 
-        /* 🖨️ 인쇄 전용 스타일 (수동 버튼 숨김 및 체크박스 표시) */
         @media print {
             body { background: white; padding: 0; }
-            .header, .tabs, .controls, .print-btn, #tab-stats, .attend-btn { display: none !important; }
+            .header, .tabs, .controls, .print-btn, .attend-btn { display: none !important; }
             .card { box-shadow: none; padding: 0; border: none; display: block !important; }
+            .card:not(.active) { display: none !important; } 
             table { border: 2px solid #000; }
             th, td { border: 1px solid #000; color: #000; padding: 8px; }
             th { background-color: #e0e0e0 !important; color: #000; -webkit-print-color-adjust: exact; }
@@ -89,14 +60,14 @@
         <a href="index.html" class="back-btn">⬅️ 메인으로 돌아가기</a>
     </div>
 
-    <div id="loading-screen" class="loading">
-        데이터를 서버에서 동기화 중입니다... ⏳
-    </div>
+    <div id="loading-screen" class="loading">데이터를 서버에서 동기화 중입니다... ⏳</div>
 
     <div id="dashboard-content" style="display: none;">
+        
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('daily')">📅 일일 출석부 (조회/수동체크/인쇄)</button>
-            <button class="tab-btn" onclick="switchTab('stats')">📈 종합 통계 (주간/월간/년간)</button>
+            <button class="tab-btn active" onclick="switchTab('daily')">📅 일일 출석부</button>
+            <button class="tab-btn" onclick="switchTab('individual')">🧑‍🎓 개인별 출결 현황</button>
+            <button class="tab-btn" onclick="switchTab('stats')">📈 종합 통계</button>
         </div>
 
         <div id="tab-daily" class="card active">
@@ -104,20 +75,47 @@
                 <label style="font-weight: bold; margin-right: 10px;">조회 날짜:</label>
                 <input type="date" id="date-picker" onchange="renderDaily()">
             </div>
-            <h2 style="color: var(--text-main); text-align: center;" id="daily-title">출석부</h2>
+            
+            <div class="title-row">
+                <h2 id="daily-title">글마루 출석부</h2>
+                <button class="print-btn" onclick="window.print()">🖨️ 일일 출석부 인쇄</button>
+            </div>
+
             <div style="overflow-x: auto;">
                 <table id="roster-table">
-                    <thead>
-                        <tr><th>학번</th><th>이름</th><th>1교시</th><th>2교시</th></tr>
-                    </thead>
+                    <thead><tr><th>학번</th><th>이름</th><th>1교시</th><th>2교시</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-            <button class="print-btn" onclick="window.print()">🖨️ 현재 빈 양식 인쇄 (PDF 저장)</button>
+        </div>
+
+        <div id="tab-individual" class="card">
+            <div class="controls">
+                <label style="font-weight: bold; margin-right: 10px;">학생 선택:</label>
+                <select id="student-select" onchange="renderIndividual()">
+                    <option value="">-- 학생을 선택하세요 --</option>
+                </select>
+            </div>
+            
+            <div class="title-row">
+                <h2 id="individual-title">개인별 출결 기록</h2>
+                <button class="print-btn" onclick="window.print()">🖨️ 개인 현황 인쇄</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table id="individual-table">
+                    <thead><tr><th>날짜</th><th>요일</th><th>1교시</th><th>2교시</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="tab-stats" class="card">
-            <h2 style="color: var(--text-main); margin-top: 0;">기간별 평균 출석률 요약</h2>
+            <div class="title-row">
+                <h2>기간별 평균 출석률 요약</h2>
+                <button class="print-btn" onclick="window.print()">🖨️ 통계 현황 인쇄</button>
+            </div>
+            
             <div class="stat-grid">
                 <div class="stat-box"><div class="title">오늘 출석률</div><div class="value" id="stat-today">-</div></div>
                 <div class="stat-box"><div class="title">이번 주 평균</div><div class="value" id="stat-week">-</div></div>
@@ -156,8 +154,12 @@
                 document.querySelectorAll('.tab-btn')[0].classList.add('active');
                 document.getElementById('tab-daily').classList.add('active');
                 renderDaily();
-            } else {
+            } else if (tabName === 'individual') {
                 document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('tab-individual').classList.add('active');
+                renderIndividual();
+            } else {
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
                 document.getElementById('tab-stats').classList.add('active');
                 renderStats();
             }
@@ -172,18 +174,24 @@
                 const resLogs = await fetch(`${API_URL}?action=getLogs`);
                 allLogs = await resLogs.json();
 
+                const selectBox = document.getElementById('student-select');
+                selectBox.innerHTML = '<option value="">-- 학생을 선택하세요 --</option>';
+                const uniqueStudents = []; const map = new Map();
+                for (const s of allStudents) { if(!map.has(s.id)){ map.set(s.id, true); uniqueStudents.push(s); } }
+                
+                uniqueStudents.sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
+                    selectBox.innerHTML += `<option value="${s.id}">${s.id} ${s.name}</option>`;
+                });
+
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('dashboard-content').style.display = 'block';
 
                 renderDaily(); 
             } catch (error) {
-                document.getElementById('loading-screen').innerText = "데이터 통신에 실패했습니다. 네트워크를 확인해주세요.";
+                document.getElementById('loading-screen').innerText = "데이터 통신 실패. 새로고침 해주세요.";
             }
         }
 
-        // ==========================================
-        // 📅 일일 출석부 렌더링 (수동 체크 기능 포함)
-        // ==========================================
         function renderDaily() {
             const selectedDate = document.getElementById('date-picker').value;
             if(!selectedDate || allStudents.length === 0) return;
@@ -195,8 +203,7 @@
             allStudents.forEach(student => {
                 const studentLogs = allLogs.filter(log => log.timestamp.startsWith(selectedDate) && log.id === student.id);
                 
-                let p1 = "미출석"; let p1Time = "";
-                let p2 = "미출석"; let p2Time = "";
+                let p1 = "미출석"; let p1Time = ""; let p2 = "미출석"; let p2Time = "";
 
                 studentLogs.forEach(log => {
                     const timeOnly = log.timestamp.split(" ")[1].substring(0, 5); 
@@ -204,7 +211,6 @@
                     if(log.period === "2교시") { p2 = "출석"; p2Time = timeOnly; }
                 });
 
-                // 웹에서는 클릭 버튼, 인쇄 시에는 빈칸으로 나오는 CSS 적용
                 const btnStyle = "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:0.2s;";
                 const p1Btn = p1 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','1교시',this)">⭕ (${p1Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','1교시',this)">수동 출석</button>`;
                 const p2Btn = p2 === '출석' ? `<button class="attend-btn" style="${btnStyle} background:#e8f5e9; color:#2e7d32;" onclick="toggleManual('${student.id}','2교시',this)">⭕ (${p2Time})</button>` : `<button class="attend-btn" style="${btnStyle} background:#ffebee; color:#c62828;" onclick="toggleManual('${student.id}','2교시',this)">수동 출석</button>`;
@@ -213,39 +219,63 @@
                 tr.innerHTML = `
                     <td>${student.id}</td>
                     <td>${student.name}</td>
-                    <td>${p1Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold; color:#000;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
-                    <td>${p2Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold; color:#000;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
+                    <td>${p1Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
+                    <td>${p2Btn}<span class="print-only" style="display:none; font-size:1.5em; font-weight:bold;">[ &nbsp;&nbsp;&nbsp; ]</span></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // 수동 출석/취소 토글 서버 요청 함수
         async function toggleManual(studentId, period, btnElement) {
             btnElement.innerText = "⏳ 처리중";
             try {
                 const response = await fetch(`${API_URL}?action=manualAttend&id=${studentId}&period=${period}`);
                 const result = await response.json();
-                
-                if(result.status === "출석") {
-                    btnElement.style.background = "#e8f5e9"; btnElement.style.color = "#2e7d32";
-                    btnElement.innerText = "⭕ 수동";
-                } else {
-                    btnElement.style.background = "#ffebee"; btnElement.style.color = "#c62828";
-                    btnElement.innerText = "수동 출석";
-                }
-                
-                // 데이터 재조회하여 통계 업데이트
-                fetchData();
-            } catch(e) {
-                alert("처리 실패");
-                renderDaily(); // 원래 상태로 복귀
-            }
+                fetchData(); 
+            } catch(e) { alert("처리 실패"); renderDaily(); }
         }
 
-        // ==========================================
-        // 📈 종합 통계 계산 및 차트 렌더링
-        // ==========================================
+        function renderIndividual() {
+            const sid = document.getElementById('student-select').value;
+            const tbody = document.querySelector('#individual-table tbody');
+            tbody.innerHTML = '';
+            document.getElementById('individual-title').innerText = '개인별 출결 기록';
+
+            if(!sid) return;
+
+            const student = allStudents.find(s => s.id === sid);
+            document.getElementById('individual-title').innerText = `[${student.id}] ${student.name} 학생 출결 기록`;
+
+            const sLogs = allLogs.filter(l => l.id === sid);
+            const grouped = {};
+
+            sLogs.forEach(log => {
+                const date = log.timestamp.split(" ")[0];
+                if(!grouped[date]) grouped[date] = { day: log.day, p1: '-', p2: '-' };
+                if(log.period === '1교시') grouped[date].p1 = '⭕ ' + log.timestamp.split(" ")[1].substring(0, 5);
+                if(log.period === '2교시') grouped[date].p2 = '⭕ ' + log.timestamp.split(" ")[1].substring(0, 5);
+            });
+
+            const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+
+            if(sortedDates.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">출결 기록이 없습니다.</td></tr>';
+                return;
+            }
+
+            sortedDates.forEach(date => {
+                const data = grouped[date];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${date}</td>
+                    <td>${data.day}</td>
+                    <td style="color:${data.p1 !== '-' ? '#2e7d32' : '#c62828'}; font-weight:bold;">${data.p1 !== '-' ? data.p1 : '결석'}</td>
+                    <td style="color:${data.p2 !== '-' ? '#2e7d32' : '#c62828'}; font-weight:bold;">${data.p2 !== '-' ? data.p2 : '결석'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         function renderStats() {
             if(allStudents.length === 0) return;
             const totalS = allStudents.length;
@@ -255,30 +285,20 @@
             const currentMonth = currentYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
             const todayLogs = allLogs.filter(l => l.timestamp.startsWith(todayStr));
-            const todayPresentCount = new Set(todayLogs.map(l => l.id)).size;
-            document.getElementById('stat-today').innerText = Math.round((todayPresentCount / totalS) * 100) + '%';
+            document.getElementById('stat-today').innerText = Math.round((new Set(todayLogs.map(l => l.id)).size / totalS) * 100) + '%';
 
-            const yearLogs = allLogs.filter(l => l.timestamp.startsWith(currentYear));
-            const yearActiveDays = new Set(yearLogs.map(l => l.timestamp.split(" ")[0])).size;
-            if(yearActiveDays > 0) {
-                const yearTotalPresents = new Set(yearLogs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
-                document.getElementById('stat-year').innerText = Math.round((yearTotalPresents / (totalS * yearActiveDays)) * 100) + '%';
-            } else { document.getElementById('stat-year').innerText = '0%'; }
+            const calcAvg = (logs) => {
+                const activeDays = new Set(logs.map(l => l.timestamp.split(" ")[0])).size;
+                if(activeDays === 0) return '0%';
+                const totalPresents = new Set(logs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
+                return Math.round((totalPresents / (totalS * activeDays)) * 100) + '%';
+            };
 
-            const monthLogs = allLogs.filter(l => l.timestamp.startsWith(currentMonth));
-            const monthActiveDays = new Set(monthLogs.map(l => l.timestamp.split(" ")[0])).size;
-            if(monthActiveDays > 0) {
-                const monthTotalPresents = new Set(monthLogs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
-                document.getElementById('stat-month').innerText = Math.round((monthTotalPresents / (totalS * monthActiveDays)) * 100) + '%';
-            } else { document.getElementById('stat-month').innerText = '0%'; }
-
+            document.getElementById('stat-year').innerText = calcAvg(allLogs.filter(l => l.timestamp.startsWith(currentYear)));
+            document.getElementById('stat-month').innerText = calcAvg(allLogs.filter(l => l.timestamp.startsWith(currentMonth)));
+            
             const lastWeek = new Date(now); lastWeek.setDate(now.getDate() - 7);
-            const weekLogs = allLogs.filter(l => new Date(l.timestamp.split(" ")[0]) >= lastWeek);
-            const weekActiveDays = new Set(weekLogs.map(l => l.timestamp.split(" ")[0])).size;
-            if(weekActiveDays > 0) {
-                const weekTotalPresents = new Set(weekLogs.map(l => l.timestamp.split(" ")[0] + l.id)).size;
-                document.getElementById('stat-week').innerText = Math.round((weekTotalPresents / (totalS * weekActiveDays)) * 100) + '%';
-            } else { document.getElementById('stat-week').innerText = '0%'; }
+            document.getElementById('stat-week').innerText = calcAvg(allLogs.filter(l => new Date(l.timestamp.split(" ")[0]) >= lastWeek));
 
             renderChart();
         }
@@ -305,20 +325,9 @@
                 type: 'bar',
                 data: {
                     labels: sortedDates.length > 0 ? sortedDates : ['데이터 없음'],
-                    datasets: [{
-                        label: '일별 실제 출석 인원',
-                        data: countsData.length > 0 ? countsData : [0],
-                        backgroundColor: '#a5d6a7',
-                        borderColor: '#4caf50',
-                        borderWidth: 2,
-                        borderRadius: 5
-                    }]
+                    datasets: [{ label: '일별 출석 인원', data: countsData.length > 0 ? countsData : [0], backgroundColor: '#a5d6a7', borderRadius: 5 }]
                 },
-                options: {
-                    responsive: true,
-                    scales: { y: { beginAtZero: true, suggestedMax: allStudents.length || 10 } },
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
             });
         }
     </script>
