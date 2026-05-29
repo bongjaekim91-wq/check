@@ -2,388 +2,911 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>서현고등학교 꿈꾸는 글마루 출석관리 시스템</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <title>출결 관리 시스템</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
-    :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
-    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:20px; display:flex; flex-direction:column; align-items:center; min-height:100vh; color:var(--text-main); }
-    .container { background:white; padding:40px; border-radius:20px; box-shadow:0 8px 30px rgba(85,139,47,.08); width:100%; max-width:400px; text-align:center; box-sizing:border-box; }
-    h1 { font-size:1.45em; line-height:1.4; }
-    .clock-container { background:#e8f5e9; padding:20px; border-radius:15px; margin-bottom:25px; border:1px solid #c8e6c9; }
-    .date-text { font-size:1.1em; color:#558b2f; font-weight:700; }
-    .time-text { font-size:2.4em; font-weight:900; color:#2e7d32; }
-    .notice { background:#fffde7; border:1px solid #fff59d; padding:12px; border-radius:10px; font-size:.92em; color:#795548; margin-bottom:15px; line-height:1.5; }
-    .login-form { display:flex; flex-direction:column; gap:15px; margin-top:20px; text-align:left; }
-    .input-group { display:flex; flex-direction:column; gap:5px; }
-    .input-group label { font-weight:bold; font-size:.9em; color:var(--primary-dark); }
-    input[type="text"], input[type="password"] { padding:15px; font-size:1em; border:2px solid #c8e6c9; border-radius:10px; outline:none; width:100%; box-sizing:border-box; }
-    .btn { padding:14px; font-size:1.03em; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; border:none; min-height:55px; margin-top:10px; transition:.2s; text-decoration:none; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
-    .btn-solid { background:var(--primary-color); color:white; }
-    .btn-outline { background:white; border:2px solid var(--primary-color); color:var(--primary-dark); }
-    .btn-danger { background:white; border:2px solid #e57373; color:#c62828; }
-    .btn-group { display:flex; gap:10px; margin-bottom:12px; }
-    .btn-group .btn { flex:1; margin-top:0; }
-    .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
-    #student-list { margin-top:15px; padding:12px; border-radius:10px; background:#e8f5e9; display:none; font-weight:bold; }
-    .footer { margin-top:30px; font-size:.85em; color:#7f8c8d; text-align:center; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif;
+      margin: 0;
+      background: #f8fafc;
+      color: #222;
+    }
+
+    header {
+      background: #1e3a8a;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: #dbeafe;
+      color: #1e3a8a;
+      font-weight: 700;
+    }
+
+    .badge.readonly {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .login-card {
+      max-width: 420px;
+      margin: 60px auto;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input, select, textarea {
+      padding: 9px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .filter {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+    }
+
+    button.secondary {
+      background: #475569;
+    }
+
+    button.danger {
+      background: #dc2626;
+    }
+
+    button.light {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    nav button {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    nav button.active {
+      background: #2563eb;
+      color: white;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .message {
+      margin: 12px 0;
+      font-weight: 700;
+    }
+
+    .message.error {
+      color: #b91c1c;
+    }
+
+    .message.success {
+      color: #047857;
+    }
+
+    .message.loading {
+      color: #2563eb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 7px;
+      text-align: center;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 800;
+    }
+
+    td.left {
+      text-align: left;
+    }
+
+    .section-title {
+      margin-top: 28px;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .small {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .grid, .grid-2, .filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .grid, .grid-2, .filter {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 14px;
+      }
+    }
+
+    @media print {
+      header,
+      nav,
+      .no-print,
+      .message {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .container {
+        max-width: none;
+        padding: 0;
+      }
+
+      .card {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+
+      table {
+        font-size: 11px;
+      }
+
+      th, td {
+        padding: 4px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="container" id="login-screen">
-    <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
-    <div class="notice">
-      출석 인정 시간<br>
-      1교시 18:00~19:40 / 2교시 19:41~21:40
+  <header>
+    <div>
+      <h1>출결 관리 시스템</h1>
+      <div id="modeText" class="small" style="color:#dbeafe;"></div>
     </div>
-    <div class="login-form">
-      <div class="input-group">
-        <label>아이디</label>
-        <input type="text" id="admin-id" placeholder="당일 감독자 이름 또는 admin" autocomplete="off">
+
+    <div class="buttons">
+      <span id="userBadge" class="badge"></span>
+      <button id="logoutBtn" class="danger no-print" onclick="handleLogout()" style="display:none;">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="loginView" class="card login-card" style="display:none;">
+      <h2>관리자 / 감독교사 로그인</h2>
+      <p class="small">출결 입력 및 관리 기능은 로그인 후 사용할 수 있습니다.</p>
+
+      <div class="grid-2">
+        <label>
+          아이디
+          <input type="text" id="loginId" placeholder="예: admin">
+        </label>
+
+        <label>
+          비밀번호
+          <input type="password" id="loginPassword" placeholder="비밀번호">
+        </label>
       </div>
-      <div class="input-group">
-        <label>비밀번호</label>
-        <input type="password" id="admin-pw" placeholder="비밀번호">
+
+      <div class="buttons" style="margin-top:16px;">
+        <button onclick="handleLogin()">로그인</button>
       </div>
-      <button class="btn btn-solid" onclick="checkLogin()">로그인</button>
+
+      <div id="loginMessage" class="message"></div>
+    </div>
+
+    <div id="appView" style="display:none;">
+      <nav class="no-print">
+        <button id="nav-attendanceInput" class="write-only" onclick="showPage('attendanceInput')">출결 입력</button>
+        <button id="nav-periodStats" onclick="showPage('periodStats')">기간별 통계</button>
+        <button id="nav-printAttendance" onclick="showPage('printAttendance')">출석부 인쇄</button>
+      </nav>
+
+      <div id="globalMessage" class="message"></div>
+
+      <!-- 출결 입력 -->
+      <section id="page-attendanceInput" class="page">
+        <div class="card">
+          <h2>출결 입력</h2>
+          <p class="small">관리자 또는 감독교사만 사용할 수 있습니다.</p>
+
+          <div class="grid">
+            <label>
+              날짜
+              <input type="date" id="inputDate">
+            </label>
+
+            <label>
+              학년
+              <input type="text" id="inputGrade" placeholder="예: 1">
+            </label>
+
+            <label>
+              반
+              <input type="text" id="inputClassName" placeholder="예: 3">
+            </label>
+
+            <label>
+              번호
+              <input type="text" id="inputNumber" placeholder="예: 15">
+            </label>
+
+            <label>
+              이름
+              <input type="text" id="inputName" placeholder="학생 이름">
+            </label>
+
+            <label>
+              출결 상태
+              <select id="inputStatus"></select>
+            </label>
+
+            <label style="grid-column: span 2;">
+              사유
+              <input type="text" id="inputReason" placeholder="사유 입력">
+            </label>
+          </div>
+
+          <div class="buttons" style="margin-top:16px;">
+            <button onclick="saveAttendanceFromForm()">저장</button>
+            <button class="light" onclick="clearInputForm()">초기화</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 기간별 통계 -->
+      <section id="page-periodStats" class="page">
+        <div class="card">
+          <h2>기간별 통계</h2>
+
+          <div class="filter no-print">
+            <label>
+              시작일
+              <input type="date" id="statsStart">
+            </label>
+
+            <label>
+              종료일
+              <input type="date" id="statsEnd">
+            </label>
+
+            <label>
+              학년
+              <input type="text" id="statsGrade" placeholder="전체">
+            </label>
+
+            <label>
+              반
+              <input type="text" id="statsClassName" placeholder="전체">
+            </label>
+
+            <label>
+              이름
+              <input type="text" id="statsName" placeholder="전체">
+            </label>
+
+            <div class="buttons">
+              <button onclick="loadPeriodStats()">조회</button>
+            </div>
+          </div>
+
+          <h3 class="section-title">전체 통계</h3>
+          <div id="totalTable"></div>
+
+          <h3 class="section-title">학생별 기간 통계</h3>
+          <div id="studentTable"></div>
+
+          <h3 class="section-title">상세 내역</h3>
+          <div id="statsRecordTable"></div>
+        </div>
+      </section>
+
+      <!-- 출석부 인쇄 -->
+      <section id="page-printAttendance" class="page">
+        <div class="card">
+          <h2>출석부 인쇄</h2>
+
+          <div class="filter no-print">
+            <label>
+              시작일
+              <input type="date" id="printStart">
+            </label>
+
+            <label>
+              종료일
+              <input type="date" id="printEnd">
+            </label>
+
+            <label>
+              학년
+              <input type="text" id="printGrade" placeholder="전체">
+            </label>
+
+            <label>
+              반
+              <input type="text" id="printClassName" placeholder="전체">
+            </label>
+
+            <label>
+              이름
+              <input type="text" id="printName" placeholder="전체">
+            </label>
+
+            <div class="buttons">
+              <button onclick="loadPrintData()">조회</button>
+              <button class="secondary" onclick="window.print()">인쇄</button>
+            </div>
+          </div>
+
+          <div id="printTitle"></div>
+          <div id="printTable"></div>
+        </div>
+      </section>
     </div>
   </div>
-
-  <div class="container" id="main-screen" style="display:none; max-width:500px;">
-    <div class="clock-container">
-      <div id="current-date" class="date-text"></div>
-      <div id="current-time" class="time-text"></div>
-    </div>
-
-    <div class="notice">
-      출석 인정 시간<br>
-      1교시 18:00~19:40 / 2교시 19:41~21:40
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
-      <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
-    </div>
-
-    <div class="btn-group">
-      <label class="btn btn-outline" for="excel-upload">📤 명단 업로드</label>
-      <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
-      <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 QR</button>
-      <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
-    </div>
-
-    <a href="dashboard.html" class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;">📊 기간별 통계 및 출석부 인쇄</a>
-    <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
-
-    <div id="student-list"></div>
-  </div>
-
-  <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    let studentsData = [];
+    const READ_ONLY = <?!= READ_ONLY_JSON ?>;
+    const INITIAL_PAGE = <?!= INITIAL_PAGE_JSON ?>;
 
-    window.onload = function() {
-      if (sessionStorage.getItem("userRole")) {
-        document.getElementById("login-screen").style.display = "none";
-        document.getElementById("main-screen").style.display = "block";
-        applyRoleUI(sessionStorage.getItem("userRole"));
-        setInterval(updateClock, 1000);
-        updateClock();
-        loadExistingStudents();
-      }
-    };
+    let TOKEN = localStorage.getItem('ATTENDANCE_TOKEN') || '';
+    let CURRENT_USER = null;
+    let STATUSES = [];
 
-    function updateClock() {
-      const now = new Date();
-      const d = ["일","월","화","수","목","금","토"];
-      document.getElementById("current-date").innerText =
-        `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${d[now.getDay()]}요일)`;
-      document.getElementById("current-time").innerText =
-        now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
-    }
+    document.addEventListener('DOMContentLoaded', async () => {
+      setDefaultDates();
+      await loadBootstrap();
 
-    function applyRoleUI(role) {
-      const delBtn = document.getElementById("delete-all-btn");
-      if (role === "admin") {
-        delBtn.disabled = false;
-        delBtn.classList.remove("btn-disabled");
-      } else {
-        delBtn.disabled = true;
-        delBtn.classList.add("btn-disabled");
-        delBtn.innerText = "🚫 관리자전용";
-      }
-    }
+      if (READ_ONLY) {
+        enterReadonlyMode();
+        showPage(INITIAL_PAGE || 'periodStats');
 
-    function checkLogin() {
-      const id = document.getElementById("admin-id").value.trim();
-      const pw = document.getElementById("admin-pw").value.trim();
-
-      if (!id) return alert("아이디(감독자 이름)를 입력해주세요.");
-      if (!pw) return alert("비밀번호를 입력해주세요.");
-      if (pw !== "1234") return alert("비밀번호가 올바르지 않습니다.");
-
-      const role = id === "admin" ? "admin" : "supervisor";
-      sessionStorage.setItem("userRole", role);
-      sessionStorage.setItem("teacherName", id);
-
-      location.reload();
-    }
-
-    function logout() {
-      if (!confirm("로그아웃하시겠습니까?")) return;
-      sessionStorage.removeItem("userRole");
-      sessionStorage.removeItem("teacherName");
-      location.reload();
-    }
-
-    async function loadExistingStudents() {
-      try {
-        const res = await fetch(`${API_URL}?action=getStudents`);
-        const data = await res.json();
-        studentsData = Array.isArray(data) ? data : (data.list || []);
-
-        if (studentsData.length > 0) {
-          document.getElementById("student-list").innerHTML =
-            `✅ ${studentsData.length}건 로드 완료<br><span style="font-size:.9em;">최근 업로드: ${data.lastUploadTime || "기록 없음"}</span>`;
-          document.getElementById("student-list").style.display = "block";
-          document.getElementById("pdf-btn").disabled = false;
+        if ((INITIAL_PAGE || 'periodStats') === 'printAttendance') {
+          loadPrintData();
+        } else {
+          loadPeriodStats();
         }
-      } catch (e) {
-        alert("학생명단을 불러오지 못했습니다.");
-      }
-    }
 
-    async function deleteExistingRoster() {
-      if (sessionStorage.getItem("userRole") !== "admin") {
-        return alert("관리자 권한이 없습니다.");
+        return;
       }
 
-      if (!confirm("학생명단만 초기화됩니다. 기존 출결기록은 유지됩니다. 계속하시겠습니까?")) return;
+      if (TOKEN) {
+        try {
+          const result = await server('validateSession', TOKEN);
 
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "resetRosterOnly" })
-      });
-
-      location.reload();
-    }
-
-    function downloadTemplate() {
-      const wb = XLSX.utils.book_new();
-
-      ["월","화","수","목","금"].forEach(day => {
-        const rows = [
-          [`2026 명단(${day}요일)`],
-          [],
-          [],
-          ["학년", "학번", "성명", "요일", "1교시 제외(X)", "2교시 제외(X)"],
-          ["1", "10101", "홍길동", day, "", ""],
-          ["1", "10102", "김글마루", day, "", "X"]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, day);
-      });
-
-      XLSX.writeFile(wb, "출석부_양식.xlsx");
-    }
-
-    function downloadExistingRoster() {
-      if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
-
-      const wb = XLSX.utils.book_new();
-
-      ["월","화","수","목","금"].forEach(day => {
-        const wsData = [["학년","학번","성명","요일","1교시 제외(X)","2교시 제외(X)"]];
-
-        studentsData
-          .filter(s => s.day === day)
-          .sort((a,b) => String(a.id).localeCompare(String(b.id)))
-          .forEach(s => {
-            wsData.push([
-              String(s.id).charAt(0),
-              s.id,
-              s.name,
-              s.day,
-              s.p1_exc || "",
-              s.p2_exc || ""
-            ]);
-          });
-
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), day);
-      });
-
-      XLSX.writeFile(wb, "현재_출석명단.xlsx");
-    }
-
-    document.getElementById("excel-upload").addEventListener("change", function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-
-      reader.onload = async function(ev) {
-        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
-        studentsData = [];
-
-        wb.SheetNames.forEach(sn => {
-          const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1 });
-          const dayFromSheet = sn.replace(/[^월화수목금]/g, "");
-
-          // 0,1,2행 안내 / 3행 헤더 / 4행부터 실제 데이터
-          for (let i = 4; i < json.length; i++) {
-            const row = json[i];
-            if (!row) continue;
-
-            const id = row[1];
-            const name = row[2];
-
-            if (id && name) {
-              studentsData.push({
-                id: String(id).trim(),
-                name: String(name).trim(),
-                day: String(dayFromSheet || row[3] || "").trim(),
-                p1_exc: row[4] != null ? String(row[4]).trim().toUpperCase() : "",
-                p2_exc: row[5] != null ? String(row[5]).trim().toUpperCase() : ""
-              });
-            }
+          if (result.ok) {
+            CURRENT_USER = result.user;
+            enterAppMode();
+            showPage(INITIAL_PAGE || 'attendanceInput');
+            return;
           }
-        });
-
-        if (studentsData.length === 0) {
-          alert("업로드할 학생 데이터가 없습니다.");
-          return;
+        } catch (err) {
+          TOKEN = '';
+          localStorage.removeItem('ATTENDANCE_TOKEN');
         }
+      }
 
-        await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "uploadStudents",
-            students: studentsData
-          })
-        });
-
-        alert(`${studentsData.length}건의 명단을 업로드했습니다.`);
-        location.reload();
-      };
-
-      reader.readAsArrayBuffer(file);
+      showLogin();
     });
 
-    function getBaseUrl() {
-      return location.href.substring(0, location.href.lastIndexOf("/") + 1);
+    async function loadBootstrap() {
+      try {
+        const result = await server('getBootstrap');
+        STATUSES = result.statuses || [];
+        renderStatusOptions();
+      } catch (err) {
+        showGlobalMessage(err.message, 'error');
+      }
     }
 
-    function downloadTeacherQR() {
-      const baseUrl = getBaseUrl();
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF("p", "mm", "a4");
-      const qrDiv = document.createElement("div");
+    function renderStatusOptions() {
+      const select = document.getElementById('inputStatus');
+      if (!select) return;
 
-      new QRCode(qrDiv, {
-        text: `${baseUrl}scan.html`,
-        width: 256,
-        height: 256,
-        colorDark: "#1976d2",
-        correctLevel: QRCode.CorrectLevel.H
+      select.innerHTML = '';
+
+      STATUSES.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        select.appendChild(option);
       });
-
-      setTimeout(() => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 350;
-        canvas.height = 420;
-        const ctx = canvas.getContext("2d");
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, 350, 420);
-        ctx.fillStyle = "#1976d2";
-        ctx.font = "bold 24px Noto Sans KR";
-        ctx.textAlign = "center";
-        ctx.fillText("감독교사 로그인 QR", 175, 50);
-        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
-        ctx.font = "bold 14px Noto Sans KR";
-        ctx.fillText("1교시 18:00~19:40 / 2교시 19:41~21:40", 175, 380);
-
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
-        pdf.save("감독교사_전용QR.pdf");
-      }, 100);
     }
 
-    async function generatePDF() {
-      if (studentsData.length === 0) return alert("학생명단이 없습니다.");
+    function showLogin() {
+      document.getElementById('loginView').style.display = 'block';
+      document.getElementById('appView').style.display = 'none';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('userBadge').textContent = '로그인 필요';
+      document.getElementById('modeText').textContent = '관리자/감독교사용 모드';
+    }
 
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF("p", "mm", "a4");
-      const baseUrl = getBaseUrl();
+    function enterAppMode() {
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('appView').style.display = 'block';
+      document.getElementById('logoutBtn').style.display = 'inline-block';
 
-      const uniqueMap = new Map();
+      document.getElementById('userBadge').className = 'badge';
+      document.getElementById('userBadge').textContent =
+        CURRENT_USER ? `${CURRENT_USER.name} (${CURRENT_USER.role})` : '로그인됨';
 
-      studentsData.forEach(s => {
-        if (uniqueMap.has(s.id)) {
-          const ex = uniqueMap.get(s.id);
-          if (!ex.day.includes(s.day)) ex.day += ", " + s.day;
-        } else {
-          uniqueMap.set(s.id, { ...s });
-        }
+      document.getElementById('modeText').textContent = '관리자/감독교사용 모드';
+    }
+
+    function enterReadonlyMode() {
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('appView').style.display = 'block';
+      document.getElementById('logoutBtn').style.display = 'none';
+
+      document.getElementById('userBadge').className = 'badge readonly';
+      document.getElementById('userBadge').textContent = '조회 전용';
+
+      document.getElementById('modeText').textContent = '일반교사용 조회 전용 모드';
+
+      document.querySelectorAll('.write-only').forEach(el => {
+        el.style.display = 'none';
       });
+    }
 
-      const finalList = Array.from(uniqueMap.values())
-        .sort((a,b) => String(a.id).localeCompare(String(b.id)));
+    async function handleLogin() {
+      const id = document.getElementById('loginId').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
 
-      for (let i = 0; i < finalList.length; i++) {
-        const s = finalList[i];
-        const qrDiv = document.createElement("div");
+      setLoginMessage('로그인 중입니다...', 'loading');
 
-        new QRCode(qrDiv, {
-          text: `${baseUrl}scan.html?id=${encodeURIComponent(s.id)}`,
-          width: 256,
-          height: 256,
-          colorDark: "#33691e",
-          correctLevel: QRCode.CorrectLevel.H
-        });
+      try {
+        const result = await server('login', { id, password });
 
-        await new Promise(r => setTimeout(r, 40));
+        TOKEN = result.token;
+        CURRENT_USER = result.user;
+        localStorage.setItem('ATTENDANCE_TOKEN', TOKEN);
 
-        const canvas = document.createElement("canvas");
-        canvas.width = 256;
-        canvas.height = 340;
-        const ctx = canvas.getContext("2d");
+        setLoginMessage('', '');
+        enterAppMode();
+        showPage('attendanceInput');
+      } catch (err) {
+        setLoginMessage(err.message, 'error');
+      }
+    }
 
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, 256, 340);
-        ctx.drawImage(qrDiv.querySelector("canvas"), 0, 0);
-
-        ctx.fillStyle = "#33691e";
-        ctx.textAlign = "center";
-        ctx.font = "bold 25px Noto Sans KR";
-        ctx.fillText(`${s.id} ${s.name}`, 128, 285);
-        ctx.font = "bold 18px Noto Sans KR";
-        ctx.fillText(`(${s.day})`, 128, 315);
-
-        pdf.addImage(
-          canvas.toDataURL("image/png"),
-          "PNG",
-          20 + (i % 3) * 60,
-          20 + Math.floor((i % 9) / 3) * 82,
-          45,
-          60
-        );
-
-        if ((i + 1) % 9 === 0 && i < finalList.length - 1) {
-          pdf.addPage();
+    async function handleLogout() {
+      try {
+        if (TOKEN) {
+          await server('logout', TOKEN);
         }
+      } catch (err) {
+        console.warn(err);
       }
 
-      pdf.save("학생_QR명단.pdf");
+      TOKEN = '';
+      CURRENT_USER = null;
+      localStorage.removeItem('ATTENDANCE_TOKEN');
+      showLogin();
+    }
+
+    function showPage(pageName) {
+      if (READ_ONLY && pageName === 'attendanceInput') {
+        pageName = 'periodStats';
+      }
+
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+
+      document.querySelectorAll('nav button').forEach(button => {
+        button.classList.remove('active');
+      });
+
+      const page = document.getElementById('page-' + pageName);
+      const nav = document.getElementById('nav-' + pageName);
+
+      if (page) page.classList.add('active');
+      if (nav) nav.classList.add('active');
+
+      clearGlobalMessage();
+    }
+
+    async function saveAttendanceFromForm() {
+      if (READ_ONLY) {
+        showGlobalMessage('조회 전용 모드에서는 저장할 수 없습니다.', 'error');
+        return;
+      }
+
+      const data = {
+        date: document.getElementById('inputDate').value,
+        grade: document.getElementById('inputGrade').value.trim(),
+        className: document.getElementById('inputClassName').value.trim(),
+        number: document.getElementById('inputNumber').value.trim(),
+        name: document.getElementById('inputName').value.trim(),
+        status: document.getElementById('inputStatus').value,
+        reason: document.getElementById('inputReason').value.trim()
+      };
+
+      showGlobalMessage('저장 중입니다...', 'loading');
+
+      try {
+        const result = await server('saveAttendance', TOKEN, data);
+        showGlobalMessage(result.message || '저장되었습니다.', 'success');
+        clearInputForm(false);
+      } catch (err) {
+        showGlobalMessage(err.message, 'error');
+      }
+    }
+
+    function clearInputForm(clearDate = true) {
+      if (clearDate) {
+        document.getElementById('inputDate').value = todayString();
+      }
+
+      document.getElementById('inputGrade').value = '';
+      document.getElementById('inputClassName').value = '';
+      document.getElementById('inputNumber').value = '';
+      document.getElementById('inputName').value = '';
+      document.getElementById('inputReason').value = '';
+
+      if (STATUSES.length > 0) {
+        document.getElementById('inputStatus').value = STATUSES[0];
+      }
+    }
+
+    function getStatsParams() {
+      return {
+        start: document.getElementById('statsStart').value,
+        end: document.getElementById('statsEnd').value,
+        grade: document.getElementById('statsGrade').value.trim(),
+        className: document.getElementById('statsClassName').value.trim(),
+        name: document.getElementById('statsName').value.trim()
+      };
+    }
+
+    async function loadPeriodStats() {
+      showGlobalMessage('조회 중입니다...', 'loading');
+
+      try {
+        const params = getStatsParams();
+
+        const result = READ_ONLY
+          ? await server('publicGetPeriodStats', params)
+          : await server('getPeriodStats', TOKEN, params);
+
+        renderTotals(result);
+        renderStudents(result);
+        renderStatsRecords(result);
+
+        clearGlobalMessage();
+      } catch (err) {
+        showGlobalMessage(err.message, 'error');
+      }
+    }
+
+    function getPrintParams() {
+      return {
+        start: document.getElementById('printStart').value,
+        end: document.getElementById('printEnd').value,
+        grade: document.getElementById('printGrade').value.trim(),
+        className: document.getElementById('printClassName').value.trim(),
+        name: document.getElementById('printName').value.trim()
+      };
+    }
+
+    async function loadPrintData() {
+      showGlobalMessage('출석부 데이터를 조회 중입니다...', 'loading');
+
+      try {
+        const params = getPrintParams();
+
+        const result = READ_ONLY
+          ? await server('publicGetAttendancePrintData', params)
+          : await server('getAttendancePrintData', TOKEN, params);
+
+        renderPrintTitle(params);
+        renderPrintTable(result);
+
+        clearGlobalMessage();
+      } catch (err) {
+        showGlobalMessage(err.message, 'error');
+      }
+    }
+
+    function renderTotals(data) {
+      const statuses = data.statuses || [];
+      const totals = data.totals || {};
+
+      let html = '<table>';
+      html += '<thead><tr>';
+      html += '<th>전체</th>';
+
+      statuses.forEach(status => {
+        html += `<th>${escapeHtml(status)}</th>`;
+      });
+
+      html += '</tr></thead><tbody><tr>';
+      html += `<td>${totals['전체'] || 0}</td>`;
+
+      statuses.forEach(status => {
+        html += `<td>${totals[status] || 0}</td>`;
+      });
+
+      html += '</tr></tbody></table>';
+
+      document.getElementById('totalTable').innerHTML = html;
+    }
+
+    function renderStudents(data) {
+      const statuses = data.statuses || [];
+      const rows = data.byStudent || [];
+
+      if (!rows.length) {
+        document.getElementById('studentTable').innerHTML = '<p class="small">조회 결과가 없습니다.</p>';
+        return;
+      }
+
+      let html = '<table>';
+      html += '<thead><tr>';
+      html += '<th>학년</th>';
+      html += '<th>반</th>';
+      html += '<th>번호</th>';
+      html += '<th>이름</th>';
+      html += '<th>전체</th>';
+
+      statuses.forEach(status => {
+        html += `<th>${escapeHtml(status)}</th>`;
+      });
+
+      html += '</tr></thead><tbody>';
+
+      rows.forEach(row => {
+        html += '<tr>';
+        html += `<td>${escapeHtml(row.grade)}</td>`;
+        html += `<td>${escapeHtml(row.className)}</td>`;
+        html += `<td>${escapeHtml(row.number)}</td>`;
+        html += `<td>${escapeHtml(row.name)}</td>`;
+        html += `<td>${row.total || 0}</td>`;
+
+        statuses.forEach(status => {
+          html += `<td>${row.counts && row.counts[status] ? row.counts[status] : 0}</td>`;
+        });
+
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+
+      document.getElementById('studentTable').innerHTML = html;
+    }
+
+    function renderStatsRecords(data) {
+      const rows = data.records || [];
+
+      document.getElementById('statsRecordTable').innerHTML = makeRecordTable(rows);
+    }
+
+    function renderPrintTitle(params) {
+      const start = params.start || '';
+      const end = params.end || '';
+      const grade = params.grade ? `${params.grade}학년` : '전체 학년';
+      const className = params.className ? `${params.className}반` : '전체 반';
+
+      document.getElementById('printTitle').innerHTML = `
+        <h3 style="text-align:center; margin:24px 0 8px;">출석부</h3>
+        <p style="text-align:center; margin:0 0 16px;">
+          기간: ${escapeHtml(start)} ~ ${escapeHtml(end)} /
+          대상: ${escapeHtml(grade)} ${escapeHtml(className)}
+        </p>
+      `;
+    }
+
+    function renderPrintTable(data) {
+      const rows = data.records || [];
+      document.getElementById('printTable').innerHTML = makeRecordTable(rows);
+    }
+
+    function makeRecordTable(rows) {
+      if (!rows.length) {
+        return '<p class="small">조회 결과가 없습니다.</p>';
+      }
+
+      let html = '<table>';
+      html += '<thead><tr>';
+      html += '<th>날짜</th>';
+      html += '<th>학년</th>';
+      html += '<th>반</th>';
+      html += '<th>번호</th>';
+      html += '<th>이름</th>';
+      html += '<th>출결</th>';
+      html += '<th>사유</th>';
+      html += '</tr></thead><tbody>';
+
+      rows.forEach(row => {
+        html += '<tr>';
+        html += `<td>${escapeHtml(row.date)}</td>`;
+        html += `<td>${escapeHtml(row.grade)}</td>`;
+        html += `<td>${escapeHtml(row.className)}</td>`;
+        html += `<td>${escapeHtml(row.number)}</td>`;
+        html += `<td>${escapeHtml(row.name)}</td>`;
+        html += `<td>${escapeHtml(row.status)}</td>`;
+        html += `<td class="left">${escapeHtml(row.reason)}</td>`;
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+
+      return html;
+    }
+
+    function setDefaultDates() {
+      const today = new Date();
+      const before = new Date(today);
+      before.setDate(today.getDate() - 30);
+
+      const start = toDateInput(before);
+      const end = toDateInput(today);
+
+      document.getElementById('inputDate').value = end;
+
+      document.getElementById('statsStart').value = start;
+      document.getElementById('statsEnd').value = end;
+
+      document.getElementById('printStart').value = start;
+      document.getElementById('printEnd').value = end;
+    }
+
+    function todayString() {
+      return toDateInput(new Date());
+    }
+
+    function toDateInput(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function showGlobalMessage(message, type) {
+      const el = document.getElementById('globalMessage');
+      el.textContent = message || '';
+      el.className = 'message ' + (type || '');
+    }
+
+    function clearGlobalMessage() {
+      showGlobalMessage('', '');
+    }
+
+    function setLoginMessage(message, type) {
+      const el = document.getElementById('loginMessage');
+      el.textContent = message || '';
+      el.className = 'message ' + (type || '');
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function server(functionName, ...args) {
+      return new Promise((resolve, reject) => {
+        const runner = google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject);
+
+        runner[functionName](...args);
+      });
     }
   </script>
 </body>
