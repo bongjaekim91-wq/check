@@ -30,7 +30,7 @@
       padding:20px 30px;
       border-radius:15px;
       box-shadow:0 4px 15px rgba(85,139,47,.08);
-      margin-bottom:15px;
+      margin-bottom:20px;
       gap:15px;
     }
 
@@ -50,50 +50,6 @@
       white-space:nowrap;
     }
 
-    .auth-bar {
-      background:white;
-      border-radius:12px;
-      padding:12px 18px;
-      margin-bottom:20px;
-      box-shadow:0 4px 12px rgba(0,0,0,.04);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .auth-status {
-      font-weight:bold;
-      color:#33691e;
-    }
-
-    .auth-status span {
-      color:#1976d2;
-      font-weight:900;
-    }
-
-    .auth-actions {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .small-btn {
-      border:none;
-      border-radius:8px;
-      padding:8px 14px;
-      cursor:pointer;
-      font-weight:bold;
-      font-family:inherit;
-      color:white;
-      background:#1976d2;
-    }
-
-    .small-btn.gray {
-      background:#757575;
-    }
-
     .tabs {
       display:flex;
       gap:10px;
@@ -111,7 +67,6 @@
       background:white;
       color:var(--text-main);
       box-shadow:0 4px 10px rgba(0,0,0,.05);
-      font-family:inherit;
     }
 
     .tab-btn.active {
@@ -193,7 +148,6 @@
       cursor:pointer;
       font-weight:bold;
       white-space:nowrap;
-      font-family:inherit;
     }
 
     .refresh-btn {
@@ -211,10 +165,6 @@
     .print-btn:disabled {
       opacity:.65;
       cursor:not-allowed;
-    }
-
-    .supervisor-only {
-      display:none;
     }
 
     .add-panel {
@@ -293,11 +243,6 @@
       padding:7px 10px;
       cursor:pointer;
       font-weight:bold;
-      font-family:inherit;
-    }
-
-    .attend-btn {
-      font-family:inherit;
     }
 
     .stat-grid {
@@ -380,10 +325,6 @@
       .add-grid {
         grid-template-columns:1fr;
       }
-
-      .auth-bar {
-        align-items:flex-start;
-      }
     }
 
     @media print {
@@ -393,7 +334,6 @@
       }
 
       .header,
-      .auth-bar,
       .tabs,
       .controls,
       .print-btn,
@@ -450,24 +390,14 @@
     <a href="index.html" class="back-btn">⬅️ 메인으로 돌아가기</a>
   </div>
 
-  <div class="auth-bar">
-    <div class="auth-status">
-      현재 권한: <span id="role-label">일반교사</span>
-      <span id="teacher-label-top" style="margin-left:8px; color:#555;"></span>
-    </div>
-    <div class="auth-actions">
-      <button class="small-btn" id="supervisor-login-btn" onclick="loginSupervisorMode()">감독교사 모드 로그인</button>
-      <button class="small-btn gray" id="teacher-mode-btn" onclick="switchTeacherMode()">일반교사 모드</button>
-    </div>
-  </div>
-
   <div id="loading-screen" class="loading">
     데이터를 서버에서 동기화 중입니다... ⏳
   </div>
 
   <div id="dashboard-content" style="display:none;">
-    <div class="notice" id="role-notice">
-      출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40
+    <div class="notice">
+      출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40<br>
+      당일 출석부에서는 학생 추가 및 삭제가 가능합니다.
     </div>
 
     <div class="tabs">
@@ -486,13 +416,13 @@
         <h2 id="daily-title">글마루 출석부</h2>
 
         <div class="title-actions">
-          <button class="print-btn refresh-btn supervisor-only" onclick="refreshScanResults(this)">
+          <button class="print-btn refresh-btn" onclick="refreshScanResults(this)">
             🔄 QR 스캔 반영
           </button>
-          <button class="print-btn add-btn supervisor-only" onclick="toggleAddPanel()">
+          <button class="print-btn add-btn" onclick="toggleAddPanel()">
             ➕ 학생추가
           </button>
-          <button class="print-btn save-btn supervisor-only" onclick="saveDailyPdf(this)">
+          <button class="print-btn save-btn" onclick="saveDailyPdf(this)">
             💾 일일 출석부 저장
           </button>
           <button class="print-btn" onclick="window.print()">
@@ -624,132 +554,13 @@
       document.getElementById("month-picker").value =
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-      applyDashboardRoleUI();
-
       await fetchData();
     };
 
-    function getUserRole() {
-      const dashboardRole = sessionStorage.getItem("dashboardRole");
-      const verified = sessionStorage.getItem("supervisorVerified");
-      const storedRole = sessionStorage.getItem("userRole");
-
-      if (storedRole === "admin") return "admin";
-
-      if (dashboardRole === "supervisor" && verified === "Y") {
-        return "supervisor";
-      }
-
-      return "teacher";
-    }
-
     function getTeacherName() {
-      return sessionStorage.getItem("teacherName") || "일반교사";
-    }
-
-    function isSupervisorMode() {
-      const role = getUserRole();
-      return role === "admin" || role === "supervisor";
-    }
-
-    function getRoleText() {
-      const role = getUserRole();
-
-      if (role === "admin") return "관리자";
-      if (role === "supervisor") return "감독교사";
-      return "일반교사";
-    }
-
-    function applyDashboardRoleUI() {
-      const isSupervisor = isSupervisorMode();
-
-      document.querySelectorAll(".supervisor-only").forEach(el => {
-        el.style.display = isSupervisor ? "" : "none";
-      });
-
-      document.querySelectorAll(".manage-col").forEach(el => {
-        el.style.display = isSupervisor ? "" : "none";
-      });
-
-      const addPanel = document.getElementById("add-panel");
-      if (addPanel && !isSupervisor) {
-        addPanel.style.display = "none";
-      }
-
-      const roleLabel = document.getElementById("role-label");
-      if (roleLabel) {
-        roleLabel.innerText = getRoleText();
-      }
-
-      const teacherTop = document.getElementById("teacher-label-top");
-      if (teacherTop) {
-        const name = getTeacherName();
-        teacherTop.innerText = name ? `(${name})` : "";
-      }
-
-      const notice = document.getElementById("role-notice");
-      if (notice) {
-        if (isSupervisor) {
-          notice.innerHTML =
-            `출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40<br>
-             감독교사 권한: QR 스캔 반영, 학생추가, 출석부 저장, 수동출석, 학생삭제 가능`;
-        } else {
-          notice.innerHTML =
-            `출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40<br>
-             일반교사 권한: 일일 출석부 조회 및 인쇄, 개인별 출결현황 조회, 종합통계 조회 가능`;
-        }
-      }
-    }
-
-    function requireSupervisorPermission() {
-      if (!isSupervisorMode()) {
-        alert("이 기능은 감독교사만 사용할 수 있습니다.");
-        return false;
-      }
-
-      return true;
-    }
-
-    function loginSupervisorMode() {
-      const pw = prompt("감독교사 비밀번호를 입력하세요.");
-
-      if (pw === null) return;
-
-      if (pw !== "1234") {
-        alert("비밀번호가 올바르지 않습니다.");
-        return;
-      }
-
       let name = sessionStorage.getItem("teacherName") || "";
-      name = prompt("감독교사 이름을 입력하세요.", name || "");
-
-      if (name === null) return;
-
-      name = name.trim();
-
-      if (!name) {
-        alert("감독교사 이름을 입력해야 합니다.");
-        return;
-      }
-
-      sessionStorage.setItem("teacherName", name);
-      sessionStorage.setItem("dashboardRole", "supervisor");
-      sessionStorage.setItem("supervisorVerified", "Y");
-
-      applyDashboardRoleUI();
-      renderDaily();
-
-      alert("감독교사 모드로 전환되었습니다.");
-    }
-
-    function switchTeacherMode() {
-      sessionStorage.removeItem("dashboardRole");
-      sessionStorage.removeItem("supervisorVerified");
-
-      applyDashboardRoleUI();
-      renderDaily();
-
-      alert("일반교사 모드로 전환되었습니다.");
+      if (!name) name = "미상";
+      return name;
     }
 
     function escapeHtml(value) {
@@ -842,8 +653,6 @@
         document.getElementById("loading-screen").style.display = "none";
         document.getElementById("dashboard-content").style.display = "block";
 
-        applyDashboardRoleUI();
-
         await renderDaily();
 
       } catch (error) {
@@ -873,8 +682,6 @@
     }
 
     async function refreshScanResults(btn) {
-      if (!requireSupervisorPermission()) return;
-
       const oldText = btn.innerText;
 
       btn.disabled = true;
@@ -904,8 +711,6 @@
     }
 
     function toggleAddPanel() {
-      if (!requireSupervisorPermission()) return;
-
       const panel = document.getElementById("add-panel");
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     }
@@ -937,11 +742,9 @@
 
         const todayStr = formatLocalDate(new Date());
         const isToday = selectedDate === todayStr;
-        const canManage = isToday && isSupervisorMode();
 
         if (currentDailyRoster.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6">해당 날짜 출석 대상 학생이 없습니다.</td></tr>';
-          applyDashboardRoleUI();
           return;
         }
 
@@ -975,7 +778,7 @@
               `;
             }
 
-            if (!canManage) {
+            if (!isToday) {
               return time
                 ? `<span style="color:#2e7d32; font-weight:bold;">⭕ ${escapeHtml(time)}</span>`
                 : `<span style="color:#c62828; font-weight:bold;">미출석</span>`;
@@ -1005,7 +808,7 @@
           const source = student.source || "기본명단";
           const badgeClass = source === "추가" ? "badge-add" : "badge-base";
 
-          const manageHtml = canManage
+          const manageHtml = isToday
             ? `<button class="delete-btn" onclick="removeDailyStudent('${jsString(student.id)}','${jsString(student.name)}',this)">삭제</button>`
             : `<span style="color:#999;">-</span>`;
 
@@ -1023,16 +826,12 @@
           tbody.appendChild(tr);
         });
 
-        applyDashboardRoleUI();
-
       } catch (e) {
         alert("일일 출석부를 불러오는 중 오류가 발생했습니다.");
       }
     }
 
     async function addDailyStudent(btn) {
-      if (!requireSupervisorPermission()) return;
-
       const selectedDate = document.getElementById("date-picker").value;
       const todayStr = formatLocalDate(new Date());
 
@@ -1103,8 +902,6 @@
     }
 
     async function removeDailyStudent(studentId, studentName, btn) {
-      if (!requireSupervisorPermission()) return;
-
       const selectedDate = document.getElementById("date-picker").value;
       const todayStr = formatLocalDate(new Date());
 
@@ -1151,8 +948,6 @@
     }
 
     async function toggleManual(studentId, period, btnElement) {
-      if (!requireSupervisorPermission()) return;
-
       const selectedDate = document.getElementById("date-picker").value;
       const todayStr = formatLocalDate(new Date());
 
@@ -1186,8 +981,6 @@
     }
 
     async function saveDailyPdf(btn) {
-      if (!requireSupervisorPermission()) return;
-
       const selectedDate = document.getElementById("date-picker").value;
 
       if (!selectedDate) {
