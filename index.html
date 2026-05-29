@@ -101,6 +101,12 @@
       gap: 12px;
     }
 
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
     .filter {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -137,6 +143,14 @@
     button.light {
       background: #e2e8f0;
       color: #1e293b;
+    }
+
+    button.green {
+      background: #059669;
+    }
+
+    button.orange {
+      background: #ea580c;
     }
 
     button:disabled {
@@ -220,14 +234,35 @@
       font-size: 13px;
     }
 
+    .main-card {
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .main-card h3 {
+      margin-top: 0;
+    }
+
+    .main-card p {
+      line-height: 1.5;
+    }
+
     @media (max-width: 900px) {
-      .grid, .grid-2, .filter {
+      .grid,
+      .grid-2,
+      .grid-3,
+      .filter {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
     @media (max-width: 520px) {
-      .grid, .grid-2, .filter {
+      .grid,
+      .grid-2,
+      .grid-3,
+      .filter {
         grid-template-columns: 1fr;
       }
 
@@ -284,6 +319,8 @@
   </header>
 
   <div class="container">
+
+    <!-- 로그인 화면 -->
     <div id="loginView" class="card login-card" style="display:none;">
       <h2>관리자 / 감독교사 로그인</h2>
       <p class="small">출결 입력 및 관리 기능은 로그인 후 사용할 수 있습니다.</p>
@@ -291,12 +328,12 @@
       <div class="grid-2">
         <label>
           아이디
-          <input type="text" id="loginId" placeholder="예: admin">
+          <input type="text" id="loginId" placeholder="예: admin" autocomplete="username">
         </label>
 
         <label>
           비밀번호
-          <input type="password" id="loginPassword" placeholder="비밀번호">
+          <input type="password" id="loginPassword" placeholder="비밀번호" autocomplete="current-password">
         </label>
       </div>
 
@@ -307,14 +344,51 @@
       <div id="loginMessage" class="message"></div>
     </div>
 
+    <!-- 앱 화면 -->
     <div id="appView" style="display:none;">
+
       <nav class="no-print">
+        <button id="nav-main" class="write-only" onclick="showPage('main')">메인</button>
         <button id="nav-attendanceInput" class="write-only" onclick="showPage('attendanceInput')">출결 입력</button>
         <button id="nav-periodStats" onclick="showPage('periodStats')">기간별 통계</button>
         <button id="nav-printAttendance" onclick="showPage('printAttendance')">출석부 인쇄</button>
       </nav>
 
       <div id="globalMessage" class="message"></div>
+
+      <!-- 메인화면 -->
+      <section id="page-main" class="page">
+        <div class="card">
+          <h2>메인화면</h2>
+          <p class="small">출결 관리 시스템에 접속했습니다. 원하는 업무를 선택하세요.</p>
+
+          <div class="grid-3">
+            <div class="card main-card">
+              <div>
+                <h3>출결 입력</h3>
+                <p class="small">학생의 출석, 지각, 조퇴, 결석 등의 출결 정보를 입력합니다.</p>
+              </div>
+              <button onclick="showPage('attendanceInput')">출결 입력으로 이동</button>
+            </div>
+
+            <div class="card main-card">
+              <div>
+                <h3>기간별 통계</h3>
+                <p class="small">기간, 학년, 반, 이름을 기준으로 출결 통계를 조회합니다.</p>
+              </div>
+              <button class="green" onclick="showPage('periodStats'); loadPeriodStats();">기간별 통계로 이동</button>
+            </div>
+
+            <div class="card main-card">
+              <div>
+                <h3>출석부 인쇄</h3>
+                <p class="small">기간별 출석부 상세 내역을 조회하고 인쇄합니다.</p>
+              </div>
+              <button class="orange" onclick="showPage('printAttendance'); loadPrintData();">출석부 인쇄로 이동</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <!-- 출결 입력 -->
       <section id="page-attendanceInput" class="page">
@@ -454,6 +528,7 @@
           <div id="printTable"></div>
         </div>
       </section>
+
     </div>
   </div>
 
@@ -471,9 +546,16 @@
 
       if (READ_ONLY) {
         enterReadonlyMode();
-        showPage(INITIAL_PAGE || 'periodStats');
 
-        if ((INITIAL_PAGE || 'periodStats') === 'printAttendance') {
+        let page = INITIAL_PAGE || 'periodStats';
+
+        if (!['periodStats', 'printAttendance'].includes(page)) {
+          page = 'periodStats';
+        }
+
+        showPage(page);
+
+        if (page === 'printAttendance') {
           loadPrintData();
         } else {
           loadPeriodStats();
@@ -486,14 +568,16 @@
         try {
           const result = await server('validateSession', TOKEN);
 
-          if (result.ok) {
+          if (result && result.ok) {
             CURRENT_USER = result.user;
             enterAppMode();
-            showPage(INITIAL_PAGE || 'attendanceInput');
+
+            showPage(INITIAL_PAGE || 'main');
             return;
           }
         } catch (err) {
           TOKEN = '';
+          CURRENT_USER = null;
           localStorage.removeItem('ATTENDANCE_TOKEN');
         }
       }
@@ -529,7 +613,11 @@
       document.getElementById('loginView').style.display = 'block';
       document.getElementById('appView').style.display = 'none';
       document.getElementById('logoutBtn').style.display = 'none';
-      document.getElementById('userBadge').textContent = '로그인 필요';
+
+      const userBadge = document.getElementById('userBadge');
+      userBadge.className = 'badge';
+      userBadge.textContent = '로그인 필요';
+
       document.getElementById('modeText').textContent = '관리자/감독교사용 모드';
     }
 
@@ -538,11 +626,16 @@
       document.getElementById('appView').style.display = 'block';
       document.getElementById('logoutBtn').style.display = 'inline-block';
 
-      document.getElementById('userBadge').className = 'badge';
-      document.getElementById('userBadge').textContent =
+      const userBadge = document.getElementById('userBadge');
+      userBadge.className = 'badge';
+      userBadge.textContent =
         CURRENT_USER ? `${CURRENT_USER.name} (${CURRENT_USER.role})` : '로그인됨';
 
       document.getElementById('modeText').textContent = '관리자/감독교사용 모드';
+
+      document.querySelectorAll('.write-only').forEach(el => {
+        el.style.display = '';
+      });
     }
 
     function enterReadonlyMode() {
@@ -550,8 +643,9 @@
       document.getElementById('appView').style.display = 'block';
       document.getElementById('logoutBtn').style.display = 'none';
 
-      document.getElementById('userBadge').className = 'badge readonly';
-      document.getElementById('userBadge').textContent = '조회 전용';
+      const userBadge = document.getElementById('userBadge');
+      userBadge.className = 'badge readonly';
+      userBadge.textContent = '조회 전용';
 
       document.getElementById('modeText').textContent = '일반교사용 조회 전용 모드';
 
@@ -575,7 +669,8 @@
 
         setLoginMessage('', '');
         enterAppMode();
-        showPage('attendanceInput');
+
+        showPage('main');
       } catch (err) {
         setLoginMessage(err.message, 'error');
       }
@@ -593,6 +688,7 @@
       TOKEN = '';
       CURRENT_USER = null;
       localStorage.removeItem('ATTENDANCE_TOKEN');
+
       showLogin();
     }
 
@@ -601,15 +697,25 @@
         pageName = 'periodStats';
       }
 
-      document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
+      if (READ_ONLY && pageName === 'main') {
+        pageName = 'periodStats';
+      }
+
+      let page = document.getElementById('page-' + pageName);
+
+      if (!page) {
+        pageName = READ_ONLY ? 'periodStats' : 'main';
+        page = document.getElementById('page-' + pageName);
+      }
+
+      document.querySelectorAll('.page').forEach(item => {
+        item.classList.remove('active');
       });
 
       document.querySelectorAll('nav button').forEach(button => {
         button.classList.remove('active');
       });
 
-      const page = document.getElementById('page-' + pageName);
       const nav = document.getElementById('nav-' + pageName);
 
       if (page) page.classList.add('active');
@@ -789,7 +895,6 @@
 
     function renderStatsRecords(data) {
       const rows = data.records || [];
-
       document.getElementById('statsRecordTable').innerHTML = makeRecordTable(rows);
     }
 
@@ -798,12 +903,13 @@
       const end = params.end || '';
       const grade = params.grade ? `${params.grade}학년` : '전체 학년';
       const className = params.className ? `${params.className}반` : '전체 반';
+      const name = params.name ? ` / 이름: ${params.name}` : '';
 
       document.getElementById('printTitle').innerHTML = `
         <h3 style="text-align:center; margin:24px 0 8px;">출석부</h3>
         <p style="text-align:center; margin:0 0 16px;">
           기간: ${escapeHtml(start)} ~ ${escapeHtml(end)} /
-          대상: ${escapeHtml(grade)} ${escapeHtml(className)}
+          대상: ${escapeHtml(grade)} ${escapeHtml(className)}${escapeHtml(name)}
         </p>
       `;
     }
@@ -854,13 +960,17 @@
       const start = toDateInput(before);
       const end = toDateInput(today);
 
-      document.getElementById('inputDate').value = end;
+      const inputDate = document.getElementById('inputDate');
+      const statsStart = document.getElementById('statsStart');
+      const statsEnd = document.getElementById('statsEnd');
+      const printStart = document.getElementById('printStart');
+      const printEnd = document.getElementById('printEnd');
 
-      document.getElementById('statsStart').value = start;
-      document.getElementById('statsEnd').value = end;
-
-      document.getElementById('printStart').value = start;
-      document.getElementById('printEnd').value = end;
+      if (inputDate) inputDate.value = end;
+      if (statsStart) statsStart.value = start;
+      if (statsEnd) statsEnd.value = end;
+      if (printStart) printStart.value = start;
+      if (printEnd) printEnd.value = end;
     }
 
     function todayString() {
@@ -876,6 +986,8 @@
 
     function showGlobalMessage(message, type) {
       const el = document.getElementById('globalMessage');
+      if (!el) return;
+
       el.textContent = message || '';
       el.className = 'message ' + (type || '');
     }
@@ -886,6 +998,8 @@
 
     function setLoginMessage(message, type) {
       const el = document.getElementById('loginMessage');
+      if (!el) return;
+
       el.textContent = message || '';
       el.className = 'message ' + (type || '');
     }
