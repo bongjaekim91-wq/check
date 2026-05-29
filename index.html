@@ -2,380 +2,389 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>출결 관리 시스템</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>서현고등학교 꿈꾸는 글마루 출석관리 시스템</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f8fafc; color: #222; }
-    header { background: #1e3a8a; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    header h1 { margin: 0; font-size: 22px; }
-    .badge { padding: 5px 10px; border-radius: 999px; font-size: 13px; background: #dbeafe; color: #1e3a8a; font-weight: bold; }
-    .badge.readonly { background: #fef3c7; color: #92400e; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-    .card { background: white; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-    .login-card { max-width: 420px; margin: 60px auto; }
-    label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: bold; }
-    input, select { padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
-    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
-    button { border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: bold; background: #2563eb; color: white; }
-    button.secondary { background: #475569; }
-    button.danger { background: #dc2626; }
-    button.light { background: #e2e8f0; color: #1e293b; }
-    button.green { background: #059669; }
-    button.orange { background: #ea580c; }
-    nav { display: flex; gap: 8px; margin-bottom: 20px; }
-    nav button { background: #e2e8f0; color: #1e293b; }
-    nav button.active { background: #2563eb; color: white; }
-    .page { display: none; }
-    .page.active { display: block; }
-    .message { margin: 12px 0; font-weight: bold; }
-    .message.error { color: #b91c1c; }
-    .message.success { color: #047857; }
-    .message.loading { color: #2563eb; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; background: white; }
-    th, td { border: 1px solid #d1d5db; padding: 7px; text-align: center; }
-    th { background: #f1f5f9; font-weight: bold; }
-    .small { color: #64748b; font-size: 13px; }
-    #loadingOverlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background: rgba(255,255,255,0.9); z-index: 9999;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-    }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @media (max-width: 768px) { .grid, .grid-2, .grid-3 { grid-template-columns: 1fr; } }
-    @media print { header, nav, .no-print { display: none !important; } .container { padding: 0; } .card { border: none; box-shadow: none; padding: 0; } }
+    :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
+    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:20px; display:flex; flex-direction:column; align-items:center; min-height:100vh; color:var(--text-main); }
+    .container { background:white; padding:40px; border-radius:20px; box-shadow:0 8px 30px rgba(85,139,47,.08); width:100%; max-width:400px; text-align:center; box-sizing:border-box; }
+    h1 { font-size:1.45em; line-height:1.4; }
+    .clock-container { background:#e8f5e9; padding:20px; border-radius:15px; margin-bottom:25px; border:1px solid #c8e6c9; }
+    .date-text { font-size:1.1em; color:#558b2f; font-weight:700; }
+    .time-text { font-size:2.4em; font-weight:900; color:#2e7d32; }
+    .notice { background:#fffde7; border:1px solid #fff59d; padding:12px; border-radius:10px; font-size:.92em; color:#795548; margin-bottom:15px; line-height:1.5; }
+    .login-form { display:flex; flex-direction:column; gap:15px; margin-top:20px; text-align:left; }
+    .input-group { display:flex; flex-direction:column; gap:5px; }
+    .input-group label { font-weight:bold; font-size:.9em; color:var(--primary-dark); }
+    input[type="text"], input[type="password"] { padding:15px; font-size:1em; border:2px solid #c8e6c9; border-radius:10px; outline:none; width:100%; box-sizing:border-box; }
+    .btn { padding:14px; font-size:1.03em; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; border:none; min-height:55px; margin-top:10px; transition:.2s; text-decoration:none; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
+    .btn-solid { background:var(--primary-color); color:white; }
+    .btn-outline { background:white; border:2px solid var(--primary-color); color:var(--primary-dark); }
+    .btn-danger { background:white; border:2px solid #e57373; color:#c62828; }
+    .btn-group { display:flex; gap:10px; margin-bottom:12px; }
+    .btn-group .btn { flex:1; margin-top:0; }
+    .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
+    #student-list { margin-top:15px; padding:12px; border-radius:10px; background:#e8f5e9; display:none; font-weight:bold; }
+    .footer { margin-top:30px; font-size:.85em; color:#7f8c8d; text-align:center; }
   </style>
 </head>
 <body>
-
-  <!-- 전체 화면 로딩창 -->
-  <div id="loadingOverlay">
-    <div class="spinner"></div>
-    <h3 id="loadingText" style="color:#1e3a8a;">시스템 초기화 중...</h3>
-  </div>
-
-  <header>
-    <div>
-      <h1>출결 관리 시스템</h1>
-      <div id="modeText" class="small" style="color:#dbeafe;"></div>
+  <div class="container" id="login-screen">
+    <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
+    <div class="notice">
+      출석 인정 시간<br>
+      1교시 18:00~19:40 / 2교시 19:41~21:40
     </div>
-    <div class="buttons">
-      <span id="userBadge" class="badge"></span>
-      <button id="logoutBtn" class="danger no-print" onclick="handleLogout()" style="display:none;">로그아웃</button>
-    </div>
-  </header>
-
-  <div class="container">
-    <!-- 로그인 뷰 -->
-    <div id="loginView" class="card login-card" style="display:none;">
-      <h2>관리자 / 감독교사 로그인</h2>
-      <div class="grid-2">
-        <label>아이디 <input type="text" id="loginId"></label>
-        <label>비밀번호 <input type="password" id="loginPassword"></label>
+    <div class="login-form">
+      <div class="input-group">
+        <label>아이디</label>
+        <input type="text" id="admin-id" placeholder="당일 감독자 이름 또는 admin" autocomplete="off">
       </div>
-      <div class="buttons"><button onclick="handleLogin()">로그인</button></div>
-      <div id="loginMessage" class="message"></div>
-    </div>
-
-    <!-- 메인 앱 뷰 -->
-    <div id="appView" style="display:none;">
-      <nav class="no-print">
-        <button id="nav-main" class="write-only" onclick="showPage('main')">메인</button>
-        <button id="nav-attendanceInput" class="write-only" onclick="showPage('attendanceInput')">출결 입력</button>
-        <button id="nav-periodStats" onclick="showPage('periodStats')">기간별 통계</button>
-        <button id="nav-printAttendance" onclick="showPage('printAttendance')">출석부 인쇄</button>
-      </nav>
-
-      <div id="globalMessage" class="message"></div>
-
-      <!-- 메인 화면 -->
-      <section id="page-main" class="page">
-        <div class="card">
-          <h2>메인화면</h2>
-          <div class="grid-3">
-            <div class="card"><h3>출결 입력</h3><button onclick="showPage('attendanceInput')">이동</button></div>
-            <div class="card"><h3>기간별 통계</h3><button class="green" onclick="showPage('periodStats'); loadPeriodStats();">이동</button></div>
-            <div class="card"><h3>출석부 인쇄</h3><button class="orange" onclick="showPage('printAttendance'); loadPrintData();">이동</button></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 출결 입력 -->
-      <section id="page-attendanceInput" class="page">
-        <div class="card">
-          <h2>출결 입력</h2>
-          <div class="grid">
-            <label>날짜 <input type="date" id="inputDate"></label>
-            <label>학년 <input type="text" id="inputGrade"></label>
-            <label>반 <input type="text" id="inputClassName"></label>
-            <label>번호 <input type="text" id="inputNumber"></label>
-            <label>이름 <input type="text" id="inputName"></label>
-            <label>출결 상태 <select id="inputStatus"></select></label>
-            <label style="grid-column: span 2;">사유 <input type="text" id="inputReason"></label>
-          </div>
-          <div class="buttons">
-            <button onclick="saveAttendanceFromForm()">저장</button>
-            <button class="light" onclick="clearInputForm()">초기화</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 기간별 통계 -->
-      <section id="page-periodStats" class="page">
-        <div class="card">
-          <h2>기간별 통계</h2>
-          <div class="grid no-print">
-            <label>시작일 <input type="date" id="statsStart"></label>
-            <label>종료일 <input type="date" id="statsEnd"></label>
-            <label>학년 <input type="text" id="statsGrade"></label>
-            <label>이름 <input type="text" id="statsName"></label>
-          </div>
-          <div class="buttons no-print"><button onclick="loadPeriodStats()">조회</button></div>
-          
-          <h3 style="margin-top:20px;">전체 통계</h3>
-          <div id="totalTable"></div>
-          <h3 style="margin-top:20px;">학생별 통계</h3>
-          <div id="studentTable"></div>
-        </div>
-      </section>
-
-      <!-- 출석부 인쇄 -->
-      <section id="page-printAttendance" class="page">
-        <div class="card">
-          <h2>출석부 인쇄</h2>
-          <div class="grid no-print">
-            <label>시작일 <input type="date" id="printStart"></label>
-            <label>종료일 <input type="date" id="printEnd"></label>
-            <label>학년 <input type="text" id="printGrade"></label>
-            <label>이름 <input type="text" id="printName"></label>
-          </div>
-          <div class="buttons no-print">
-            <button onclick="loadPrintData()">조회</button>
-            <button class="secondary" onclick="window.print()">인쇄</button>
-          </div>
-          <div id="printTitle"></div>
-          <div id="printTable"></div>
-        </div>
-      </section>
-
+      <div class="input-group">
+        <label>비밀번호</label>
+        <input type="password" id="admin-pw" placeholder="비밀번호">
+      </div>
+      <button class="btn btn-solid" onclick="checkLogin()">로그인</button>
     </div>
   </div>
+
+  <div class="container" id="main-screen" style="display:none; max-width:500px;">
+    <div class="clock-container">
+      <div id="current-date" class="date-text"></div>
+      <div id="current-time" class="time-text"></div>
+    </div>
+
+    <div class="notice">
+      출석 인정 시간<br>
+      1교시 18:00~19:40 / 2교시 19:41~21:40
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
+      <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
+    </div>
+
+    <div class="btn-group">
+      <label class="btn btn-outline" for="excel-upload">📤 명단 업로드</label>
+      <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none;">
+      <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 QR</button>
+      <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
+    </div>
+
+    <a href="dashboard.html" class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;">📊 기간별 통계 및 출석부 인쇄</a>
+    <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
+
+    <div id="student-list"></div>
+  </div>
+
+  <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
 
   <script>
-    // ★★★ [매우 중요] 구글 앱스 스크립트 웹앱 주소를 아래에 반드시 넣으세요! ★★★
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    let studentsData = [];
 
-    const URL_PARAMS = new URLSearchParams(window.location.search);
-    const MODE = String(URL_PARAMS.get('mode') || '').toLowerCase();
-    const READ_ONLY = (MODE === 'readonly' || MODE === 'view' || MODE === 'public');
-    const INITIAL_PAGE = URL_PARAMS.get('page') || (READ_ONLY ? 'periodStats' : 'main');
-
-    let TOKEN = localStorage.getItem('ATTENDANCE_TOKEN') || '';
-    let CURRENT_USER = null;
-    let STATUSES = [];
-
-    // 앱 시작점
-    document.addEventListener('DOMContentLoaded', async () => {
-      setDefaultDates();
-
-      if (!GAS_WEBAPP_URL || !GAS_WEBAPP_URL.startsWith('http')) {
-        document.getElementById('loadingText').innerText = "에러: HTML 코드 안에 구글 앱스 스크립트 주소(GAS_WEBAPP_URL)를 입력해야 합니다.";
-        document.getElementById('loadingText').style.color = "red";
-        document.querySelector('.spinner').style.display = 'none';
-        return;
+    window.onload = function() {
+      if (sessionStorage.getItem("userRole")) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("main-screen").style.display = "block";
+        applyRoleUI(sessionStorage.getItem("userRole"));
+        setInterval(updateClock, 1000);
+        updateClock();
+        loadExistingStudents();
       }
+    };
 
+    function updateClock() {
+      const now = new Date();
+      const d = ["일","월","화","수","목","금","토"];
+      document.getElementById("current-date").innerText =
+        `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${d[now.getDay()]}요일)`;
+      document.getElementById("current-time").innerText =
+        now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
+    }
+
+    function applyRoleUI(role) {
+      const delBtn = document.getElementById("delete-all-btn");
+      if (role === "admin") {
+        delBtn.disabled = false;
+        delBtn.classList.remove("btn-disabled");
+      } else {
+        delBtn.disabled = true;
+        delBtn.classList.add("btn-disabled");
+        delBtn.innerText = "🚫 관리자전용";
+      }
+    }
+
+    function checkLogin() {
+      const id = document.getElementById("admin-id").value.trim();
+      const pw = document.getElementById("admin-pw").value.trim();
+
+      if (!id) return alert("아이디(감독자 이름)를 입력해주세요.");
+      if (!pw) return alert("비밀번호를 입력해주세요.");
+      if (pw !== "1234") return alert("비밀번호가 올바르지 않습니다.");
+
+      const role = id === "admin" ? "admin" : "supervisor";
+      sessionStorage.setItem("userRole", role);
+      sessionStorage.setItem("teacherName", id);
+
+      location.reload();
+    }
+
+    function logout() {
+      if (!confirm("로그아웃하시겠습니까?")) return;
+      sessionStorage.removeItem("userRole");
+      sessionStorage.removeItem("teacherName");
+      location.reload();
+    }
+
+    async function loadExistingStudents() {
       try {
-        await loadBootstrap(); // 기초 데이터 불러오기
+        const res = await fetch(`${API_URL}?action=getStudents`);
+        const data = await res.json();
+        studentsData = Array.isArray(data) ? data : (data.list || []);
 
-        if (READ_ONLY) {
-          enterReadonlyMode();
-          let page = ['periodStats', 'printAttendance'].includes(INITIAL_PAGE) ? INITIAL_PAGE : 'periodStats';
-          showPage(page);
-          if (page === 'printAttendance') loadPrintData(); else loadPeriodStats();
-        } else {
-          if (TOKEN) {
-            const res = await server('validateSession', TOKEN);
-            if (res && res.ok) {
-              CURRENT_USER = res.user;
-              enterAppMode();
-              showPage(INITIAL_PAGE === 'periodStats' || INITIAL_PAGE === 'printAttendance' ? INITIAL_PAGE : 'main');
-            } else {
-              TOKEN = ''; localStorage.removeItem('ATTENDANCE_TOKEN');
-              showLogin();
-            }
-          } else {
-            showLogin();
-          }
+        if (studentsData.length > 0) {
+          document.getElementById("student-list").innerHTML =
+            `✅ ${studentsData.length}건 로드 완료<br><span style="font-size:.9em;">최근 업로드: ${data.lastUploadTime || "기록 없음"}</span>`;
+          document.getElementById("student-list").style.display = "block";
+          document.getElementById("pdf-btn").disabled = false;
         }
-      } catch (err) {
-        alert("초기화 실패: " + err.message + "\n(GAS 배포 시 '모든 사용자' 권한인지 확인하세요)");
-        showLogin();
-      } finally {
-        // 모든 처리가 끝나면 무조건 로딩창 숨김
-        document.getElementById('loadingOverlay').style.display = 'none';
+      } catch (e) {
+        alert("학생명단을 불러오지 못했습니다.");
       }
+    }
+
+    async function deleteExistingRoster() {
+      if (sessionStorage.getItem("userRole") !== "admin") {
+        return alert("관리자 권한이 없습니다.");
+      }
+
+      if (!confirm("학생명단만 초기화됩니다. 기존 출결기록은 유지됩니다. 계속하시겠습니까?")) return;
+
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "resetRosterOnly" })
+      });
+
+      location.reload();
+    }
+
+    function downloadTemplate() {
+      const wb = XLSX.utils.book_new();
+
+      ["월","화","수","목","금"].forEach(day => {
+        const rows = [
+          [`2026 명단(${day}요일)`],
+          [],
+          [],
+          ["학년", "학번", "성명", "요일", "1교시 제외(X)", "2교시 제외(X)"],
+          ["1", "10101", "홍길동", day, "", ""],
+          ["1", "10102", "김글마루", day, "", "X"]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, day);
+      });
+
+      XLSX.writeFile(wb, "출석부_양식.xlsx");
+    }
+
+    function downloadExistingRoster() {
+      if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
+
+      const wb = XLSX.utils.book_new();
+
+      ["월","화","수","목","금"].forEach(day => {
+        const wsData = [["학년","학번","성명","요일","1교시 제외(X)","2교시 제외(X)"]];
+
+        studentsData
+          .filter(s => s.day === day)
+          .sort((a,b) => String(a.id).localeCompare(String(b.id)))
+          .forEach(s => {
+            wsData.push([
+              String(s.id).charAt(0),
+              s.id,
+              s.name,
+              s.day,
+              s.p1_exc || "",
+              s.p2_exc || ""
+            ]);
+          });
+
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), day);
+      });
+
+      XLSX.writeFile(wb, "현재_출석명단.xlsx");
+    }
+
+    document.getElementById("excel-upload").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = async function(ev) {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
+        studentsData = [];
+
+        wb.SheetNames.forEach(sn => {
+          const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1 });
+          const dayFromSheet = sn.replace(/[^월화수목금]/g, "");
+
+          // 0,1,2행 안내 / 3행 헤더 / 4행부터 실제 데이터
+          for (let i = 4; i < json.length; i++) {
+            const row = json[i];
+            if (!row) continue;
+
+            const id = row[1];
+            const name = row[2];
+
+            if (id && name) {
+              studentsData.push({
+                id: String(id).trim(),
+                name: String(name).trim(),
+                day: String(dayFromSheet || row[3] || "").trim(),
+                p1_exc: row[4] != null ? String(row[4]).trim().toUpperCase() : "",
+                p2_exc: row[5] != null ? String(row[5]).trim().toUpperCase() : ""
+              });
+            }
+          }
+        });
+
+        if (studentsData.length === 0) {
+          alert("업로드할 학생 데이터가 없습니다.");
+          return;
+        }
+
+        await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "uploadStudents",
+            students: studentsData
+          })
+        });
+
+        alert(`${studentsData.length}건의 명단을 업로드했습니다.`);
+        location.reload();
+      };
+
+      reader.readAsArrayBuffer(file);
     });
 
-    /* --- 백엔드 통신 함수 (GitHub <-> Google Apps Script) --- */
-    async function server(action, ...args) {
-      try {
-        const response = await fetch(GAS_WEBAPP_URL, {
-          method: 'POST',
-          redirect: 'follow', // 리다이렉트 허용 (필수)
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS 방지를 위해 text/plain 사용
-          body: JSON.stringify({ action: action, args: args })
+    function getBaseUrl() {
+      return location.href.substring(0, location.href.lastIndexOf("/") + 1);
+    }
+
+    function downloadTeacherQR() {
+      const baseUrl = getBaseUrl();
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const qrDiv = document.createElement("div");
+
+      new QRCode(qrDiv, {
+        text: `${baseUrl}scan.html`,
+        width: 256,
+        height: 256,
+        colorDark: "#1976d2",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 350;
+        canvas.height = 420;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 350, 420);
+        ctx.fillStyle = "#1976d2";
+        ctx.font = "bold 24px Noto Sans KR";
+        ctx.textAlign = "center";
+        ctx.fillText("감독교사 로그인 QR", 175, 50);
+        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
+        ctx.font = "bold 14px Noto Sans KR";
+        ctx.fillText("1교시 18:00~19:40 / 2교시 19:41~21:40", 175, 380);
+
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
+        pdf.save("감독교사_전용QR.pdf");
+      }, 100);
+    }
+
+    async function generatePDF() {
+      if (studentsData.length === 0) return alert("학생명단이 없습니다.");
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const baseUrl = getBaseUrl();
+
+      const uniqueMap = new Map();
+
+      studentsData.forEach(s => {
+        if (uniqueMap.has(s.id)) {
+          const ex = uniqueMap.get(s.id);
+          if (!ex.day.includes(s.day)) ex.day += ", " + s.day;
+        } else {
+          uniqueMap.set(s.id, { ...s });
+        }
+      });
+
+      const finalList = Array.from(uniqueMap.values())
+        .sort((a,b) => String(a.id).localeCompare(String(b.id)));
+
+      for (let i = 0; i < finalList.length; i++) {
+        const s = finalList[i];
+        const qrDiv = document.createElement("div");
+
+        new QRCode(qrDiv, {
+          text: `${baseUrl}scan.html?id=${encodeURIComponent(s.id)}`,
+          width: 256,
+          height: 256,
+          colorDark: "#33691e",
+          correctLevel: QRCode.CorrectLevel.H
         });
-        const text = await response.text();
-        const json = JSON.parse(text);
-        if (!json.ok) throw new Error(json.error || '서버 오류');
-        return json.data;
-      } catch (err) {
-        throw new Error('서버 통신 실패: ' + err.message);
+
+        await new Promise(r => setTimeout(r, 40));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 256;
+        canvas.height = 340;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 256, 340);
+        ctx.drawImage(qrDiv.querySelector("canvas"), 0, 0);
+
+        ctx.fillStyle = "#33691e";
+        ctx.textAlign = "center";
+        ctx.font = "bold 25px Noto Sans KR";
+        ctx.fillText(`${s.id} ${s.name}`, 128, 285);
+        ctx.font = "bold 18px Noto Sans KR";
+        ctx.fillText(`(${s.day})`, 128, 315);
+
+        pdf.addImage(
+          canvas.toDataURL("image/png"),
+          "PNG",
+          20 + (i % 3) * 60,
+          20 + Math.floor((i % 9) / 3) * 82,
+          45,
+          60
+        );
+
+        if ((i + 1) % 9 === 0 && i < finalList.length - 1) {
+          pdf.addPage();
+        }
       }
-    }
-    /* -------------------------------------------------------- */
 
-    async function loadBootstrap() {
-      const res = await server('getBootstrap');
-      STATUSES = res.statuses || ['출석','지각','조퇴','결석','결과'];
-      const sel = document.getElementById('inputStatus');
-      if(sel) {
-        sel.innerHTML = '';
-        STATUSES.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s; opt.textContent = s; sel.appendChild(opt);
-        });
-      }
-      return res;
+      pdf.save("학생_QR명단.pdf");
     }
-
-    function showLogin() {
-      document.getElementById('loginView').style.display = 'block';
-      document.getElementById('appView').style.display = 'none';
-      document.getElementById('logoutBtn').style.display = 'none';
-      document.getElementById('userBadge').textContent = '로그인 필요';
-      document.getElementById('modeText').textContent = '관리자/감독교사용 모드';
-    }
-
-    function enterAppMode() {
-      document.getElementById('loginView').style.display = 'none';
-      document.getElementById('appView').style.display = 'block';
-      document.getElementById('logoutBtn').style.display = 'inline-block';
-      document.getElementById('userBadge').textContent = CURRENT_USER ? `${CURRENT_USER.name}(${CURRENT_USER.role})` : '로그인됨';
-      document.getElementById('modeText').textContent = '관리자/감독교사용 모드';
-      document.querySelectorAll('.write-only').forEach(el => el.style.display = '');
-    }
-
-    function enterReadonlyMode() {
-      document.getElementById('loginView').style.display = 'none';
-      document.getElementById('appView').style.display = 'block';
-      document.getElementById('logoutBtn').style.display = 'none';
-      document.getElementById('userBadge').textContent = '조회 전용';
-      document.getElementById('userBadge').classList.add('readonly');
-      document.getElementById('modeText').textContent = '일반교사용 조회 전용 모드';
-      document.querySelectorAll('.write-only').forEach(el => el.style.display = 'none');
-    }
-
-    async function handleLogin() {
-      const id = document.getElementById('loginId').value.trim();
-      const pwd = document.getElementById('loginPassword').value.trim();
-      setMsg('loginMessage', '로그인 중...', 'loading');
-      try {
-        const res = await server('login', { id: id, password: pwd });
-        TOKEN = res.token; CURRENT_USER = res.user;
-        localStorage.setItem('ATTENDANCE_TOKEN', TOKEN);
-        setMsg('loginMessage', '', '');
-        enterAppMode();
-        showPage('main');
-      } catch (err) { setMsg('loginMessage', err.message, 'error'); }
-    }
-
-    async function handleLogout() {
-      try { await server('logout', TOKEN); } catch(e){}
-      TOKEN = ''; CURRENT_USER = null; localStorage.removeItem('ATTENDANCE_TOKEN');
-      showLogin();
-    }
-
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      const p = document.getElementById('page-' + pageId);
-      const b = document.getElementById('nav-' + pageId);
-      if(p) p.classList.add('active');
-      if(b) b.classList.add('active');
-      setMsg('globalMessage', '', '');
-    }
-
-    async function saveAttendanceFromForm() {
-      const data = {
-        date: document.getElementById('inputDate').value, grade: document.getElementById('inputGrade').value,
-        className: document.getElementById('inputClassName').value, number: document.getElementById('inputNumber').value,
-        name: document.getElementById('inputName').value, status: document.getElementById('inputStatus').value,
-        reason: document.getElementById('inputReason').value
-      };
-      setMsg('globalMessage', '저장 중...', 'loading');
-      try {
-        const res = await server('saveAttendance', TOKEN, data);
-        setMsg('globalMessage', res.message, 'success');
-        clearInputForm(false);
-      } catch(err) { setMsg('globalMessage', err.message, 'error'); }
-    }
-
-    function clearInputForm(clearDate = true) {
-      if(clearDate) document.getElementById('inputDate').value = todayString();
-      ['inputGrade','inputClassName','inputNumber','inputName','inputReason'].forEach(id => document.getElementById(id).value = '');
-      if(STATUSES.length > 0) document.getElementById('inputStatus').value = STATUSES[0];
-    }
-
-    async function loadPeriodStats() {
-      setMsg('globalMessage', '조회 중...', 'loading');
-      try {
-        const p = { start: document.getElementById('statsStart').value, end: document.getElementById('statsEnd').value, grade: document.getElementById('statsGrade').value, name: document.getElementById('statsName').value };
-        const res = READ_ONLY ? await server('publicGetPeriodStats', p) : await server('getPeriodStats', TOKEN, p);
-        
-        let htmlT = '<table><tr><th>전체</th>' + res.statuses.map(s => `<th>${s}</th>`).join('') + `</tr><tr><td>${res.totals['전체']||0}</td>` + res.statuses.map(s => `<td>${res.totals[s]||0}</td>`).join('') + '</tr></table>';
-        document.getElementById('totalTable').innerHTML = htmlT;
-
-        let htmlS = '<table><tr><th>학년</th><th>반</th><th>이름</th><th>전체</th>' + res.statuses.map(s => `<th>${s}</th>`).join('') + '</tr>';
-        res.byStudent.forEach(r => {
-          htmlS += `<tr><td>${r.grade}</td><td>${r.className}</td><td>${r.name}</td><td>${r.total}</td>` + res.statuses.map(s => `<td>${r.counts[s]||0}</td>`).join('') + '</tr>';
-        });
-        document.getElementById('studentTable').innerHTML = htmlS + '</table>';
-        setMsg('globalMessage', '', '');
-      } catch(err) { setMsg('globalMessage', err.message, 'error'); }
-    }
-
-    async function loadPrintData() {
-      setMsg('globalMessage', '조회 중...', 'loading');
-      try {
-        const p = { start: document.getElementById('printStart').value, end: document.getElementById('printEnd').value, grade: document.getElementById('printGrade').value, name: document.getElementById('printName').value };
-        const res = READ_ONLY ? await server('publicGetAttendancePrintData', p) : await server('getAttendancePrintData', TOKEN, p);
-        
-        document.getElementById('printTitle').innerHTML = `<h3 style="text-align:center;">출석부 (${p.start} ~ ${p.end})</h3>`;
-        let html = '<table><tr><th>날짜</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>출결</th><th>사유</th></tr>';
-        res.records.forEach(r => html += `<tr><td>${r.date}</td><td>${r.grade}</td><td>${r.className}</td><td>${r.number}</td><td>${r.name}</td><td>${r.status}</td><td>${r.reason}</td></tr>`);
-        document.getElementById('printTable').innerHTML = html + '</table>';
-        setMsg('globalMessage', '', '');
-      } catch(err) { setMsg('globalMessage', err.message, 'error'); }
-    }
-
-    function setMsg(id, txt, type) {
-      const el = document.getElementById(id);
-      if(el) { el.textContent = txt; el.className = 'message ' + type; }
-    }
-
-    function setDefaultDates() {
-      const d = new Date(); const b = new Date(); b.setDate(d.getDate() - 30);
-      const end = d.toISOString().split('T')[0]; const start = b.toISOString().split('T')[0];
-      ['inputDate','statsEnd','printEnd'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = end; });
-      ['statsStart','printStart'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = start; });
-    }
-    function todayString() { return new Date().toISOString().split('T')[0]; }
   </script>
 </body>
 </html>
