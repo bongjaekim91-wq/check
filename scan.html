@@ -158,7 +158,7 @@
       2교시 19:41~21:40
     </div>
 
-    <input type="text" id="teacher-name" placeholder="아이디, 감독자 이름 입력" autocomplete="off">
+    <input type="text" id="teacher-name" placeholder="감독교사 이름 입력" autocomplete="off">
     <input type="password" id="shared-pw" placeholder="비밀번호">
 
     <button type="button" class="btn" onclick="loginTeacher()">로그인 및 스캔 시작</button>
@@ -168,7 +168,8 @@
     <h1>📷 출석 스캐너</h1>
 
     <div class="notice">
-      1교시 18:00~19:40 / 2교시 19:41~21:40
+      1교시 18:00~19:40 / 2교시 19:41~21:40<br>
+      QR 스캔 시 알림음은 재생되지 않습니다.
     </div>
 
     <p style="color:#666; font-size:.9em; margin-bottom:20px;">
@@ -217,8 +218,6 @@
     Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
   </div>
 
-  <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
 
@@ -243,8 +242,9 @@
       }
 
       const savedTeacherName = sessionStorage.getItem("teacherName");
+      const savedRole = sessionStorage.getItem("userRole");
 
-      if (savedTeacherName) {
+      if (savedTeacherName && savedRole === "supervisor") {
         showScanScreen();
 
         const directId = getIdFromCurrentUrl();
@@ -264,10 +264,14 @@
       const tName = document.getElementById("teacher-name").value.trim();
       const tPw = document.getElementById("shared-pw").value;
 
-      if (!tName) return alert("아이디, 감독자 이름을 입력해주세요.");
+      if (!tName) return alert("감독교사 이름을 입력해주세요.");
       if (tPw !== "1234") return alert("비밀번호가 틀렸습니다.");
 
       sessionStorage.setItem("teacherName", tName);
+      sessionStorage.setItem("userRole", "supervisor");
+      sessionStorage.setItem("dashboardRole", "supervisor");
+      sessionStorage.setItem("supervisorVerified", "Y");
+
       showScanScreen();
 
       const directId = getIdFromCurrentUrl();
@@ -279,7 +283,12 @@
 
     function logoutTeacher() {
       if (!confirm("로그아웃하시겠습니까?")) return;
+
       sessionStorage.removeItem("teacherName");
+      sessionStorage.removeItem("userRole");
+      sessionStorage.removeItem("dashboardRole");
+      sessionStorage.removeItem("supervisorVerified");
+
       location.reload();
     }
 
@@ -336,7 +345,6 @@
       if (!isScanning) return;
 
       isScanning = false;
-      document.getElementById("beep").play().catch(() => {});
 
       const studentId = extractStudentId(decodedText);
 
