@@ -1,549 +1,1276 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
-  <title>출결 대시보드</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>서현고등학교 글마루 출결 대시보드</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --danger: #dc2626;
-      --success: #16a34a;
-      --warning: #f59e0b;
-    }
-
-    * {
-      box-sizing: border-box;
+      --primary-color:#81c784;
+      --primary-dark:#558b2f;
+      --bg-color:#f1f8e9;
+      --text-main:#33691e;
     }
 
     body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family:'Noto Sans KR',sans-serif;
+      background:var(--bg-color);
+      margin:0;
+      padding:20px;
+      color:#333;
     }
 
-    .wrap {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 20px;
+    .header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:white;
+      padding:20px 30px;
+      border-radius:15px;
+      box-shadow:0 4px 15px rgba(85,139,47,.08);
+      margin-bottom:20px;
+      gap:15px;
     }
 
-    .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+    .header h1 {
+      margin:0;
+      color:var(--text-main);
+      font-size:1.5em;
     }
 
-    h1 {
-      margin: 0;
-      font-size: 24px;
-      letter-spacing: -0.02em;
+    .back-btn {
+      text-decoration:none;
+      background:var(--text-main);
+      color:white;
+      padding:10px 20px;
+      border-radius:8px;
+      font-weight:bold;
+      white-space:nowrap;
     }
 
-    a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 700;
+    .tabs {
+      display:flex;
+      gap:10px;
+      margin-bottom:20px;
+    }
+
+    .tab-btn {
+      flex:1;
+      padding:15px;
+      font-size:1.1em;
+      font-weight:bold;
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
+      background:white;
+      color:var(--text-main);
+      box-shadow:0 4px 10px rgba(0,0,0,.05);
+    }
+
+    .tab-btn.active {
+      background:var(--primary-color);
+      color:white;
     }
 
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-      margin-bottom: 16px;
+      background:white;
+      padding:25px;
+      border-radius:15px;
+      box-shadow:0 4px 15px rgba(0,0,0,.05);
+      margin-bottom:20px;
+      display:none;
     }
 
-    .filters {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+    .card.active {
+      display:block;
     }
 
-    label {
-      display: block;
-      font-weight: 700;
-      font-size: 14px;
-      margin-bottom: 8px;
+    .controls {
+      text-align:center;
+      margin-bottom:20px;
     }
 
-    input,
-    button {
-      width: 100%;
-      font: inherit;
+    input[type="date"],
+    input[type="month"],
+    input[type="text"],
+    select {
+      padding:10px;
+      font-size:1.05em;
+      border:2px solid var(--primary-color);
+      border-radius:8px;
+      outline:none;
+      font-family:inherit;
+      color:var(--primary-dark);
+      font-weight:bold;
+      box-sizing:border-box;
     }
 
-    input {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
-      background: #fff;
-      color: var(--text);
-      outline: none;
+    .title-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:15px;
+      border-bottom:2px solid #e8f5e9;
+      padding-bottom:10px;
+      gap:10px;
     }
 
-    input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    .title-row h2 {
+      margin:0;
+      color:var(--text-main);
+      line-height:1.4;
     }
 
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 13px 16px;
-      background: var(--primary);
-      color: white;
-      font-weight: 800;
-      cursor: pointer;
-      transition: 0.15s ease;
+    .teacher-label {
+      display:inline-block;
+      margin-left:12px;
+      font-size:.72em;
+      color:#1976d2;
+      font-weight:900;
     }
 
-    button:hover {
-      background: var(--primary-dark);
+    .title-actions {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
-    button.secondary {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--border);
+    .print-btn {
+      background:#4caf50;
+      color:white;
+      border:none;
+      padding:10px 16px;
+      font-size:1em;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:bold;
+      white-space:nowrap;
     }
 
-    button.secondary:hover {
-      background: #f8fafc;
+    .refresh-btn {
+      background:#1976d2;
     }
 
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
+    .save-btn {
+      background:#6a1b9a;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
+    .add-btn {
+      background:#f57c00;
     }
 
-    .stat {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
+    .print-btn:disabled {
+      opacity:.65;
+      cursor:not-allowed;
     }
 
-    .stat .label {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
+    .add-panel {
+      display:none;
+      background:#fff8e1;
+      border:1px solid #ffe082;
+      border-radius:12px;
+      padding:15px;
+      margin:15px 0 20px 0;
     }
 
-    .stat .value {
-      margin-top: 6px;
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: -0.03em;
+    .add-panel h3 {
+      margin:0 0 12px 0;
+      color:#e65100;
     }
 
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 16px;
+    .add-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr auto auto auto;
+      gap:10px;
+      align-items:center;
+    }
+
+    .check-label {
+      font-weight:bold;
+      color:#33691e;
+      white-space:nowrap;
     }
 
     table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 900px;
-      background: #fff;
+      width:100%;
+      border-collapse:collapse;
+      text-align:center;
+      margin-top:10px;
     }
 
-    th,
-    td {
-      padding: 12px 10px;
-      border-bottom: 1px solid var(--border);
-      text-align: left;
-      font-size: 14px;
-      vertical-align: top;
-      white-space: nowrap;
+    th, td {
+      border:1px solid #ddd;
+      padding:10px;
+      vertical-align:middle;
     }
 
     th {
-      background: #f8fafc;
-      color: #334155;
-      font-size: 13px;
-      position: sticky;
-      top: 0;
-      z-index: 1;
+      background:#e8f5e9;
+      color:var(--text-main);
+      font-weight:bold;
     }
 
-    tr:last-child td {
-      border-bottom: 0;
+    tr:nth-child(even) {
+      background:#fcfdfa;
     }
 
     .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:.82em;
+      font-weight:bold;
     }
 
-    .badge.in {
-      background: #dcfce7;
-      color: #166534;
+    .badge-base {
+      background:#e8f5e9;
+      color:#2e7d32;
     }
 
-    .badge.out {
-      background: #fee2e2;
-      color: #991b1b;
+    .badge-add {
+      background:#f3e5f5;
+      color:#6a1b9a;
     }
 
-    .empty {
-      padding: 36px;
-      text-align: center;
-      color: var(--muted);
-      border: 1px dashed var(--border);
-      border-radius: 16px;
-      background: #fff;
+    .delete-btn {
+      background:#ef5350;
+      color:white;
+      border:none;
+      border-radius:6px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-weight:bold;
     }
 
-    .message {
-      padding: 14px;
-      border-radius: 14px;
-      background: #f1f5f9;
-      margin-bottom: 16px;
-      color: var(--text);
-      line-height: 1.5;
+    .stat-grid {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:15px;
+      margin-bottom:30px;
     }
 
-    .message.error {
-      background: #fee2e2;
-      color: #991b1b;
+    .stat-box {
+      background:#f1f8e9;
+      padding:20px;
+      border-radius:12px;
+      text-align:center;
+      border:1px solid #c8e6c9;
     }
 
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      align-items: end;
+    .stat-box .title {
+      font-size:1em;
+      color:#558b2f;
+      margin-bottom:10px;
+      font-weight:bold;
     }
 
-    @media (min-width: 720px) {
-      .filters {
-        grid-template-columns: 1fr 1fr 1fr 1.3fr;
-        align-items: end;
+    .stat-box .value {
+      font-size:1.8em;
+      font-weight:900;
+      color:#2e7d32;
+    }
+
+    .loading {
+      text-align:center;
+      font-size:1.2em;
+      color:var(--text-main);
+      padding:50px;
+      font-weight:bold;
+    }
+
+    .notice {
+      background:#fffde7;
+      border:1px solid #fff59d;
+      color:#795548;
+      padding:12px;
+      border-radius:10px;
+      margin-bottom:15px;
+      line-height:1.5;
+    }
+
+    .footer {
+      margin-top:20px;
+      font-size:.85em;
+      color:#7f8c8d;
+      text-align:center;
+    }
+
+    @media (max-width:850px) {
+      .header {
+        flex-direction:column;
+        align-items:flex-start;
       }
 
-      .actions {
-        grid-template-columns: 1fr 1fr;
+      .tabs {
+        flex-direction:column;
       }
 
-      .stats {
-        grid-template-columns: repeat(4, 1fr);
+      .stat-grid {
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .title-row {
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .title-actions {
+        width:100%;
+        justify-content:flex-start;
+      }
+
+      .add-grid {
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background:white;
+        padding:0;
+      }
+
+      .header,
+      .tabs,
+      .controls,
+      .print-btn,
+      .attend-btn,
+      .delete-btn,
+      .footer,
+      .notice,
+      .add-panel,
+      .manage-col {
+        display:none!important;
+      }
+
+      .card {
+        box-shadow:none;
+        padding:0;
+        border:none;
+        display:block!important;
+      }
+
+      .card:not(.active) {
+        display:none!important;
+      }
+
+      table {
+        border:2px solid #000;
+      }
+
+      th, td {
+        border:1px solid #000;
+        color:#000;
+        padding:8px;
+      }
+
+      th {
+        background:#e0e0e0!important;
+        color:#000;
+        -webkit-print-color-adjust:exact;
+        print-color-adjust:exact;
+      }
+
+      .print-only {
+        display:inline-block!important;
+      }
+
+      .teacher-label {
+        color:#000;
       }
     }
   </style>
 </head>
-
 <body>
-  <main class="wrap">
-    <div class="top">
-      <h1>출결 대시보드</h1>
-      <a href="<?= appUrl ?>?page=index">홈</a>
+  <div class="header">
+    <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
+    <a href="index.html" class="back-btn">⬅️ 메인으로 돌아가기</a>
+  </div>
+
+  <div id="loading-screen" class="loading">
+    데이터를 서버에서 동기화 중입니다... ⏳
+  </div>
+
+  <div id="dashboard-content" style="display:none;">
+    <div class="notice">
+      출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40<br>
+      당일 출석부에서는 학생 추가 및 삭제가 가능합니다.
     </div>
 
-    <section class="card">
-      <div class="filters">
-        <div>
-          <label for="adminPin">관리자 PIN</label>
-          <input id="adminPin" type="password" placeholder="기본값 1234">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('daily')">📅 일일 출석부</button>
+      <button class="tab-btn" onclick="switchTab('individual')">🧑‍🎓 개인별 출결 현황</button>
+      <button class="tab-btn" onclick="switchTab('stats')">📈 종합 통계</button>
+    </div>
+
+    <div id="tab-daily" class="card active">
+      <div class="controls">
+        <label style="font-weight:bold; margin-right:10px;">조회 날짜:</label>
+        <input type="date" id="date-picker" onchange="renderDaily()">
+      </div>
+
+      <div class="title-row">
+        <h2 id="daily-title">글마루 출석부</h2>
+
+        <div class="title-actions">
+          <button class="print-btn refresh-btn" onclick="refreshScanResults(this)">
+            🔄 QR 스캔 반영
+          </button>
+          <button class="print-btn add-btn" onclick="toggleAddPanel()">
+            ➕ 학생추가
+          </button>
+          <button class="print-btn save-btn" onclick="saveDailyPdf(this)">
+            💾 일일 출석부 저장
+          </button>
+          <button class="print-btn" onclick="window.print()">
+            🖨️ 일일 출석부 인쇄
+          </button>
+        </div>
+      </div>
+
+      <div id="add-panel" class="add-panel">
+        <h3>➕ 당일 출석부 학생 추가</h3>
+        <div style="font-size:.92em; color:#795548; margin-bottom:10px;">
+          다른 요일 학생이 오늘 참석했거나, 명단에 없는 학생이 참석한 경우 입력합니다.
+          선택한 교시는 즉시 출석 처리됩니다.
         </div>
 
-        <div>
-          <label for="dateFrom">시작일</label>
-          <input id="dateFrom" type="date">
-        </div>
-
-        <div>
-          <label for="dateTo">종료일</label>
-          <input id="dateTo" type="date">
-        </div>
-
-        <div>
-          <label for="q">검색</label>
-          <input id="q" type="search" placeholder="학생 ID, 이름, 반, 메모 등">
+        <div class="add-grid">
+          <input type="text" id="add-student-id" placeholder="학번">
+          <input type="text" id="add-student-name" placeholder="이름">
+          <label class="check-label">
+            <input type="checkbox" id="add-p1" checked> 1교시
+          </label>
+          <label class="check-label">
+            <input type="checkbox" id="add-p2" checked> 2교시
+          </label>
+          <button class="print-btn add-btn" onclick="addDailyStudent(this)">추가 및 출석체크</button>
         </div>
       </div>
 
-      <div class="actions" style="margin-top:14px;">
-        <button id="btnLoad" type="button" onclick="loadDashboard()">
-          조회
-        </button>
-        <button class="secondary" type="button" onclick="downloadCsv()">
-          CSV 다운로드
-        </button>
+      <div style="overflow-x:auto;">
+        <table id="roster-table">
+          <thead>
+            <tr>
+              <th>학번</th>
+              <th>이름</th>
+              <th>구분</th>
+              <th>1교시</th>
+              <th>2교시</th>
+              <th class="manage-col">관리</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-    </section>
+    </div>
 
-    <div id="message" class="message" style="display:none;"></div>
-
-    <section class="stats">
-      <div class="stat">
-        <div class="label">등록 학생 수</div>
-        <div id="statTotalStudents" class="value">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">조회 기록 수</div>
-        <div id="statTotalRecords" class="value">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="label">입실 학생 수</div>
-        <div id="statUniqueIn" class="value">0</div>
+    <div id="tab-individual" class="card">
+      <div class="controls">
+        <label style="font-weight:bold; margin-right:10px;">학생 선택:</label>
+        <select id="student-select" onchange="renderIndividual()">
+          <option value="">-- 학생을 선택하세요 --</option>
+        </select>
       </div>
 
-      <div class="stat">
-        <div class="label">퇴실 학생 수</div>
-        <div id="statUniqueOut" class="value">0</div>
+      <div class="title-row">
+        <h2 id="individual-title">개인별 출결 기록</h2>
+        <button class="print-btn" onclick="window.print()">🖨️ 개인 현황 인쇄</button>
       </div>
-    </section>
 
-    <section class="card">
-      <div id="tableArea">
-        <div class="empty">조회 버튼을 눌러 출결 데이터를 불러오세요.</div>
+      <div style="overflow-x:auto;">
+        <table id="individual-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>요일</th>
+              <th>1교시</th>
+              <th>2교시</th>
+              <th>구분</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-    </section>
-  </main>
+    </div>
+
+    <div id="tab-stats" class="card">
+      <div class="title-row">
+        <h2>기간별 평균 출석률 요약</h2>
+        <button class="print-btn" onclick="window.print()">🖨️ 통계 현황 인쇄</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="title">오늘 출석률</div>
+          <div class="value" id="stat-today">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="title">최근 7일 평균</div>
+          <div class="value" id="stat-week">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="title">이번 달 평균</div>
+          <div class="value" id="stat-month">-</div>
+        </div>
+        <div class="stat-box">
+          <div class="title">올해 전체 평균</div>
+          <div class="value" id="stat-year">-</div>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top:30px; text-align:left;">
+        <h3 style="color:var(--text-main); display:inline-block; margin-right:15px;">
+          📊 월별 참석인원 그래프
+        </h3>
+        <input type="month" id="month-picker" onchange="renderChart()">
+      </div>
+
+      <canvas id="trendChart" style="max-height:350px;"></canvas>
+    </div>
+  </div>
+
+  <div class="footer">
+    Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
+  </div>
 
   <script>
-    let currentRecords = [];
+    const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const today = toDateInputValue(new Date());
+    let allStudents = [];
+    let allLogs = [];
+    let allChanges = [];
+    let currentDailyRoster = [];
+    let currentDailyTeacherText = "미입력";
+    let chartInstance = null;
 
-      document.getElementById('dateFrom').value = today;
-      document.getElementById('dateTo').value = today;
+    window.onload = async function() {
+      const now = new Date();
 
-      const savedPin = localStorage.getItem('attendance_admin_pin') || '';
-      document.getElementById('adminPin').value = savedPin;
+      document.getElementById("date-picker").value = formatLocalDate(now);
+      document.getElementById("month-picker").value =
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-      loadDashboard();
-    });
+      await fetchData();
+    };
 
-    function loadDashboard() {
-      const adminPin = document.getElementById('adminPin').value.trim();
-      const dateFrom = document.getElementById('dateFrom').value;
-      const dateTo = document.getElementById('dateTo').value;
-      const q = document.getElementById('q').value.trim();
-
-      localStorage.setItem('attendance_admin_pin', adminPin);
-
-      setMessage('데이터를 불러오는 중입니다...', '');
-      document.getElementById('btnLoad').disabled = true;
-
-      google.script.run
-        .withSuccessHandler(res => {
-          document.getElementById('btnLoad').disabled = false;
-
-          if (!res || !res.ok) {
-            const message = res && res.error ? res.error : '조회 실패';
-            setMessage(message, 'error');
-            renderStats({});
-            renderTable([]);
-            return;
-          }
-
-          currentRecords = res.records || [];
-
-          setMessage('조회가 완료되었습니다.', '');
-          renderStats(res.stats || {});
-          renderTable(currentRecords);
-        })
-        .withFailureHandler(err => {
-          document.getElementById('btnLoad').disabled = false;
-          setMessage('서버 오류: ' + err, 'error');
-          renderStats({});
-          renderTable([]);
-        })
-        .getDashboardData({
-          adminPin: adminPin,
-          dateFrom: dateFrom,
-          dateTo: dateTo,
-          q: q
-        });
-    }
-
-    function renderStats(stats) {
-      document.getElementById('statTotalStudents').textContent = stats.totalStudents || 0;
-      document.getElementById('statTotalRecords').textContent = stats.totalRecords || 0;
-      document.getElementById('statUniqueIn').textContent = stats.uniqueIn || 0;
-      document.getElementById('statUniqueOut').textContent = stats.uniqueOut || 0;
-    }
-
-    function renderTable(records) {
-      const area = document.getElementById('tableArea');
-
-      if (!records || records.length === 0) {
-        area.innerHTML = '<div class="empty">조회된 출결 기록이 없습니다.</div>';
-        return;
-      }
-
-      const rows = records.map(record => {
-        const statusClass = record.status === 'IN' ? 'in' : 'out';
-        const statusText = record.status === 'IN' ? '입실' : '퇴실';
-
-        return `
-          <tr>
-            <td>${escapeHtml(record.timestamp)}</td>
-            <td>${escapeHtml(record.studentId)}</td>
-            <td>${escapeHtml(record.studentName)}</td>
-            <td>${escapeHtml(record.className)}</td>
-            <td>
-              <span class="badge ${statusClass}">
-                ${statusText}
-              </span>
-            </td>
-            <td>${escapeHtml(record.source)}</td>
-            <td>${escapeHtml(record.note)}</td>
-            <td>${escapeHtml(record.deviceId)}</td>
-            <td>${escapeHtml(record.userEmail)}</td>
-          </tr>
-        `;
-      }).join('');
-
-      area.innerHTML = `
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>시간</th>
-                <th>학생 ID</th>
-                <th>이름</th>
-                <th>반</th>
-                <th>상태</th>
-                <th>소스</th>
-                <th>메모</th>
-                <th>기기 ID</th>
-                <th>사용자</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function downloadCsv() {
-      if (!currentRecords || currentRecords.length === 0) {
-        alert('다운로드할 데이터가 없습니다.');
-        return;
-      }
-
-      const headers = [
-        'timestamp',
-        'studentId',
-        'studentName',
-        'className',
-        'status',
-        'source',
-        'note',
-        'deviceId',
-        'userEmail'
-      ];
-
-      const lines = [];
-      lines.push(headers.join(','));
-
-      currentRecords.forEach(record => {
-        const line = headers.map(key => csvEscape(record[key] || '')).join(',');
-        lines.push(line);
-      });
-
-      const csv = '\uFEFF' + lines.join('\n');
-      const blob = new Blob([csv], {
-        type: 'text/csv;charset=utf-8;'
-      });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-
-      const dateFrom = document.getElementById('dateFrom').value || 'all';
-      const dateTo = document.getElementById('dateTo').value || 'all';
-
-      a.href = url;
-      a.download = `attendance_${dateFrom}_${dateTo}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      URL.revokeObjectURL(url);
-    }
-
-    function setMessage(message, type) {
-      const el = document.getElementById('message');
-
-      if (!message) {
-        el.style.display = 'none';
-        el.textContent = '';
-        el.className = 'message';
-        return;
-      }
-
-      el.style.display = 'block';
-      el.textContent = message;
-      el.className = 'message';
-
-      if (type) {
-        el.classList.add(type);
-      }
-    }
-
-    function toDateInputValue(date) {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-
-      return `${yyyy}-${mm}-${dd}`;
-    }
-
-    function csvEscape(value) {
-      value = String(value || '');
-
-      if (
-        value.includes(',') ||
-        value.includes('"') ||
-        value.includes('\n') ||
-        value.includes('\r')
-      ) {
-        return '"' + value.replaceAll('"', '""') + '"';
-      }
-
-      return value;
+    function getTeacherName() {
+      let name = sessionStorage.getItem("teacherName") || "";
+      if (!name) name = "미상";
+      return name;
     }
 
     function escapeHtml(value) {
-      return String(value || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function jsString(value) {
+      return String(value ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "");
+    }
+
+    function formatLocalDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseLocalDate(dateStr) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getKorDayByDateStr(dateStr) {
+      return ["일", "월", "화", "수", "목", "금", "토"][parseLocalDate(dateStr).getDay()];
+    }
+
+    function normalizeDay(value) {
+      const s = String(value || "").trim();
+      const m = s.match(/[월화수목금토일]/);
+      return m ? m[0] : "";
+    }
+
+    function isExcluded(student, period) {
+      const p1 = String(student.p1_exc || "").trim().toUpperCase();
+      const p2 = String(student.p2_exc || "").trim().toUpperCase();
+
+      if (period === "1교시") return p1 === "X";
+      if (period === "2교시") return p2 === "X";
+
+      return false;
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".card").forEach(card => card.classList.remove("active"));
+
+      if (tabName === "daily") {
+        document.querySelectorAll(".tab-btn")[0].classList.add("active");
+        document.getElementById("tab-daily").classList.add("active");
+        renderDaily();
+      } else if (tabName === "individual") {
+        document.querySelectorAll(".tab-btn")[1].classList.add("active");
+        document.getElementById("tab-individual").classList.add("active");
+        renderIndividual();
+      } else {
+        document.querySelectorAll(".tab-btn")[2].classList.add("active");
+        document.getElementById("tab-stats").classList.add("active");
+        renderStats();
+      }
+    }
+
+    async function fetchData() {
+      try {
+        const resStudents = await fetch(`${API_URL}?action=getStudents&t=${Date.now()}`);
+        const studentData = await resStudents.json();
+
+        allStudents = Array.isArray(studentData) ? studentData : (studentData.list || []);
+        allStudents = allStudents.map(s => ({
+          ...s,
+          day: normalizeDay(s.day)
+        }));
+
+        const resLogs = await fetch(`${API_URL}?action=getLogs&t=${Date.now()}`);
+        allLogs = await resLogs.json();
+
+        const resChanges = await fetch(`${API_URL}?action=getDailyChanges&t=${Date.now()}`);
+        allChanges = await resChanges.json();
+
+        buildStudentSelect();
+
+        document.getElementById("loading-screen").style.display = "none";
+        document.getElementById("dashboard-content").style.display = "block";
+
+        await renderDaily();
+
+      } catch (error) {
+        document.getElementById("loading-screen").innerText =
+          "데이터 통신 실패. 새로고침 해주세요.";
+      }
+    }
+
+    function buildStudentSelect() {
+      const selectBox = document.getElementById("student-select");
+      selectBox.innerHTML = '<option value="">-- 학생을 선택하세요 --</option>';
+
+      const map = new Map();
+
+      for (const s of allStudents) {
+        if (!map.has(String(s.id))) map.set(String(s.id), s);
+      }
+
+      Array.from(map.values())
+        .sort((a, b) => String(a.id).localeCompare(String(b.id)))
+        .forEach(s => {
+          const option = document.createElement("option");
+          option.value = s.id;
+          option.textContent = `${s.id} ${s.name}`;
+          selectBox.appendChild(option);
+        });
+    }
+
+    async function refreshScanResults(btn) {
+      const oldText = btn.innerText;
+
+      btn.disabled = true;
+      btn.innerText = "🔄 반영 중...";
+
+      try {
+        const resLogs = await fetch(`${API_URL}?action=getLogs&t=${Date.now()}`);
+        allLogs = await resLogs.json();
+
+        const resChanges = await fetch(`${API_URL}?action=getDailyChanges&t=${Date.now()}`);
+        allChanges = await resChanges.json();
+
+        await renderDaily();
+
+        btn.innerText = "✅ 반영 완료";
+
+        setTimeout(() => {
+          btn.innerText = oldText;
+          btn.disabled = false;
+        }, 1200);
+
+      } catch (e) {
+        alert("QR 스캔 결과를 불러오지 못했습니다. 다시 시도해주세요.");
+        btn.innerText = oldText;
+        btn.disabled = false;
+      }
+    }
+
+    function toggleAddPanel() {
+      const panel = document.getElementById("add-panel");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    }
+
+    async function renderDaily() {
+      const selectedDate = document.getElementById("date-picker").value;
+      if (!selectedDate) return;
+
+      const selectedDayStr = getKorDayByDateStr(selectedDate);
+
+      try {
+        const res = await fetch(`${API_URL}?action=getDailyRoster&date=${encodeURIComponent(selectedDate)}&t=${Date.now()}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          alert(data.message || "일일 출석부를 불러오지 못했습니다.");
+          return;
+        }
+
+        currentDailyRoster = data.roster || [];
+        currentDailyTeacherText = data.teacherText || "미입력";
+
+        document.getElementById("daily-title").innerHTML =
+          `${selectedDate} (${selectedDayStr}) 글마루 출석부` +
+          `<span class="teacher-label">감독교사: ${escapeHtml(currentDailyTeacherText)}</span>`;
+
+        const tbody = document.querySelector("#roster-table tbody");
+        tbody.innerHTML = "";
+
+        const todayStr = formatLocalDate(new Date());
+        const isToday = selectedDate === todayStr;
+
+        if (currentDailyRoster.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">해당 날짜 출석 대상 학생이 없습니다.</td></tr>';
+          return;
+        }
+
+        currentDailyRoster.forEach(student => {
+          const studentLogs = allLogs.filter(log =>
+            log.timestamp &&
+            log.timestamp.startsWith(selectedDate) &&
+            String(log.id) === String(student.id)
+          );
+
+          let p1Time = "";
+          let p2Time = "";
+
+          studentLogs.forEach(log => {
+            if (!log.timestamp || !log.timestamp.includes(" ")) return;
+
+            const timeOnly = log.timestamp.split(" ")[1].substring(0, 5);
+
+            if (log.period === "1교시") p1Time = timeOnly;
+            if (log.period === "2교시") p2Time = timeOnly;
+          });
+
+          const btnStyle =
+            "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:.2s;";
+
+          function cellHtml(period, time) {
+            if (isExcluded(student, period)) {
+              return `
+                <span style="color:#9e9e9e; font-weight:bold;">제외됨</span>
+                <span class="print-only" style="display:none;">X</span>
+              `;
+            }
+
+            if (!isToday) {
+              return time
+                ? `<span style="color:#2e7d32; font-weight:bold;">⭕ ${escapeHtml(time)}</span>`
+                : `<span style="color:#c62828; font-weight:bold;">미출석</span>`;
+            }
+
+            if (time) {
+              return `
+                <button class="attend-btn"
+                  style="${btnStyle} background:#e8f5e9; color:#2e7d32;"
+                  onclick="toggleManual('${jsString(student.id)}','${period}',this)">
+                  ⭕ ${escapeHtml(time)}
+                </button>
+                <span class="print-only" style="display:none;">O</span>
+              `;
+            }
+
+            return `
+              <button class="attend-btn"
+                style="${btnStyle} background:#ffebee; color:#c62828;"
+                onclick="toggleManual('${jsString(student.id)}','${period}',this)">
+                수동 출석
+              </button>
+              <span class="print-only" style="display:none;">[　　　]</span>
+            `;
+          }
+
+          const source = student.source || "기본명단";
+          const badgeClass = source === "추가" ? "badge-add" : "badge-base";
+
+          const manageHtml = isToday
+            ? `<button class="delete-btn" onclick="removeDailyStudent('${jsString(student.id)}','${jsString(student.name)}',this)">삭제</button>`
+            : `<span style="color:#999;">-</span>`;
+
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+            <td>${escapeHtml(student.id)}</td>
+            <td>${escapeHtml(student.name)}</td>
+            <td><span class="badge ${badgeClass}">${escapeHtml(source)}</span></td>
+            <td>${cellHtml("1교시", p1Time)}</td>
+            <td>${cellHtml("2교시", p2Time)}</td>
+            <td class="manage-col">${manageHtml}</td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+
+      } catch (e) {
+        alert("일일 출석부를 불러오는 중 오류가 발생했습니다.");
+      }
+    }
+
+    async function addDailyStudent(btn) {
+      const selectedDate = document.getElementById("date-picker").value;
+      const todayStr = formatLocalDate(new Date());
+
+      if (selectedDate !== todayStr) {
+        alert("학생 추가는 당일 출석부에서만 가능합니다.");
+        return;
+      }
+
+      const id = document.getElementById("add-student-id").value.trim();
+      const name = document.getElementById("add-student-name").value.trim();
+      const p1 = document.getElementById("add-p1").checked;
+      const p2 = document.getElementById("add-p2").checked;
+      const teacher = getTeacherName();
+
+      if (!id) {
+        alert("학번을 입력해주세요.");
+        return;
+      }
+
+      if (!name) {
+        alert("이름을 입력해주세요.");
+        return;
+      }
+
+      if (!p1 && !p2) {
+        alert("1교시 또는 2교시 중 최소 하나를 선택해주세요.");
+        return;
+      }
+
+      const oldText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = "처리 중...";
+
+      try {
+        const res = await fetch(
+          `${API_URL}?action=addDailyStudent` +
+          `&date=${encodeURIComponent(selectedDate)}` +
+          `&id=${encodeURIComponent(id)}` +
+          `&name=${encodeURIComponent(name)}` +
+          `&p1=${encodeURIComponent(p1)}` +
+          `&p2=${encodeURIComponent(p2)}` +
+          `&teacher=${encodeURIComponent(teacher)}` +
+          `&t=${Date.now()}`
+        );
+
+        const result = await res.json();
+
+        if (!result.success) {
+          alert(result.message || "학생 추가 실패");
+          btn.innerText = oldText;
+          btn.disabled = false;
+          return;
+        }
+
+        alert(result.message || "학생을 추가했습니다.");
+
+        document.getElementById("add-student-id").value = "";
+        document.getElementById("add-student-name").value = "";
+
+        await fetchData();
+
+      } catch (e) {
+        alert("학생 추가 중 오류가 발생했습니다.");
+      }
+
+      btn.innerText = oldText;
+      btn.disabled = false;
+    }
+
+    async function removeDailyStudent(studentId, studentName, btn) {
+      const selectedDate = document.getElementById("date-picker").value;
+      const todayStr = formatLocalDate(new Date());
+
+      if (selectedDate !== todayStr) {
+        alert("학생 삭제는 당일 출석부에서만 가능합니다.");
+        return;
+      }
+
+      if (!confirm(`${studentName} 학생을 오늘 출석부에서 삭제하시겠습니까?\n해당 학생의 오늘 출석기록도 함께 삭제됩니다.`)) {
+        return;
+      }
+
+      const oldText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = "삭제 중...";
+
+      try {
+        const res = await fetch(
+          `${API_URL}?action=removeDailyStudent` +
+          `&date=${encodeURIComponent(selectedDate)}` +
+          `&id=${encodeURIComponent(studentId)}` +
+          `&teacher=${encodeURIComponent(getTeacherName())}` +
+          `&t=${Date.now()}`
+        );
+
+        const result = await res.json();
+
+        if (!result.success) {
+          alert(result.message || "학생 삭제 실패");
+          btn.innerText = oldText;
+          btn.disabled = false;
+          return;
+        }
+
+        alert(result.message || "삭제되었습니다.");
+        await fetchData();
+
+      } catch (e) {
+        alert("학생 삭제 중 오류가 발생했습니다.");
+      }
+
+      btn.innerText = oldText;
+      btn.disabled = false;
+    }
+
+    async function toggleManual(studentId, period, btnElement) {
+      const selectedDate = document.getElementById("date-picker").value;
+      const todayStr = formatLocalDate(new Date());
+
+      if (selectedDate !== todayStr) {
+        alert("수동 출석 처리는 오늘 날짜에서만 가능합니다.");
+        return;
+      }
+
+      btnElement.innerText = "⏳ 처리중";
+
+      try {
+        const response = await fetch(
+          `${API_URL}?action=manualAttend` +
+          `&id=${encodeURIComponent(studentId)}` +
+          `&period=${encodeURIComponent(period)}` +
+          `&t=${Date.now()}`
+        );
+
+        const result = await response.json();
+
+        if (!result.success) {
+          alert(result.message || "처리 실패");
+        }
+
+        await fetchData();
+
+      } catch (e) {
+        alert("처리 실패");
+        await renderDaily();
+      }
+    }
+
+    async function saveDailyPdf(btn) {
+      const selectedDate = document.getElementById("date-picker").value;
+
+      if (!selectedDate) {
+        alert("저장할 날짜를 선택해주세요.");
+        return;
+      }
+
+      const oldText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = "💾 저장 중...";
+
+      try {
+        const res = await fetch(
+          `${API_URL}?action=saveDailyPdf` +
+          `&date=${encodeURIComponent(selectedDate)}` +
+          `&teacher=${encodeURIComponent(getTeacherName())}` +
+          `&t=${Date.now()}`
+        );
+
+        const result = await res.json();
+
+        if (!result.success) {
+          alert(result.message || "PDF 저장에 실패했습니다.");
+          btn.innerText = oldText;
+          btn.disabled = false;
+          return;
+        }
+
+        if (confirm("PDF 저장이 완료되었습니다. 저장된 파일을 열어보시겠습니까?")) {
+          window.open(result.fileUrl, "_blank");
+        }
+
+        btn.innerText = "✅ 저장 완료";
+
+        setTimeout(() => {
+          btn.innerText = oldText;
+          btn.disabled = false;
+        }, 1200);
+
+      } catch (e) {
+        alert("PDF 저장 중 오류가 발생했습니다.");
+        btn.innerText = oldText;
+        btn.disabled = false;
+      }
+    }
+
+    function getTargetStudentIdsForDate(dateStr) {
+      const day = getKorDayByDateStr(dateStr);
+      const set = new Set();
+
+      allStudents
+        .filter(s => normalizeDay(s.day) === day)
+        .forEach(s => {
+          if (!isExcluded(s, "1교시") || !isExcluded(s, "2교시")) {
+            set.add(String(s.id));
+          }
+        });
+
+      const changes = allChanges
+        .filter(c => String(c.date) === String(dateStr));
+
+      changes.forEach(c => {
+        if (c.status === "REMOVE") {
+          set.delete(String(c.id));
+        }
+
+        if (c.status === "ADD") {
+          set.add(String(c.id));
+        }
+      });
+
+      return set;
+    }
+
+    function getPresentStudentIdsForDate(dateStr) {
+      const set = new Set();
+
+      allLogs
+        .filter(l => l.timestamp && l.timestamp.startsWith(dateStr))
+        .forEach(l => {
+          set.add(String(l.id));
+        });
+
+      return set;
+    }
+
+    function calcDailyStudentRate(dateStr) {
+      const targetIds = getTargetStudentIdsForDate(dateStr);
+      const presentIds = getPresentStudentIdsForDate(dateStr);
+
+      if (targetIds.size === 0) return "-";
+
+      let presentTargetCount = 0;
+
+      targetIds.forEach(id => {
+        if (presentIds.has(id)) presentTargetCount++;
+      });
+
+      return Math.round((presentTargetCount / targetIds.size) * 100) + "%";
+    }
+
+    function calcAverageDailyStudentRate(dateList) {
+      let totalTarget = 0;
+      let totalPresent = 0;
+
+      dateList.forEach(dateStr => {
+        const targetIds = getTargetStudentIdsForDate(dateStr);
+        const presentIds = getPresentStudentIdsForDate(dateStr);
+
+        if (targetIds.size === 0) return;
+
+        totalTarget += targetIds.size;
+
+        targetIds.forEach(id => {
+          if (presentIds.has(id)) totalPresent++;
+        });
+      });
+
+      if (totalTarget === 0) return "-";
+      return Math.round((totalPresent / totalTarget) * 100) + "%";
+    }
+
+    function getDatesBetween(startDate, endDate) {
+      const dates = [];
+      const cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+      while (cur <= end) {
+        dates.push(formatLocalDate(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+
+      return dates;
+    }
+
+    function renderIndividual() {
+      const sid = document.getElementById("student-select").value;
+      const tbody = document.querySelector("#individual-table tbody");
+
+      tbody.innerHTML = "";
+      document.getElementById("individual-title").innerText = "개인별 출결 기록";
+
+      if (!sid) return;
+
+      const student = allStudents.find(s => String(s.id) === String(sid));
+      if (!student) return;
+
+      document.getElementById("individual-title").innerText =
+        `[${student.id}] ${student.name} 학생 출결 기록`;
+
+      const sLogs = allLogs.filter(l => String(l.id) === String(sid));
+      const grouped = {};
+
+      sLogs.forEach(log => {
+        if (!log.timestamp || !log.timestamp.includes(" ")) return;
+
+        const date = log.timestamp.split(" ")[0];
+
+        if (!grouped[date]) {
+          grouped[date] = {
+            day: log.day,
+            p1: "-",
+            p2: "-",
+            status: log.status || "출석"
+          };
+        }
+
+        const time = log.timestamp.split(" ")[1].substring(0, 5);
+
+        if (log.period === "1교시") grouped[date].p1 = "⭕ " + time;
+        if (log.period === "2교시") grouped[date].p2 = "⭕ " + time;
+        if (log.status === "추가출석") grouped[date].status = "추가출석";
+      });
+
+      const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+      if (sortedDates.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">출결 기록이 없습니다.</td></tr>';
+        return;
+      }
+
+      sortedDates.forEach(date => {
+        const data = grouped[date];
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${escapeHtml(date)}</td>
+          <td>${escapeHtml(data.day)}</td>
+          <td style="color:${data.p1 !== "-" ? "#2e7d32" : "#c62828"}; font-weight:bold;">
+            ${data.p1 !== "-" ? escapeHtml(data.p1) : "결석"}
+          </td>
+          <td style="color:${data.p2 !== "-" ? "#2e7d32" : "#c62828"}; font-weight:bold;">
+            ${data.p2 !== "-" ? escapeHtml(data.p2) : "결석"}
+          </td>
+          <td>${escapeHtml(data.status)}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderStats() {
+      if (allStudents.length === 0) return;
+
+      const now = new Date();
+      const todayStr = formatLocalDate(now);
+
+      document.getElementById("stat-today").innerText =
+        calcDailyStudentRate(todayStr);
+
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - 6);
+
+      document.getElementById("stat-week").innerText =
+        calcAverageDailyStudentRate(getDatesBetween(weekStart, now));
+
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      document.getElementById("stat-month").innerText =
+        calcAverageDailyStudentRate(getDatesBetween(monthStart, now));
+
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+
+      document.getElementById("stat-year").innerText =
+        calcAverageDailyStudentRate(getDatesBetween(yearStart, now));
+
+      renderChart();
+    }
+
+    function renderChart() {
+      const selectedMonth = document.getElementById("month-picker").value;
+      if (!selectedMonth) return;
+
+      const [year, month] = selectedMonth.split("-").map(Number);
+      const lastDay = new Date(year, month, 0).getDate();
+      const todayStr = formatLocalDate(new Date());
+
+      const labels = [];
+      const counts = [];
+
+      for (let d = 1; d <= lastDay; d++) {
+        const dateStr =
+          `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+        if (dateStr > todayStr) break;
+
+        const presentIds = getPresentStudentIdsForDate(dateStr);
+
+        labels.push(`${d}일`);
+        counts.push(presentIds.size);
+      }
+
+      const ctx = document.getElementById("trendChart").getContext("2d");
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels.length ? labels : ["데이터 없음"],
+          datasets: [{
+            label: "일별 참석인원",
+            data: counts.length ? counts : [0],
+            backgroundColor: "#a5d6a7",
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+                callback: value => value + "명"
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.raw + "명"
+              }
+            }
+          }
+        }
+      });
     }
   </script>
 </body>
