@@ -20,7 +20,6 @@
       color:#333;
       box-sizing:border-box;
     }
-
     .card {
       background:white;
       padding:30px;
@@ -32,7 +31,6 @@
       margin-bottom:20px;
       box-sizing:border-box;
     }
-
     h1 {
       font-size:1.4em;
       color:#2e7d32;
@@ -40,7 +38,6 @@
       word-break:keep-all;
       line-height:1.4;
     }
-
     input[type="text"],
     input[type="password"],
     select {
@@ -54,7 +51,6 @@
       text-align:center;
       font-family:inherit;
     }
-
     .btn {
       background:#4caf50;
       color:white;
@@ -69,22 +65,18 @@
       transition:.2s;
       font-family:inherit;
     }
-
     .btn-outline {
       background:white;
       border:2px solid #4caf50;
       color:#2e7d32;
     }
-
     .btn-camera {
       background:#1976d2;
       margin-bottom:15px;
     }
-
     .btn-extra {
       background:#6a1b9a;
     }
-
     .notice {
       background:#fffde7;
       border:1px solid #fff59d;
@@ -95,7 +87,6 @@
       line-height:1.5;
       margin-bottom:15px;
     }
-
     .stats-box {
       background:#e8f5e9;
       padding:15px;
@@ -106,7 +97,6 @@
       line-height:1.6;
       border:1px solid #c8e6c9;
     }
-
     #reader {
       width:100%;
       border-radius:15px;
@@ -114,7 +104,6 @@
       margin:0 auto;
       display:none;
     }
-
     .test-panel {
       display:none;
       background:#fff3e0;
@@ -123,7 +112,6 @@
       margin-bottom:20px;
       border:1px solid #ffcc80;
     }
-
     .extra-panel {
       display:none;
       background:#f3e5f5;
@@ -133,13 +121,11 @@
       border:1px solid #ce93d8;
       text-align:left;
     }
-
     .extra-panel h3 {
       margin:0 0 10px 0;
       color:#6a1b9a;
       text-align:center;
     }
-
     .footer {
       margin-top:10px;
       font-size:.85em;
@@ -151,34 +137,26 @@
 <body>
   <div class="card" id="auth-screen">
     <h1>🔐 서현고등학교 꿈꾸는 글마루<br>출석 스캐너 로그인</h1>
-
     <div class="notice">
       출석 인정 시간<br>
       1교시 18:00~19:40<br>
-      2교시 19:41~21:40
+      2교시 20:00~21:40
     </div>
-
     <input type="text" id="teacher-name" placeholder="아이디, 감독자 이름 입력" autocomplete="off">
     <input type="password" id="shared-pw" placeholder="비밀번호">
-
     <button type="button" class="btn" onclick="loginTeacher()">로그인 및 스캔 시작</button>
   </div>
-
   <div class="card" id="scan-screen" style="display:none;">
     <h1>📷 출석 스캐너</h1>
-
     <div class="notice">
-      1교시 18:00~19:40 / 2교시 19:41~21:40
+      1교시 18:00~19:40 / 2교시 20:00~21:40
     </div>
-
     <p style="color:#666; font-size:.9em; margin-bottom:20px;">
       학생의 QR코드를 비춰주세요.
     </p>
-
     <button class="btn btn-outline" id="test-mode-btn" onclick="toggleTestMode()" style="margin-bottom:15px;">
       🛠️ 테스트 모드 켜기, 시간 무시
     </button>
-
     <div class="test-panel" id="test-panel">
       <p style="margin:0 0 10px 0; color:#e65100; font-weight:bold; text-align:center;">
         ⚠️ 강제로 처리할 교시 선택
@@ -188,13 +166,9 @@
         <option value="2교시">2교시 강제 출석</option>
       </select>
     </div>
-
     <button class="btn btn-camera" id="start-btn" onclick="startScanner()">🚀 카메라 켜기, 스캔 시작</button>
-
     <div id="reader"></div>
-
     <button class="btn btn-extra" onclick="toggleExtraPanel()">➕ 학생 추가입력</button>
-
     <div class="extra-panel" id="extra-panel">
       <h3>학생 추가 출석 입력</h3>
       <div style="font-size:.9em; color:#6a1b9a; text-align:center; margin-bottom:10px;">
@@ -204,49 +178,38 @@
       <input type="text" id="extra-name" placeholder="이름 입력, 명단에 있는 학생은 생략 가능">
       <button class="btn btn-extra" onclick="submitExtraAttendance()">추가 출석 처리</button>
     </div>
-
     <div id="result-box" style="display:none; margin-top:20px;">
       <h2 id="result-msg" style="color:#2e7d32; margin-bottom:10px;">-</h2>
       <div class="stats-box" id="stats-content">데이터 대기 중...</div>
     </div>
-
     <button class="btn btn-outline" onclick="logoutTeacher()">로그아웃</button>
   </div>
-
   <div class="footer">
     Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
   </div>
-
-  <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
   <script>
+    // 새 버전으로 배포한 최신 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-
+    
     let html5QrCode = null;
     let isScanning = false;
     let isTestMode = false;
-
     window.addEventListener("DOMContentLoaded", () => {
       const pwInput = document.getElementById("shared-pw");
       const idInput = document.getElementById("teacher-name");
-
       if (pwInput) {
         pwInput.addEventListener("keyup", function(event) {
           if (event.key === "Enter") loginTeacher();
         });
       }
-
       if (idInput) {
         idInput.addEventListener("keyup", function(event) {
           if (event.key === "Enter") loginTeacher();
         });
       }
-
       const savedTeacherName = sessionStorage.getItem("teacherName");
-
       if (savedTeacherName) {
         showScanScreen();
-
         const directId = getIdFromCurrentUrl();
         if (directId) {
           processAttendance(directId);
@@ -254,41 +217,32 @@
         }
       }
     });
-
     function showScanScreen() {
       document.getElementById("auth-screen").style.display = "none";
       document.getElementById("scan-screen").style.display = "block";
     }
-
     function loginTeacher() {
       const tName = document.getElementById("teacher-name").value.trim();
       const tPw = document.getElementById("shared-pw").value;
-
       if (!tName) return alert("아이디, 감독자 이름을 입력해주세요.");
       if (tPw !== "1234") return alert("비밀번호가 틀렸습니다.");
-
       sessionStorage.setItem("teacherName", tName);
       showScanScreen();
-
       const directId = getIdFromCurrentUrl();
       if (directId) {
         processAttendance(directId);
         history.replaceState(null, "", location.pathname);
       }
     }
-
     function logoutTeacher() {
       if (!confirm("로그아웃하시겠습니까?")) return;
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-
     function toggleTestMode() {
       isTestMode = !isTestMode;
-
       const btn = document.getElementById("test-mode-btn");
       const panel = document.getElementById("test-panel");
-
       if (isTestMode) {
         btn.innerText = "❌ 테스트 모드 끄기, 정상 작동";
         btn.style.backgroundColor = "#ffebee";
@@ -303,20 +257,16 @@
         panel.style.display = "none";
       }
     }
-
     function toggleExtraPanel() {
       const panel = document.getElementById("extra-panel");
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     }
-
     function startScanner() {
       document.getElementById("start-btn").style.display = "none";
       document.getElementById("reader").style.display = "block";
-
       if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
       }
-
       html5QrCode.start(
         { facingMode:"environment" },
         { fps:10, qrbox:{ width:250, height:250 } },
@@ -331,34 +281,26 @@
         isScanning = false;
       });
     }
-
     function onScanSuccess(decodedText) {
       if (!isScanning) return;
-
       isScanning = false;
-      document.getElementById("beep").play().catch(() => {});
-
+      
       const studentId = extractStudentId(decodedText);
-
       if (!studentId) {
         showResult(false, "학생 QR을 다시 비춰주세요.", "QR 데이터에서 학생 ID를 찾지 못했습니다.");
         setTimeout(() => isScanning = true, 2000);
         return;
       }
-
       processAttendance(studentId);
     }
-
     function extractStudentId(decodedText) {
       const text = String(decodedText || "").trim();
       if (!text) return "";
-
       try {
         const url = new URL(text);
         const id = url.searchParams.get("id");
         if (id) return id.trim();
       } catch (e) {}
-
       if (text.includes("?")) {
         try {
           const qs = text.substring(text.indexOf("?") + 1);
@@ -367,88 +309,70 @@
           if (id) return id.trim();
         } catch (e) {}
       }
-
       return text;
     }
-
     function getIdFromCurrentUrl() {
       const params = new URLSearchParams(location.search);
       const id = params.get("id");
       return id ? id.trim() : "";
     }
-
     function showResult(success, message, detailHtml) {
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
       const statsContent = document.getElementById("stats-content");
-
       resultBox.style.display = "block";
       resultMsg.style.color = success ? "#2e7d32" : "#c62828";
       resultMsg.innerText = message;
       statsContent.innerHTML = detailHtml || "";
     }
-
     async function processAttendance(studentId) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
       const statsContent = document.getElementById("stats-content");
-
       resultBox.style.display = "block";
       resultMsg.style.color = "#f57c00";
       resultMsg.innerText = "⏳ 처리 중...";
       statsContent.innerHTML = "데이터 동기화 중...";
-
       try {
         let fetchUrl =
           `${API_URL}?action=attend` +
           `&id=${encodeURIComponent(studentId)}` +
           `&teacher=${encodeURIComponent(tName)}` +
           `&t=${Date.now()}`;
-
         if (isTestMode) {
           const forceP = document.getElementById("force-period").value;
           fetchUrl += `&forcePeriod=${encodeURIComponent(forceP)}`;
         }
-
         const response = await fetch(fetchUrl);
         const result = await response.json();
-
         resultMsg.style.color = result.success ? "#2e7d32" : "#c62828";
         resultMsg.innerText = (result.success ? "✅ " : "⚠️ ") + (result.message || "");
-
         renderStatsBox(result);
-
       } catch (e) {
         resultMsg.style.color = "#c62828";
         resultMsg.innerText = "❌ 서버 접속 실패";
         statsContent.innerHTML = "네트워크 또는 서버 상태를 확인해주세요.";
       }
-
       setTimeout(() => {
         isScanning = true;
       }, 2000);
     }
-
     async function submitExtraAttendance() {
       const id = document.getElementById("extra-id").value.trim();
       const name = document.getElementById("extra-name").value.trim();
       const tName = sessionStorage.getItem("teacherName") || "미상";
-
       if (!id) {
         alert("학번을 입력해주세요.");
         return;
       }
-
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
       const statsContent = document.getElementById("stats-content");
-
       resultBox.style.display = "block";
       resultMsg.style.color = "#f57c00";
       resultMsg.innerText = "⏳ 추가 출석 처리 중...";
       statsContent.innerHTML = "데이터 동기화 중...";
-
       try {
         let fetchUrl =
           `${API_URL}?action=extraAttend` +
@@ -456,35 +380,27 @@
           `&name=${encodeURIComponent(name)}` +
           `&teacher=${encodeURIComponent(tName)}` +
           `&t=${Date.now()}`;
-
         if (isTestMode) {
           const forceP = document.getElementById("force-period").value;
           fetchUrl += `&forcePeriod=${encodeURIComponent(forceP)}`;
         }
-
         const response = await fetch(fetchUrl);
         const result = await response.json();
-
         resultMsg.style.color = result.success ? "#2e7d32" : "#c62828";
         resultMsg.innerText = (result.success ? "✅ " : "⚠️ ") + (result.message || "");
-
         renderStatsBox(result);
-
         if (result.success) {
           document.getElementById("extra-id").value = "";
           document.getElementById("extra-name").value = "";
         }
-
       } catch (e) {
         resultMsg.style.color = "#c62828";
         resultMsg.innerText = "❌ 서버 접속 실패";
         statsContent.innerHTML = "네트워크 또는 서버 상태를 확인해주세요.";
       }
     }
-
     function renderStatsBox(result) {
       const statsContent = document.getElementById("stats-content");
-
       if (result.stats) {
         statsContent.innerHTML = `
           <strong>📅 오늘 ${result.stats.period} 통계</strong><br>
