@@ -81,7 +81,6 @@
   <script>
     // 새 버전으로 배포한 최신 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    
     let studentsData = [];
     window.onload = function() {
       if (sessionStorage.getItem("userRole")) {
@@ -193,49 +192,85 @@
       });
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
+    
+    // ==========================================
+    // 💡 엑셀 업로드 로직 완전 교체 (스마트 인식 방식)
+    // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
+      
       reader.onload = async function(ev) {
-        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
-        studentsData = [];
-        wb.SheetNames.forEach(sn => {
-          const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header:1 });
-          const dayFromSheet = sn.replace(/[^월화수목금]/g, "");
-          // 0,1,2행 안내 / 3행 헤더 / 4행부터 실제 데이터
-          for (let i = 4; i < json.length; i++) {
-            const row = json[i];
-            if (!row) continue;
-            const id = row[1];
-            const name = row[2];
-            if (id && name) {
-              studentsData.push({
-                id: String(id).trim(),
-                name: String(name).trim(),
-                day: String(dayFromSheet || row[3] || "").trim(),
-                p1_exc: row[4] != null ? String(row[4]).trim().toUpperCase() : "",
-                p2_exc: row[5] != null ? String(row[5]).trim().toUpperCase() : ""
-              });
+        try {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
+          studentsData = [];
+          
+          wb.SheetNames.forEach(sn => {
+            // 1. 시트 이름에서 요일 추출 ("월요일" -> "월")
+            const dayMatch = sn.match(/[월화수목금토일]/);
+            const dayFromSheet = dayMatch ? dayMatch[0] : "";
+            
+            // 요일이 적힌 시트가 아니면 건너뜀
+            if (!dayFromSheet) return;
+
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1 });
+            
+            // 2. 고정된 줄부터 읽지 않고, 모든 줄을 검사하여 스마트하게 데이터 추출
+            for (let i = 0; i < json.length; i++) {
+              const row = json[i];
+              if (!row || row.length < 3) continue;
+              
+              const id = String(row[1] || "").trim();    // B열: 학번
+              const name = String(row[2] || "").trim();  // C열: 이름/교시
+              
+              // 학번 칸(B열)에 순수하게 '숫자'가 들어있고, 이름이 존재하는 줄만 학생으로 인식합니다.
+              // (이렇게 하면 위에 제목이 몇 줄이 있든 에러 없이 정확히 학생만 골라냅니다)
+              if (/^\d+$/.test(id) && name && name !== "이름/교시" && name !== "성명") {
+                
+                // D열(인덱스 3)이 1교시, E열(인덱스 4)이 2교시
+                const p1Mark = String(row[3] || "").trim().toUpperCase();
+                const p2Mark = String(row[4] || "").trim().toUpperCase();
+                
+                studentsData.push({
+                  id: id,
+                  name: name,
+                  day: dayFromSheet,
+                  p1_exc: (p1Mark === "X" || p1Mark === "O") ? "X" : "",
+                  p2_exc: (p2Mark === "X" || p2Mark === "O") ? "X" : ""
+                });
+              }
             }
+          });
+          
+          if (studentsData.length === 0) {
+            alert("업로드할 학생 데이터가 없습니다. 엑셀 양식을 다시 확인해주세요.");
+            return;
           }
-        });
-        if (studentsData.length === 0) {
-          alert("업로드할 학생 데이터가 없습니다.");
-          return;
+
+          document.getElementById("student-list").style.display = "block";
+          document.getElementById("student-list").innerHTML = `⏳ 데이터를 서버로 전송 중입니다... (${studentsData.length}명)`;
+          
+          await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "uploadStudents",
+              students: studentsData
+            })
+          });
+          
+          alert(`${studentsData.length}건의 명단을 업로드했습니다.`);
+          location.reload();
+          
+        } catch (error) {
+          alert("명단 업로드 중 오류가 발생했습니다: " + error.message);
         }
-        await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "uploadStudents",
-            students: studentsData
-          })
-        });
-        alert(`${studentsData.length}건의 명단을 업로드했습니다.`);
-        location.reload();
       };
       reader.readAsArrayBuffer(file);
+      e.target.value = ''; // 똑같은 파일 다시 선택 가능하도록 초기화
     });
+    // ==========================================
+
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
