@@ -466,9 +466,7 @@
     Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
   </div>
   <script>
-    // 새 버전으로 배포한 최신 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    
     let allStudents = [];
     let allLogs = [];
     let allChanges = [];
@@ -608,36 +606,107 @@
       const panel = document.getElementById("add-panel");
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     }
+
+    // ==========================================
+    // 💡 과거 날짜 조회 시 데이터가 비어보이는 문제 해결!
+    // 서버 생성일(업로드일)에 구애받지 않고 프론트엔드에서 즉시 명단을 조립합니다.
+    // ==========================================
+    function buildFrontendDailyRoster(dateStr) {
+      const day = getKorDayByDateStr(dateStr);
+      const map = new Map();
+      let teacherTextSet = new Set();
+
+      // 1. 현재 로드된 전체 명단에서 해당 요일 학생만 추출
+      allStudents.forEach(s => {
+        if (normalizeDay(s.day) === day) {
+          map.set(String(s.id), {
+            id: s.id,
+            name: s.name,
+            day: day,
+            p1_exc: s.p1_exc,
+            p2_exc: s.p2_exc,
+            source: "기본명단"
+          });
+        }
+      });
+
+      // 2. 해당 날짜에 당일 추가/삭제된 학생 내역(일일명단변경 시트 반영)
+      const dateChanges = allChanges.filter(c => c.date === dateStr);
+      dateChanges.forEach(c => {
+        if (c.teacher && c.teacher !== "미상") teacherTextSet.add(c.teacher);
+        if (c.status === "REMOVE") {
+          map.delete(String(c.id));
+        } else if (c.status === "ADD") {
+          if (!map.has(String(c.id))) {
+            map.set(String(c.id), {
+              id: c.id,
+              name: c.name,
+              day: day,
+              p1_exc: c.p1 ? "" : "X",
+              p2_exc: c.p2 ? "" : "X",
+              source: "추가"
+            });
+          } else {
+            const existing = map.get(String(c.id));
+            existing.source = existing.source === "기본명단" ? "기본명단" : "추가";
+            if (c.p1) existing.p1_exc = "";
+            if (c.p2) existing.p2_exc = "";
+          }
+        }
+      });
+
+      // 3. 감독교사 수집 (당일 출결기록 기반)
+      const dateLogs = allLogs.filter(l => l.timestamp && l.timestamp.startsWith(dateStr));
+      dateLogs.forEach(l => {
+        if (l.teacher && l.teacher !== "미상") teacherTextSet.add(l.teacher);
+      });
+
+      let teacherText = Array.from(teacherTextSet).join(", ");
+      if (!teacherText) teacherText = "미입력";
+
+      const roster = Array.from(map.values()).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+      return {
+        date: dateStr,
+        day: day,
+        teacherText: teacherText,
+        roster: roster
+      };
+    }
+
     async function renderDaily() {
       const selectedDate = document.getElementById("date-picker").value;
       if (!selectedDate) return;
       const selectedDayStr = getKorDayByDateStr(selectedDate);
+      
       try {
-        const res = await fetch(`${API_URL}?action=getDailyRoster&date=${encodeURIComponent(selectedDate)}&t=${Date.now()}`);
-        const data = await res.json();
-        if (!data.success) {
-          alert(data.message || "일일 출석부를 불러오지 못했습니다.");
-          return;
-        }
+        // 기존 fetch(getDailyRoster) 방식 대신 브라우저에서 직접 계산하도록 변경 (빠르고 강력함)
+        const data = buildFrontendDailyRoster(selectedDate);
+        
         currentDailyRoster = data.roster || [];
         currentDailyTeacherText = data.teacherText || "미입력";
+        
         document.getElementById("daily-title").innerHTML =
           `${selectedDate} (${selectedDayStr}) 글마루 출석부` +
           `<span class="teacher-label">감독교사: ${escapeHtml(currentDailyTeacherText)}</span>`;
+          
         const tbody = document.querySelector("#roster-table tbody");
         tbody.innerHTML = "";
         const todayStr = formatLocalDate(new Date());
         const isToday = selectedDate === todayStr;
+        
         if (currentDailyRoster.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6">해당 날짜 출석 대상 학생이 없습니다.</td></tr>';
           return;
         }
+        
         currentDailyRoster.forEach(student => {
           const studentLogs = allLogs.filter(log =>
             log.timestamp &&
             log.timestamp.startsWith(selectedDate) &&
             String(log.id) === String(student.id)
           );
+          
           let p1Time = "";
           let p2Time = "";
           studentLogs.forEach(log => {
@@ -646,8 +715,9 @@
             if (log.period === "1교시") p1Time = timeOnly;
             if (log.period === "2교시") p2Time = timeOnly;
           });
-          const btnStyle =
-            "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:.2s;";
+          
+          const btnStyle = "padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; border:none; width:100%; transition:.2s;";
+          
           function cellHtml(period, time) {
             if (isExcluded(student, period)) {
               return `
@@ -679,11 +749,13 @@
               <span class="print-only" style="display:none;">[　　　]</span>
             `;
           }
+          
           const source = student.source || "기본명단";
           const badgeClass = source === "추가" ? "badge-add" : "badge-base";
           const manageHtml = isToday
             ? `<button class="delete-btn" onclick="removeDailyStudent('${jsString(student.id)}','${jsString(student.name)}',this)">삭제</button>`
             : `<span style="color:#999;">-</span>`;
+            
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${escapeHtml(student.id)}</td>
@@ -699,6 +771,8 @@
         alert("일일 출석부를 불러오는 중 오류가 발생했습니다.");
       }
     }
+    // ==========================================
+
     async function addDailyStudent(btn) {
       const selectedDate = document.getElementById("date-picker").value;
       const todayStr = formatLocalDate(new Date());
@@ -815,8 +889,6 @@
         await renderDaily();
       }
     }
-    
-    // 에러 디버깅 기능이 강화된 PDF 저장 함수
     async function saveDailyPdf(btn) {
       const selectedDate = document.getElementById("date-picker").value;
       if (!selectedDate) {
@@ -833,27 +905,23 @@
           `&teacher=${encodeURIComponent(getTeacherName())}` +
           `&t=${Date.now()}`
         );
-
         if (!res.ok) {
           throw new Error(`서버 통신 상태 에러: ${res.status}`);
         }
-
-        const text = await res.text(); 
+        const text = await res.text();
         let result;
         try {
           result = JSON.parse(text);
         } catch (parseError) {
           console.error("서버 응답 오류 내용:", text);
-          throw new Error("서버에서 올바른 JSON 데이터를 반환하지 않았습니다. (F12 개발자 도구 콘솔 확인)");
+          throw new Error("서버에서 올바른 JSON 데이터를 반환하지 않았습니다.");
         }
-
         if (!result.success) {
           alert("저장 실패 사유: " + (result.message || "알 수 없는 오류"));
           btn.innerText = oldText;
           btn.disabled = false;
           return;
         }
-        
         if (confirm("PDF 저장이 완료되었습니다. 저장된 파일을 열어보시겠습니까?")) {
           window.open(result.fileUrl, "_blank");
         }
@@ -862,15 +930,12 @@
           btn.innerText = oldText;
           btn.disabled = false;
         }, 1200);
-
       } catch (e) {
-        console.error("PDF 저장 에러 상세:", e);
         alert("PDF 저장 중 오류가 발생했습니다.\n\n[에러 내용]\n" + e.message);
         btn.innerText = oldText;
         btn.disabled = false;
       }
     }
-
     function getTargetStudentIdsForDate(dateStr) {
       const day = getKorDayByDateStr(dateStr);
       const set = new Set();
