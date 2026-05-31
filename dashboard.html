@@ -7,134 +7,68 @@
     /* 전체 배경 및 폰트 설정 (사진과 동일한 연한 녹색 배경) */
     body {
       font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-      background-color: #f1f8ed; /* 사진 배경색상 */
+      background-color: #f1f8ed;
       color: #333;
       margin: 0;
       padding: 20px;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .container { max-width: 1200px; margin: 0 auto; }
 
     /* 상단 헤더 박스 */
     .header-box {
-      background: white;
-      border-radius: 12px;
-      padding: 20px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-      margin-bottom: 20px;
+      background: white; border-radius: 12px; padding: 20px 25px;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px;
     }
-    .header-box h1 {
-      margin: 0;
-      font-size: 1.5rem;
-      color: #2b7a2b; /* 진녹색 */
-    }
+    .header-box h1 { margin: 0; font-size: 1.5rem; color: #2b7a2b; }
     .btn-home {
-      background-color: #3e8e41;
-      color: white;
-      text-decoration: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 0.95rem;
+      background-color: #3e8e41; color: white; text-decoration: none;
+      padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 0.95rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .btn-home:hover { background-color: #2e6d30; }
 
     /* 노란색 안내 박스 */
     .info-box {
-      background-color: #fffde7;
-      border: 1px solid #f2e3a8;
-      border-radius: 8px;
-      padding: 18px 25px;
-      color: #666;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      margin-bottom: 20px;
+      background-color: #fffde7; border: 1px solid #f2e3a8; border-radius: 8px;
+      padding: 18px 25px; color: #666; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;
     }
 
-    /* 탭 메뉴 (3개 버튼) */
-    .tab-container {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
+    /* 탭 메뉴 */
+    .tab-container { display: flex; gap: 15px; margin-bottom: 20px; }
     .tab-btn {
-      flex: 1;
-      background: white;
-      border: none;
-      padding: 18px;
-      border-radius: 12px;
-      font-size: 1.05rem;
-      font-weight: bold;
-      color: #2b7a2b;
-      cursor: pointer;
+      flex: 1; background: white; border: none; padding: 18px; border-radius: 12px;
+      font-size: 1.05rem; font-weight: bold; color: #2b7a2b; cursor: pointer;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-    .tab-btn.active {
-      background-color: #81c784; /* 활성화된 연녹색 */
-      color: white;
-    }
+    .tab-btn.active { background-color: #81c784; color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
     /* 메인 콘텐츠 화이트 박스 */
     .content-box {
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-      min-height: 400px;
+      background: white; border-radius: 12px; padding: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-height: 400px;
     }
 
-    /* 날짜 선택기 (중앙 정렬) */
-    .date-picker-container {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .date-picker-container span {
-      font-weight: bold;
-      margin-right: 10px;
-      font-size: 1.05rem;
-    }
+    /* 날짜 선택기 */
+    .date-picker-container { text-align: center; margin-bottom: 30px; }
+    .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] {
-      border: 2px solid #81c784;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 1.05rem;
-      color: #2b7a2b;
-      font-weight: bold;
-      outline: none;
+      border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px;
+      font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none;
     }
 
     /* 테이블 제목 및 액션 버튼들 */
     .table-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #f0f0f0;
-      padding-bottom: 15px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;
     }
-    .table-header-row h2 {
-      margin: 0;
-      color: #2b7a2b;
-      font-size: 1.4rem;
-    }
+    .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; }
     
     .action-btns button {
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      color: white;
-      font-weight: bold;
-      font-size: 0.95rem;
-      cursor: pointer;
-      margin-left: 8px;
+      border: none; border-radius: 6px; padding: 10px 16px; color: white;
+      font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .btn-qr { background-color: #3182ce; }
@@ -142,36 +76,19 @@
     .btn-save { background-color: #805ad5; }
     .btn-print { background-color: #38a169; }
 
-    /* 학생 추가 폼 (숨김 기본값) */
+    /* 학생 추가 폼 */
     .add-student-form {
-      background-color: #fffaf0;
-      border: 1px solid #fbd38d;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      display: none;
+      background-color: #fffaf0; border: 1px solid #fbd38d; padding: 20px;
+      border-radius: 8px; margin-bottom: 20px; display: none;
     }
     .add-student-form input[type="text"] {
       padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px;
     }
 
     /* 메인 테이블 스타일 */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-    }
-    th, td {
-      border: 1px solid #e0e0e0;
-      padding: 15px 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #e8f5e9; /* 연녹색 헤더 배경 */
-      color: #2b7a2b;
-      font-weight: bold;
-      border-color: #c8e6c9;
-    }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { border: 1px solid #e0e0e0; padding: 15px 10px; text-align: center; }
+    th { background-color: #e8f5e9; color: #2b7a2b; font-weight: bold; border-color: #c8e6c9; }
 
     /* 상태별 색상 */
     .status-present { color: #3182ce; font-weight: bold; } /* 출석-파랑 */
@@ -179,12 +96,7 @@
     .status-absent { color: #e53e3e; font-weight: bold; } /* 미출석-빨강 */
     .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; } /* 제외-회색 취소선 */
 
-    .footer {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 0.85rem;
-      color: #888;
-    }
+    .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
     
     .loading-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -198,39 +110,31 @@
   <div id="loading" class="loading-overlay">데이터를 서버에서 동기화 중입니다... ⏳</div>
 
   <div class="container">
-    
-    <!-- 상단 헤더 (사진과 동일) -->
     <div class="header-box">
       <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
       <a href="index.html" class="btn-home">⬅️ 메인으로 돌아가기</a>
     </div>
 
-    <!-- 안내 박스 (사진과 동일) -->
     <div class="info-box">
       출석 인정 시간: 1교시 18:00~19:40 / 2교시 20:00~21:40<br>
       당일 출석부에서는 학생 추가 및 삭제가 가능합니다.
     </div>
 
-    <!-- 탭 메뉴 (사진과 동일) -->
     <div class="tab-container">
       <button class="tab-btn active" onclick="switchTab('tab-daily', this)">📅 일일 출석부</button>
       <button class="tab-btn" onclick="switchTab('tab-individual', this)">🧑‍🎓 개인별 출결 현황</button>
       <button class="tab-btn" onclick="switchTab('tab-stats', this)">📈 종합 통계</button>
     </div>
 
-    <!-- 메인 콘텐츠 영역 -->
     <div class="content-box">
       
       <!-- 탭 1: 일일 출석부 -->
       <div id="tab-daily" class="tab-content active">
-        
-        <!-- 중앙 정렬 날짜 선택기 -->
         <div class="date-picker-container">
           <span>조회 날짜:</span>
           <input type="date" id="datePicker" onchange="loadDailyData()">
         </div>
 
-        <!-- 테이블 제목 및 4색 버튼 -->
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
@@ -241,7 +145,6 @@
           </div>
         </div>
 
-        <!-- 학생 추가 숨김 영역 -->
         <div id="addStudentSection" class="add-student-form">
           <h3 style="margin-top:0; color:#dd6b20;">➕ 당일 출석부 학생 추가</h3>
           <p style="font-size:0.9rem; color:#666;">다른 요일 학생이나 명단에 없는 학생이 참석한 경우 입력합니다.</p>
@@ -254,7 +157,6 @@
           </div>
         </div>
 
-        <!-- 메인 테이블 (연번 추가 됨) -->
         <table id="rosterTable">
           <thead>
             <tr>
@@ -268,7 +170,6 @@
             </tr>
           </thead>
           <tbody id="rosterBody">
-            <!-- 데이터가 렌더링 됩니다 -->
           </tbody>
         </table>
       </div>
@@ -297,22 +198,18 @@
           <thead>
             <tr><th>오늘 출석률</th><th>최근 7일 평균</th><th>이번 달 평균</th><th>올해 전체 평균</th></tr>
           </thead>
-          <tbody>
-            <tr><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-          </tbody>
+          <tbody><tr><td>-</td><td>-</td><td>-</td><td>-</td></tr></tbody>
         </table>
       </div>
 
-    </div> <!-- content-box end -->
+    </div> 
 
     <div class="footer">
       Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
     </div>
-
-  </div> <!-- container end -->
+  </div> 
 
   <script>
-    // 선생님의 깃허브용 API 주소
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -323,11 +220,8 @@
       loadDailyData();
     });
 
-    function showLoading(show) {
-      document.getElementById('loading').style.display = show ? 'flex' : 'none';
-    }
+    function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 
-    // 탭 전환 애니메이션
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -335,17 +229,14 @@
       btn.classList.add('active');
     }
 
-    // 주황색 버튼 클릭 시 숨겨진 폼 열기
     function toggleAddSection() {
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
     }
 
-    // 서버 데이터 불러오기
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
-      
       showLoading(true);
 
       fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}`)
@@ -360,7 +251,7 @@
         });
     }
 
-    // 표 그리기 (연번 및 '제외' 표시 완벽 적용)
+    // ★ '제외' 인식 로직 강력 보강 ★
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       tbody.innerHTML = '';
@@ -374,22 +265,34 @@
         let p1Status = '미출석'; let p2Status = '미출석';
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
 
-        data.logs.forEach(function(log) {
-          if(log.id === student.id) {
-            if(log.period === '1교시') {
-              p1Status = log.status; 
-              p1Class = (log.status === '추가출석') ? 'status-extra' : 'status-present';
+        // 1. 로그 데이터에서 상태 확인
+        if(data.logs) {
+          data.logs.forEach(function(log) {
+            if(log.id === student.id) {
+              if(log.period === '1교시') {
+                p1Status = log.status; 
+                p1Class = (log.status === '추가출석') ? 'status-extra' : 'status-present';
+                // 서버에서 '제외' 혹은 'X'로 바로 상태를 보냈을 경우
+                if(log.status === '제외' || log.status === 'X') { p1Status = '제외'; p1Class = 'status-excluded'; }
+              }
+              if(log.period === '2교시') {
+                p2Status = log.status;
+                p2Class = (log.status === '추가출석') ? 'status-extra' : 'status-present';
+                // 서버에서 '제외' 혹은 'X'로 바로 상태를 보냈을 경우
+                if(log.status === '제외' || log.status === 'X') { p2Status = '제외'; p2Class = 'status-excluded'; }
+              }
             }
-            if(log.period === '2교시') {
-              p2Status = log.status;
-              p2Class = (log.status === '추가출석') ? 'status-extra' : 'status-present';
-            }
-          }
-        });
+          });
+        }
 
-        // 엑셀에서 X 표시된 학생은 무조건 '제외'로 덮어쓰기
-        if(student.p1_exc === 'X') { p1Status = '제외'; p1Class = 'status-excluded'; }
-        if(student.p2_exc === 'X') { p2Status = '제외'; p2Class = 'status-excluded'; }
+        // 2. 학생 명단 객체(엑셀 원본 데이터)에서 직접 X 표시 여부 다중 검사
+        // (서버가 어떤 컬럼명으로 보낼지 모르므로 모든 가능성 체크)
+        if(student.p1 === 'X' || student.p1_exc === 'X' || student['1교시'] === 'X' || student.p1 === '제외') {
+          p1Status = '제외'; p1Class = 'status-excluded';
+        }
+        if(student.p2 === 'X' || student.p2_exc === 'X' || student['2교시'] === 'X' || student.p2 === '제외') {
+          p2Status = '제외'; p2Class = 'status-excluded';
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -407,7 +310,6 @@
       });
     }
 
-    // 학생 명단 추가 통신
     function addDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const today = new Date();
@@ -440,7 +342,6 @@
         .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
 
-    // 학생 삭제
     function removeStudent(studentId) {
       const dateStr = document.getElementById('datePicker').value;
       if(!confirm(studentId + " 학생을 오늘 명단에서 삭제하시겠습니까?")) return;
@@ -459,7 +360,6 @@
         .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
 
-    // PDF 저장
     function savePdf() {
       const dateStr = document.getElementById('datePicker').value;
       if(!confirm(dateStr + " 출석부를 PDF로 저장하시겠습니까?\n(약 10~15초 정도 소요됩니다.)")) return;
