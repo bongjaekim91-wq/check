@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>서현고등학교 글마루 출결 대시보드</title>
   <style>
-    /* 전체 배경 및 폰트 설정 (사진과 동일한 연한 녹색 배경) */
+    /* 전체 배경 및 폰트 설정 */
     body {
       font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
       background-color: #f1f8ed;
@@ -251,7 +251,18 @@
         });
     }
 
-    // ★ '제외' 인식 로직 강력 보강 ★
+    // ★ 어떤 값이든 무조건 '제외'로 판단하는 함수 추가 ★
+    function isExcludedMark(val) {
+      if (val === undefined || val === null) return false;
+      const strVal = String(val).trim();
+      // 값이 아예 비어있거나, 시스템이 넣는 정상 출석 단어가 아닌 경우 전부 '제외' 표식으로 간주함
+      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석') {
+        return false;
+      }
+      // 위 조건에 해당하지 않는 문자, 기호, 대각선 등 모든 데이터는 true(제외) 반환
+      return true;
+    }
+
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       tbody.innerHTML = '';
@@ -265,32 +276,30 @@
         let p1Status = '미출석'; let p2Status = '미출석';
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
 
-        // 1. 로그 데이터에서 상태 확인
+        // 1. 로그 데이터 확인
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
               if(log.period === '1교시') {
                 p1Status = log.status; 
                 p1Class = (log.status === '추가출석') ? 'status-extra' : 'status-present';
-                // 서버에서 '제외' 혹은 'X'로 바로 상태를 보냈을 경우
-                if(log.status === '제외' || log.status === 'X') { p1Status = '제외'; p1Class = 'status-excluded'; }
+                // 혹시 서버 로그 자체에 이상한 값이 찍혔을 경우도 제외 처리
+                if(isExcludedMark(log.status)) { p1Status = '제외'; p1Class = 'status-excluded'; }
               }
               if(log.period === '2교시') {
                 p2Status = log.status;
                 p2Class = (log.status === '추가출석') ? 'status-extra' : 'status-present';
-                // 서버에서 '제외' 혹은 'X'로 바로 상태를 보냈을 경우
-                if(log.status === '제외' || log.status === 'X') { p2Status = '제외'; p2Class = 'status-excluded'; }
+                if(isExcludedMark(log.status)) { p2Status = '제외'; p2Class = 'status-excluded'; }
               }
             }
           });
         }
 
-        // 2. 학생 명단 객체(엑셀 원본 데이터)에서 직접 X 표시 여부 다중 검사
-        // (서버가 어떤 컬럼명으로 보낼지 모르므로 모든 가능성 체크)
-        if(student.p1 === 'X' || student.p1_exc === 'X' || student['1교시'] === 'X' || student.p1 === '제외') {
+        // 2. 명단(엑셀 업로드 데이터)에 빈칸이 아닌 어떤 기호/글자라도 입력되어 있다면 무조건 '제외'
+        if(isExcludedMark(student.p1) || isExcludedMark(student.p1_exc) || isExcludedMark(student['1교시'])) {
           p1Status = '제외'; p1Class = 'status-excluded';
         }
-        if(student.p2 === 'X' || student.p2_exc === 'X' || student['2교시'] === 'X' || student.p2 === '제외') {
+        if(isExcludedMark(student.p2) || isExcludedMark(student.p2_exc) || isExcludedMark(student['2교시'])) {
           p2Status = '제외'; p2Class = 'status-excluded';
         }
 
