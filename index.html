@@ -261,7 +261,6 @@
               
               let foundId = "", foundName = "", isP1Exc = "", isP2Exc = "";
               
-              // [A] 표의 헤더('학번', '이름')를 명확히 찾은 경우
               if (colId !== -1 && colName !== -1) {
                 const idVal = String(row[colId] || "").replace(/\s+/g, "");
                 const nameVal = String(row[colName] || "").trim();
@@ -270,7 +269,6 @@
                   foundId = idVal;
                   foundName = nameVal;
                   
-                  // ★ 요청사항 반영: 칸에 공백이 아닌 어떤 문자/기호라도 있으면 "제외"로 표시
                   if (colP1 !== -1) {
                     const p1Mark = String(row[colP1] || "").trim();
                     isP1Exc = (p1Mark !== "") ? "제외" : "";
@@ -285,7 +283,6 @@
                 }
               }
               
-              // [B] 헤더를 못 찾았을 경우 (보험용 무작위 패턴 탐색)
               if (!foundId) {
                 let idColIndex = -1;
                 for (let j = 0; j < row.length; j++) {
@@ -303,7 +300,6 @@
                     if (nextCell && !nextCell.includes("이름") && nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell)) {
                       foundName = nextCell;
                       
-                      // ★ 요청사항 반영: 칸에 공백이 아닌 어떤 문자/기호라도 있으면 "제외"로 표시
                       const p1Mark = String(row[k+1] || "").trim();
                       const p2Mark = String(row[k+2] || "").trim();
                       isP1Exc = (p1Mark !== "") ? "제외" : "";
@@ -379,20 +375,32 @@
       }, 100);
     }
     
+    // ★ 요일 순서 정렬이 추가된 PDF 다운로드 함수 ★
     async function generatePDF() {
       if (studentsData.length === 0) return alert("학생명단이 없습니다.");
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("p", "mm", "a4");
       const baseUrl = getBaseUrl();
       const uniqueMap = new Map();
+      
+      // 요일 우선순위 지정 (숫자가 작을수록 앞에 배치됨)
+      const dayOrder = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6, "일": 7 };
+      
       studentsData.forEach(s => {
         if (uniqueMap.has(s.id)) {
           const ex = uniqueMap.get(s.id);
-          if (!ex.day.includes(s.day)) ex.day += ", " + s.day;
+          // 기존에 저장된 요일과 새로운 요일을 배열로 만들고 중복을 제거한 뒤 정렬
+          let days = ex.day.split(", ").map(d => d.trim());
+          if (!days.includes(s.day)) {
+            days.push(s.day);
+          }
+          days.sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
+          ex.day = days.join(", ");
         } else {
           uniqueMap.set(s.id, { ...s });
         }
       });
+      
       const finalList = Array.from(uniqueMap.values())
         .sort((a,b) => String(a.id).localeCompare(String(b.id)));
         
