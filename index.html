@@ -79,7 +79,8 @@
       <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
     </div>
     
-    <a href="dashboard.html" class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;">📊 기간별 통계 및 출석부 인쇄</a>
+    <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;" onclick="location.href='dashboard.html'">📊 기간별 통계 및 출석부 인쇄</button>
+    
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
     <div id="student-list"></div>
   </div>
@@ -178,7 +179,7 @@
           ["", "", "", "", ""],
           ["학년", "학번", "이름", "1교시", "2교시"],
           ["1", "10114", "박하린", "", ""],
-          ["1", "10207", "노혜나", "", "X"]
+          ["1", "10207", "노혜나", "", "제외"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(rows);
         ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
@@ -211,12 +212,11 @@
     }
     
     // ==========================================
-    // 💡 궁극의 무적 패턴 인식 (보이지 않는 특수문자, 소수점, 서식 모두 돌파)
+    // 💡 최강 패턴 인식 스캔 (보이지 않는 여백/서식 무시 + '제외' 표시 기능 강화)
     // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (!file) return;
-      
       const reader = new FileReader();
       reader.onload = async function(ev) {
         try {
@@ -225,9 +225,9 @@
           
           wb.SheetNames.forEach(sn => {
             const sheet = wb.Sheets[sn];
-            const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
             if (json.length === 0) return;
-
+            
             // 1. 요일 추출
             let sheetDay = "공통";
             const dayMatch = sn.match(/[월화수목금토일]/);
@@ -238,15 +238,14 @@
               const titleMatch = firstRowText.match(/[월화수목금토일]/);
               if (titleMatch) sheetDay = titleMatch[0];
             }
-
-            // 2. 정확한 헤더 위치 찾기
-            let colId = -1, colName = -1, colP1 = -1, colP2 = -1;
             
-            for (let i = 0; i < Math.min(json.length, 15); i++) {
+            // 2. 정확한 데이터 열(Column) 위치 찾기
+            let colId = -1, colName = -1, colP1 = -1, colP2 = -1;
+            for (let i = 0; i < Math.min(json.length, 10); i++) {
               const row = json[i];
               if (!row) continue;
               for (let j = 0; j < row.length; j++) {
-                const val = String(row[j]).replace(/\s+/g, "");
+                const val = String(row[j] || "").replace(/\s+/g, "");
                 if (val.includes("학번")) colId = j;
                 if (val.includes("이름") || val.includes("성명")) colName = j;
                 if (val.includes("1교시")) colP1 = j;
@@ -254,68 +253,73 @@
               }
               if (colId !== -1 && colName !== -1) break; 
             }
-
-            // 3. 학생 데이터 추출 (무적 필터링)
+            
+            // 3. 학생 데이터 추출
             for (let i = 0; i < json.length; i++) {
               const row = json[i];
-              if (!row || row.length < 2) continue;
+              if (!row || row.length < 2) continue; 
               
               let foundId = "", foundName = "", isP1Exc = "", isP2Exc = "";
-
-              // [A] 표의 헤더('학번', '이름')를 찾은 경우
+              
+              // [A] 표의 헤더('학번', '이름')를 명확히 찾은 경우
               if (colId !== -1 && colName !== -1) {
-                // ★ 핵심 해결책: 소수점을 자르고 숫자 이외의 모든 특수문자를 강제 삭제
-                const idVal = String(row[colId]).split('.')[0].replace(/[^0-9]/g, ""); 
-                const nameVal = String(row[colName]).replace(/\s+/g, ""); 
+                const idVal = String(row[colId] || "").replace(/\s+/g, "");
+                const nameVal = String(row[colName] || "").trim();
                 
-                // 순수 숫자가 4~5자리이고, 이름이 2글자 이상이면 무조건 학생으로 인정
-                if (idVal.length >= 4 && idVal.length <= 5 && nameVal.length >= 2 && !nameVal.includes("이름")) {
+                if (idVal.match(/^\d{4,5}$/) && nameVal && !nameVal.includes("이름")) {
                   foundId = idVal;
                   foundName = nameVal;
                   
+                  // ★ 요청사항 반영: 칸에 공백이 아닌 어떤 문자/기호라도 있으면 "제외"로 표시
                   if (colP1 !== -1) {
-                    const p1Mark = String(row[colP1]).toUpperCase();
-                    if (p1Mark.includes("X") || p1Mark.includes("결") || p1Mark.includes("☒")) isP1Exc = "X";
+                    const p1Mark = String(row[colP1] || "").trim();
+                    isP1Exc = (p1Mark !== "") ? "제외" : "";
                   }
                   if (colP2 !== -1) {
-                    const p2Mark = String(row[colP2]).toUpperCase();
-                    if (p2Mark.includes("X") || p2Mark.includes("결") || p2Mark.includes("☒")) isP2Exc = "X";
+                    const p2Mark = String(row[colP2] || "").trim();
+                    isP2Exc = (p2Mark !== "") ? "제외" : "";
                   }
+                  
+                  studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
+                  continue;
                 }
               }
-
-              // [B] 보험용: 헤더를 못 찾았을 경우 좌우 셀을 뒤져서 강제 추출
+              
+              // [B] 헤더를 못 찾았을 경우 (보험용 무작위 패턴 탐색)
               if (!foundId) {
+                let idColIndex = -1;
                 for (let j = 0; j < row.length; j++) {
-                  const cellStr = String(row[j]).split('.')[0].replace(/[^0-9]/g, ""); // 순수 숫자만 추출
-                  if (cellStr.length >= 4 && cellStr.length <= 5) {
-                    for (let k = j + 1; k <= j + 2 && k < row.length; k++) {
-                      const nextCell = String(row[k]).replace(/\s+/g, "");
-                      if (nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell) && !nextCell.includes("이름")) {
-                        foundId = cellStr;
-                        foundName = nextCell;
-                        
-                        const p1Mark = String(row[k+1] || "").toUpperCase();
-                        const p2Mark = String(row[k+2] || "").toUpperCase();
-                        if (p1Mark.includes("X") || p1Mark.includes("결") || p1Mark.includes("☒")) isP1Exc = "X";
-                        if (p2Mark.includes("X") || p2Mark.includes("결") || p2Mark.includes("☒")) isP2Exc = "X";
-                        break;
-                      }
+                  const cellVal = String(row[j] || "").replace(/\s+/g, "");
+                  const idMatch = cellVal.match(/\d{4,5}/);
+                  if (idMatch && cellVal.length <= 6) { 
+                    foundId = idMatch[0];
+                    idColIndex = j;
+                    break;
+                  }
+                }
+                if (foundId && idColIndex !== -1) {
+                  for (let k = idColIndex + 1; k < row.length; k++) {
+                    const nextCell = String(row[k] || "").trim();
+                    if (nextCell && !nextCell.includes("이름") && nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell)) {
+                      foundName = nextCell;
+                      
+                      // ★ 요청사항 반영: 칸에 공백이 아닌 어떤 문자/기호라도 있으면 "제외"로 표시
+                      const p1Mark = String(row[k+1] || "").trim();
+                      const p2Mark = String(row[k+2] || "").trim();
+                      isP1Exc = (p1Mark !== "") ? "제외" : "";
+                      isP2Exc = (p2Mark !== "") ? "제외" : "";
+                      
+                      studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
+                      break;
                     }
                   }
-                  if (foundId) break;
                 }
-              }
-
-              // 학생을 정상적으로 찾았으면 명단에 추가
-              if (foundId && foundName) {
-                studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
               }
             }
           });
           
           if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다.\n(원인: 파일 내에서 학번/이름 패턴을 찾지 못했습니다.)");
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 학번과 이름 패턴을 전혀 찾지 못했습니다. 엑셀의 빈 셀 병합이나 서식을 확인해주세요.)");
             return;
           }
           
@@ -335,12 +339,11 @@
           alert("명단 업로드 중 오류가 발생했습니다: " + error.message);
         }
       };
-      
       reader.readAsArrayBuffer(file);
-      e.target.value = ''; 
+      e.target.value = '';
     });
     // ==========================================
-
+    
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
@@ -370,7 +373,6 @@
         ctx.fillText("감독교사 로그인 QR", 175, 50);
         ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
         ctx.font = "bold 14px Noto Sans KR";
-        // ★ 감독교사 QR 출력 시 하단에 표시되는 2교시 시간 변경
         ctx.fillText("1교시 18:00~19:40 / 2교시 20:40~21:40", 175, 380);
         pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
         pdf.save("감독교사_전용QR.pdf");
