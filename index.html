@@ -6,255 +6,445 @@
   <title>서현고등학교 꿈꾸는 글마루 출석관리 시스템</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    /* 전체 배경 및 폰트 설정 (이전 버전의 부드러운 톤) */
-    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
-    h1 { color: #2b7a2b; font-size: 1.4rem; margin: 0 0 5px 0; }
-    h2 { color: #555; font-size: 1.1rem; margin: 0 0 15px 0; font-weight: normal; }
+    :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
+    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:20px; display:flex; flex-direction:column; align-items:center; min-height:100vh; color:var(--text-main); }
+    .container { background:white; padding:40px; border-radius:20px; box-shadow:0 8px 30px rgba(85,139,47,.08); width:100%; max-width:400px; text-align:center; box-sizing:border-box; }
+    h1 { font-size:1.45em; line-height:1.4; }
+    .clock-container { background:#e8f5e9; padding:20px; border-radius:15px; margin-bottom:25px; border:1px solid #c8e6c9; }
+    .date-text { font-size:1.1em; color:#558b2f; font-weight:700; }
+    .time-text { font-size:2.4em; font-weight:900; color:#2e7d32; }
+    .notice { background:#fffde7; border:1px solid #fff59d; padding:12px; border-radius:10px; font-size:.92em; color:#795548; margin-bottom:15px; line-height:1.5; }
+    .login-form { display:flex; flex-direction:column; gap:15px; margin-top:20px; text-align:left; }
+    .input-group { display:flex; flex-direction:column; gap:5px; }
+    .input-group label { font-weight:bold; font-size:.9em; color:var(--primary-dark); }
+    input[type="text"], input[type="password"] { padding:15px; font-size:1em; border:2px solid #c8e6c9; border-radius:10px; outline:none; width:100%; box-sizing:border-box; }
+    .btn { padding:14px; font-size:1.03em; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; border:none; min-height:55px; margin-top:10px; transition:.2s; text-decoration:none; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
+    .btn-solid { background:var(--primary-color); color:white; }
+    .btn-outline { background:white; border:2px solid var(--primary-color); color:var(--primary-dark); }
+    .btn-danger { background:white; border:2px solid #e57373; color:#c62828; }
+    .btn-group { display:flex; gap:10px; margin-bottom:12px; }
+    .btn-group .btn { flex:1; margin-top:0; }
+    .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
     
-    .card { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px; width: 100%; max-width: 550px; text-align: center; box-sizing: border-box; }
-    .notice { background: #fffde7; border: 1px solid #f2e3a8; color: #666; padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 15px; }
+    #student-list { margin-top:15px; padding:15px; border-radius:10px; background:#e8f5e9; display:none; }
     
-    /* 입력창 디자인 (컴팩트하게) */
-    input[type="text"], input[type="password"], input[type="date"] { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; text-align: center; color: #333; }
-    
-    /* 레이아웃 그룹화 (한 화면에 들어오도록) */
-    .row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-    .row > * { flex: 1; }
-    
-    .label-text { font-size: 0.8rem; color: #777; font-weight: bold; margin-bottom: 3px; display: block; text-align: left; }
-    .section-divider { border-top: 1px dashed #e0e0e0; margin: 15px 0; }
-
-    /* 은은한 파스텔톤 버튼 디자인 */
-    .btn { display: inline-block; width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; color: #444; text-decoration: none; box-sizing: border-box; transition: filter 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .btn:hover { filter: brightness(0.95); }
-    
-    .btn-green-light { background-color: #e8f5e9; } /* 양식/명단 다운 */
-    .btn-green { background-color: #c8e6c9; color: #2b7a2b; } /* 신청 명단 업로드 */
-    .btn-red { background-color: #ffcdd2; color: #c62828; } /* 명단 초기화 */
-    .btn-blue { background-color: #bbdefb; color: #1565c0; } /* 감독교사 QR */
-    .btn-purple { background-color: #e1bee7; color: #6a1b9a; } /* 대시보드/통계 */
-    .btn-orange { background-color: #ffe0b2; color: #e65100; } /* 학생 QR 생성 (구분 강조) */
-    .btn-gray { background-color: #f5f5f5; color: #666; } /* 로그아웃 */
-
-    .file-upload-wrapper { position: relative; overflow: hidden; width: 100%; }
-    .file-upload-wrapper input[type="file"] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; }
-    
-    #qr-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; max-height: 200px; overflow-y: auto; }
-    .qr-card { border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; background: #fff; width: 110px; }
-    .qr-card img { margin: 0 auto 5px auto; display: block; width: 80px; height: 80px; }
-    .qr-card p { margin: 0; font-size: 0.8rem; font-weight: bold; color: #333; }
-    
-    .footer { margin-top: 15px; color: #999; font-size: 0.75rem; }
-    .hidden { display: none; }
-    
-    /* 인쇄 시 QR코드만 보이게 */
-    @media print {
-      body * { visibility: hidden; }
-      #qr-container, #qr-container * { visibility: visible; }
-      #qr-container { position: absolute; left: 0; top: 0; width: 100%; max-height: none; overflow: visible; }
-    }
+    .footer { margin-top:30px; font-size:.85em; color:#7f8c8d; text-align:center; }
   </style>
 </head>
 <body>
-  
-  <!-- 🔐 로그인 화면 (이전 버전 복구) -->
-  <div class="card" id="login-screen">
-    <h1>서현고등학교</h1>
-    <h2>꿈꾸는 글마루 출석관리 시스템</h2>
+  <div class="container" id="login-screen">
+    <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
     <div class="notice">
-      <b>출석 인정 시간</b><br>1교시 18:00~19:40 / 2교시 19:41~21:40
+      출석 인정 시간<br>
+      1교시 18:00~19:40 / 2교시 20:40~21:40
     </div>
-    <input type="text" id="admin-id" placeholder="아이디">
-    <input type="password" id="admin-pw" placeholder="비밀번호">
-    <button class="btn btn-green" onclick="login()">로그인</button>
+    <div class="login-form">
+      <div class="input-group">
+        <label>아이디</label>
+        <input type="text" id="admin-id" placeholder="당일 감독자 이름 또는 admin" autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label>비밀번호</label>
+        <input type="password" id="admin-pw" placeholder="비밀번호">
+      </div>
+      <button class="btn btn-solid" onclick="checkLogin()">로그인</button>
+    </div>
   </div>
-
-  <!-- ⚙️ 메인 관리 화면 (스크롤 없는 콤팩트 레이아웃) -->
-  <div class="card hidden" id="main-screen">
-    <h1 style="font-size: 1.2rem;">출석관리 시스템</h1>
-    <div class="notice" style="margin-bottom: 10px; padding: 8px;">
-      출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40
+  <div class="container" id="main-screen" style="display:none; max-width:500px;">
+    <div class="clock-container">
+      <div id="current-date" class="date-text"></div>
+      <div id="current-time" class="time-text"></div>
     </div>
+    <div class="notice">
+      출석 인정 시간<br>
+      1교시 18:00~19:40 / 2교시 20:40~21:40
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
+      <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
+    </div>
+    <div class="btn-group">
+      <label class="btn btn-outline" for="excel-upload">📤 명단 업로드</label>
+      <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none;">
+      <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 QR</button>
+      <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
+    </div>
+    <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;" onclick="location.href='dashboard.html'">📊 기간별 통계 및 출석부 인쇄</button>
+    <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
     
-    <!-- 1. 양식 및 다운로드 -->
-    <div class="row">
-      <a href="https://docs.google.com/spreadsheets/d/1B0q88z322iN-wF0b5O4D-wL_8_23x0F0E3Z_U809U7s/copy" target="_blank" class="btn btn-green-light">📥 양식 다운로드</a>
-      <button class="btn btn-green-light" onclick="downloadCurrentStudents()">📋 현재 명단 다운로드</button>
-    </div>
-
-    <!-- 2. 기간 설정 및 업로드 -->
-    <div style="text-align: left;">
-      <span class="label-text">📅 운영 기간 설정 및 업로드</span>
-    </div>
-    <div class="row">
-      <input type="date" id="uploadStartDate" title="시작일">
-      <span style="flex: 0.1; color:#999;">~</span>
-      <input type="date" id="uploadEndDate" title="종료일">
-    </div>
-    <div class="file-upload-wrapper">
-      <button class="btn btn-green">📤 신청 명단 업로드</button>
-      <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
-    </div>
-    <p id="upload-status" style="color:#2b7a2b; font-weight:bold; font-size:0.85rem; margin:5px 0 0 0;"></p>
-
-    <!-- 3. 명단 초기화 -->
-    <div class="row" style="margin-top: 10px;">
-      <button class="btn btn-red" onclick="resetRoster()">🗑️ 명단 초기화</button>
-    </div>
-    
-    <div class="section-divider"></div>
-
-    <!-- 4. 바로가기 버튼 -->
-    <div class="row">
-      <a href="scan.html" target="_blank" class="btn btn-blue">👨‍🏫 감독교사 QR 다운로드</a>
-      <a href="dashboard.html" target="_blank" class="btn btn-purple">📊 기간별 통계 및 출석부 인쇄</a>
-    </div>
-    
-    <!-- 5. 학생 QR 코드 생성 -->
-    <div style="text-align: left;">
-      <span class="label-text">📷 조회 기준일 설정 및 QR 생성</span>
-    </div>
-    <div class="row">
-      <input type="date" id="qrTargetDate" style="flex: 1; margin: 0;">
-      <button class="btn btn-orange" style="flex: 1.5; margin: 0;" onclick="loadStudentsForQR()">🖨️ 학생 QR 코드 생성</button>
-    </div>
-    
-    <button class="btn btn-gray hidden" id="print-qr-btn" onclick="window.print()" style="margin-top: 10px;">생성된 QR 코드 인쇄하기</button>
-    <div id="qr-container"></div>
-    
-    <div class="section-divider"></div>
-    <button class="btn btn-gray" onclick="logout()" style="width: 50%;">로그아웃</button>
-    
-    <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
+    <!-- 요약 정보(로드 건수, 최근 업로드 시간, 요일별 통계)가 표시될 영역 -->
+    <div id="student-list"></div>
   </div>
-
+  <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    let studentsData = [];
     
     window.onload = function() {
-      const today = new Date();
-      const offset = today.getTimezoneOffset() * 60000;
-      const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
-      
-      document.getElementById('uploadStartDate').value = localToday;
-      document.getElementById('qrTargetDate').value = localToday;
-
-      if(sessionStorage.getItem("adminLogged")) {
-        document.getElementById("login-screen").classList.add("hidden");
-        document.getElementById("main-screen").classList.remove("hidden");
+      if (sessionStorage.getItem("userRole")) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("main-screen").style.display = "block";
+        applyRoleUI(sessionStorage.getItem("userRole"));
+        setInterval(updateClock, 1000);
+        updateClock();
+        loadExistingStudents();
       }
     };
-
-    function login() {
-      if (document.getElementById("admin-pw").value === "1234") {
-        sessionStorage.setItem("adminLogged", "true");
-        document.getElementById("login-screen").classList.add("hidden");
-        document.getElementById("main-screen").classList.remove("hidden");
-      } else { alert("비밀번호가 틀렸습니다."); }
+    
+    function updateClock() {
+      const now = new Date();
+      const d = ["일","월","화","수","목","금","토"];
+      document.getElementById("current-date").innerText =
+        `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${d[now.getDay()]}요일)`;
+      document.getElementById("current-time").innerText =
+        now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
     }
-
-    function logout() {
-      sessionStorage.removeItem("adminLogged");
+    
+    function applyRoleUI(role) {
+      const delBtn = document.getElementById("delete-all-btn");
+      if (role === "admin") {
+        delBtn.disabled = false;
+        delBtn.classList.remove("btn-disabled");
+      } else {
+        delBtn.disabled = true;
+        delBtn.classList.add("btn-disabled");
+        delBtn.innerText = "🚫 관리자전용";
+      }
+    }
+    
+    function checkLogin() {
+      const id = document.getElementById("admin-id").value.trim();
+      const pw = document.getElementById("admin-pw").value.trim();
+      if (!id) return alert("아이디(감독자 이름)를 입력해주세요.");
+      if (!pw) return alert("비밀번호를 입력해주세요.");
+      if (pw !== "1234") return alert("비밀번호가 올바르지 않습니다.");
+      const role = id === "admin" ? "admin" : "supervisor";
+      sessionStorage.setItem("userRole", role);
+      sessionStorage.setItem("teacherName", id);
       location.reload();
     }
+    
+    function logout() {
+      if (!confirm("로그아웃하시겠습니까?")) return;
+      sessionStorage.removeItem("userRole");
+      sessionStorage.removeItem("teacherName");
+      location.reload();
+    }
+    
+    // 학생 명단 로드 및 요일별 인원 통계 요약 표시
+    async function loadExistingStudents() {
+      try {
+        const res = await fetch(`${API_URL}?action=getStudents`);
+        const data = await res.json();
+        studentsData = Array.isArray(data) ? data : (data.list || []);
+        
+        if (studentsData.length > 0) {
+          // 1. 요일별 인원 카운트 계산
+          const dayCounts = { "월": 0, "화": 0, "수": 0, "목": 0, "금": 0, "토": 0, "일": 0 };
+          studentsData.forEach(s => {
+            if (s.day && dayCounts[s.day] !== undefined) {
+              dayCounts[s.day]++;
+            }
+          });
 
-    function handleFileUpload(event) {
-      const file = event.target.files[0];
+          // 2. 카운트된 결과 텍스트 생성 (예: 월: 30명, 화: 25명...)
+          const daysOrder = ["월", "화", "수", "목", "금", "토", "일"];
+          let summaryParts = [];
+          daysOrder.forEach(day => {
+            if (dayCounts[day] > 0) {
+              summaryParts.push(`<b>${day}</b>: ${dayCounts[day]}명`);
+            }
+          });
+          const daySummaryText = summaryParts.length > 0 ? summaryParts.join(' &nbsp;|&nbsp; ') : '요일 정보 없음';
+
+          // 3. 화면 업데이트
+          document.getElementById("student-list").innerHTML =
+            `<div style="font-weight:bold; font-size:1.1em; color:var(--text-main); margin-bottom:5px;">
+              ✅ ${studentsData.length}건 로드 완료
+             </div>
+             <div style="font-size:0.9em; color:#555; margin-bottom:10px;">
+              최근 업로드: ${data.lastUploadTime || "기록 없음"}
+             </div>
+             <div style="background:#fff; padding:10px; border-radius:8px; font-size:0.95em; color:var(--primary-dark); border:1px solid #c8e6c9;">
+               ${daySummaryText}
+             </div>`;
+             
+          document.getElementById("student-list").style.display = "block";
+          document.getElementById("pdf-btn").disabled = false;
+        }
+      } catch (e) {
+        alert("학생명단을 불러오지 못했습니다.");
+      }
+    }
+
+    async function deleteExistingRoster() {
+      if (sessionStorage.getItem("userRole") !== "admin") {
+        return alert("관리자 권한이 없습니다.");
+      }
+      if (!confirm("학생명단만 초기화됩니다. 기존 출결기록은 유지됩니다. 계속하시겠습니까?")) return;
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "resetRosterOnly" })
+      });
+      location.reload();
+    }
+    
+    function downloadTemplate() {
+      const wb = XLSX.utils.book_new();
+      ["월","화","수","목","금"].forEach(day => {
+        const rows = [
+          [`26 꿈꾸는 글마루 명단(${day}요일)`, "", "", "", ""],
+          ["", "", "", "", ""],
+          ["학년", "학번", "이름", "1교시", "2교시"],
+          ["1", "10114", "박하린", "", ""],
+          ["1", "10207", "노혜나", "", "제외"]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+        XLSX.utils.book_append_sheet(wb, ws, day);
+      });
+      XLSX.writeFile(wb, "글마루_업로드_양식.xlsx");
+    }
+    
+    function downloadExistingRoster() {
+      if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
+      const wb = XLSX.utils.book_new();
+      ["월","화","수","목","금"].forEach(day => {
+        const wsData = [
+          [`26 꿈꾸는 글마루 명단(${day}요일)`, "", "", "", ""],
+          ["", "", "", "", ""],
+          ["학년", "학번", "이름", "1교시", "2교시"]
+        ];
+        studentsData
+          .filter(s => s.day === day)
+          .sort((a,b) => String(a.id).localeCompare(String(b.id)))
+          .forEach(s => {
+            const grade = String(s.id).substring(0, 1);
+            wsData.push([grade, s.id, s.name, s.p1_exc || "", s.p2_exc || ""]);
+          });
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+        XLSX.utils.book_append_sheet(wb, ws, day);
+      });
+      XLSX.writeFile(wb, "현재_출석명단.xlsx");
+    }
+    
+    // ==========================================
+    // 💡 최강 패턴 인식 스캔
+    // ==========================================
+    document.getElementById("excel-upload").addEventListener("change", function(e) {
+      const file = e.target.files[0];
       if (!file) return;
-
-      const startDate = document.getElementById("uploadStartDate").value;
-      const endDate = document.getElementById("uploadEndDate").value;
-      
-      if (!startDate || !endDate) { alert("명단의 [시작일]과 [종료일]을 선택해주세요."); event.target.value = ''; return; }
-      if (startDate > endDate) { alert("시작일이 종료일보다 늦을 수 없습니다."); event.target.value = ''; return; }
-
       const reader = new FileReader();
-      const statusText = document.getElementById("upload-status");
-      statusText.innerText = "엑셀 파일 분석 중... ⏳";
-      
-      reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
-        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        
-        let students = [];
-        jsonData.forEach(row => {
-          let id = row["학번"]; let name = row["이름"]; let day = row["요일"];
-          if (id && name && day) {
-            students.push({
-              id: String(id).trim(), name: String(name).trim(), day: String(day).trim(),
-              p1_exc: String(row["1교시제외"] || "").trim(), p2_exc: String(row["2교시제외"] || "").trim()
-            });
+      reader.onload = async function(ev) {
+        try {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
+          studentsData = [];
+          wb.SheetNames.forEach(sn => {
+            const sheet = wb.Sheets[sn];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (json.length === 0) return;
+            
+            let sheetDay = "공통";
+            const dayMatch = sn.match(/[월화수목금토일]/);
+            if (dayMatch) {
+              sheetDay = dayMatch[0];
+            } else {
+              const firstRowText = json.length > 0 ? String(json[0].join("")) : "";
+              const titleMatch = firstRowText.match(/[월화수목금토일]/);
+              if (titleMatch) sheetDay = titleMatch[0];
+            }
+            
+            let colId = -1, colName = -1, colP1 = -1, colP2 = -1;
+            for (let i = 0; i < Math.min(json.length, 10); i++) {
+              const row = json[i];
+              if (!row) continue;
+              for (let j = 0; j < row.length; j++) {
+                const val = String(row[j] || "").replace(/\s+/g, "");
+                if (val.includes("학번")) colId = j;
+                if (val.includes("이름") || val.includes("성명")) colName = j;
+                if (val.includes("1교시")) colP1 = j;
+                if (val.includes("2교시")) colP2 = j;
+              }
+              if (colId !== -1 && colName !== -1) break;
+            }
+            
+            for (let i = 0; i < json.length; i++) {
+              const row = json[i];
+              if (!row || row.length < 2) continue;
+              let foundId = "", foundName = "", isP1Exc = "", isP2Exc = "";
+              
+              if (colId !== -1 && colName !== -1) {
+                const idVal = String(row[colId] || "").replace(/\s+/g, "");
+                const nameVal = String(row[colName] || "").trim();
+                if (idVal.match(/^\d{4,5}$/) && nameVal && !nameVal.includes("이름")) {
+                  foundId = idVal;
+                  foundName = nameVal;
+                  if (colP1 !== -1) {
+                    const p1Mark = String(row[colP1] || "").trim();
+                    isP1Exc = (p1Mark !== "") ? "제외" : ""; 
+                  }
+                  if (colP2 !== -1) {
+                    const p2Mark = String(row[colP2] || "").trim();
+                    isP2Exc = (p2Mark !== "") ? "제외" : "";
+                  }
+                  studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
+                  continue;
+                }
+              }
+              
+              if (!foundId) {
+                let idColIndex = -1;
+                for (let j = 0; j < row.length; j++) {
+                  const cellVal = String(row[j] || "").replace(/\s+/g, "");
+                  const idMatch = cellVal.match(/\d{4,5}/);
+                  if (idMatch && cellVal.length <= 6) {
+                    foundId = idMatch[0];
+                    idColIndex = j;
+                    break;
+                  }
+                }
+                if (foundId && idColIndex !== -1) {
+                  for (let k = idColIndex + 1; k < row.length; k++) {
+                    const nextCell = String(row[k] || "").trim();
+                    if (nextCell && !nextCell.includes("이름") && nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell)) {
+                      foundName = nextCell;
+                      const p1Mark = String(row[k+1] || "").trim();
+                      const p2Mark = String(row[k+2] || "").trim();
+                      isP1Exc = (p1Mark !== "") ? "제외" : "";
+                      isP2Exc = (p2Mark !== "") ? "제외" : "";
+                      studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          });
+          if (studentsData.length === 0) {
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 학번과 이름 패턴을 전혀 찾지 못했습니다. 엑셀의 빈 셀 병합이나 서식을 확인해주세요.)");
+            return;
           }
-        });
-        
-        if (students.length === 0) { alert("학생 데이터가 없습니다."); statusText.innerText = ""; event.target.value = ''; return; }
-        if(!confirm(`총 ${students.length}명을 [${startDate} ~ ${endDate}] 기간으로 업로드하시겠습니까?`)) { statusText.innerText = ""; event.target.value = ''; return; }
-
-        statusText.innerText = "서버 전송 중... 🚀";
-        
-        fetch(API_URL, {
-          method: "POST", headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ action: "uploadStudents", startDate: startDate, endDate: endDate, students: students })
-        })
-        .then(res => res.json())
-        .then(res => {
-          if (res.success) { statusText.innerText = "✅ 업로드 완료!"; setTimeout(() => { statusText.innerText = ""; }, 3000); } 
-          else { alert("실패: " + res.message); statusText.innerText = "❌ 업로드 실패"; }
-          event.target.value = '';
-        }).catch(err => { alert("오류"); statusText.innerText = "❌ 오류 발생"; event.target.value = ''; });
+          document.getElementById("student-list").style.display = "block";
+          document.getElementById("student-list").innerHTML = `⏳ 데이터를 서버로 전송 중입니다... (${studentsData.length}명)`;
+          await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "uploadStudents",
+              students: studentsData
+            })
+          });
+          alert(`${studentsData.length}건의 명단을 정상적으로 업로드했습니다.`);
+          location.reload();
+        } catch (error) {
+          alert("명단 업로드 중 오류가 발생했습니다: " + error.message);
+        }
       };
       reader.readAsArrayBuffer(file);
+      e.target.value = '';
+    });
+    
+    // ==========================================
+    function getBaseUrl() {
+      return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
-
-    function downloadCurrentStudents() {
-      const targetDate = document.getElementById("qrTargetDate").value;
-      if(!targetDate) { alert("조회 기준일을 선택해주세요."); return; }
-      
-      document.getElementById("upload-status").innerText = "명단 다운로드 중... ⏳";
-      fetch(`${API_URL}?action=getStudents&date=${targetDate}`)
-        .then(res => res.json())
-        .then(res => {
-          document.getElementById("upload-status").innerText = "";
-          if (!res.list || res.list.length === 0) { alert("명단이 없습니다."); return; }
-          const wsData = [["학번", "이름", "요일", "1교시제외", "2교시제외"]];
-          res.list.forEach(s => { wsData.push([s.id, s.name, s.day, s.p1_exc, s.p2_exc]); });
-          const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), "학생명단");
-          XLSX.writeFile(wb, `글마루명단_${targetDate}기준.xlsx`);
-        }).catch(() => { document.getElementById("upload-status").innerText = ""; alert("다운로드 오류"); });
+    
+    function downloadTeacherQR() {
+      const baseUrl = getBaseUrl();
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const qrDiv = document.createElement("div");
+      new QRCode(qrDiv, {
+        text: `${baseUrl}scan.html`,
+        width: 256,
+        height: 256,
+        colorDark: "#1976d2",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      setTimeout(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 350;
+        canvas.height = 420;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 350, 420);
+        ctx.fillStyle = "#1976d2";
+        ctx.font = "bold 24px Noto Sans KR";
+        ctx.textAlign = "center";
+        ctx.fillText("감독교사 로그인 QR", 175, 50);
+        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
+        ctx.font = "bold 14px Noto Sans KR";
+        ctx.fillText("1교시 18:00~19:40 / 2교시 20:40~21:40", 175, 380);
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
+        pdf.save("감독교사_전용QR.pdf");
+      }, 100);
     }
-
-    function resetRoster() {
-      if(!confirm("⚠️ 전체 명단이 삭제됩니다. 초기화하시겠습니까?")) return;
-      document.getElementById("upload-status").innerText = "초기화 중... ⏳";
-      fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "resetRosterOnly" }) })
-      .then(res => res.json())
-      .then(res => { alert(res.success ? "초기화되었습니다." : "실패: " + res.message); document.getElementById("upload-status").innerText = ""; });
-    }
-
-    function loadStudentsForQR() {
-      const targetDate = document.getElementById("qrTargetDate").value;
-      if(!targetDate) { alert("조회 기준일을 선택해주세요."); return; }
-
-      document.getElementById("upload-status").innerText = "QR 생성 중... ⏳";
-      fetch(`${API_URL}?action=getStudents&date=${targetDate}`)
-        .then(res => res.json())
-        .then(res => {
-          document.getElementById("upload-status").innerText = "";
-          const container = document.getElementById("qr-container"); container.innerHTML = "";
-          if (!res.list || res.list.length === 0) { alert(`해당 날짜(${targetDate})에 데이터가 없습니다.`); document.getElementById("print-qr-btn").classList.add("hidden"); return; }
-          
-          let uniqueStudents = {}; res.list.forEach(s => { uniqueStudents[s.id] = s.name; });
-          Object.keys(uniqueStudents).forEach(id => {
-            const card = document.createElement("div"); card.className = "qr-card";
-            const qrDiv = document.createElement("div");
-            new QRCode(qrDiv, { text: `https://seohyun.hs.kr?id=${id}`, width: 80, height: 80 });
-            const p = document.createElement("p"); p.innerText = `${uniqueStudents[id]}\n(${id})`;
-            card.appendChild(qrDiv); card.appendChild(p); container.appendChild(card);
-          });
-          document.getElementById("print-qr-btn").classList.remove("hidden");
-        }).catch(() => { document.getElementById("upload-status").innerText = ""; alert("오류 발생"); });
+    
+    async function generatePDF() {
+      if (studentsData.length === 0) return alert("학생명단이 없습니다.");
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const baseUrl = getBaseUrl();
+      const uniqueMap = new Map();
+      const dayOrder = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6, "일": 7 };
+      studentsData.forEach(s => {
+        if (uniqueMap.has(s.id)) {
+          const ex = uniqueMap.get(s.id);
+          let days = ex.day.split(", ").map(d => d.trim());
+          if (!days.includes(s.day)) {
+            days.push(s.day);
+          }
+          days.sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
+          ex.day = days.join(", ");
+        } else {
+          uniqueMap.set(s.id, { ...s });
+        }
+      });
+      const finalList = Array.from(uniqueMap.values())
+        .sort((a,b) => String(a.id).localeCompare(String(b.id)));
+      for (let i = 0; i < finalList.length; i++) {
+        const s = finalList[i];
+        const qrDiv = document.createElement("div");
+        new QRCode(qrDiv, {
+          text: `${baseUrl}scan.html?id=${encodeURIComponent(s.id)}`,
+          width: 256,
+          height: 256,
+          colorDark: "#33691e",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        await new Promise(r => setTimeout(r, 40));
+        const canvas = document.createElement("canvas");
+        canvas.width = 256;
+        canvas.height = 340;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 256, 340);
+        ctx.drawImage(qrDiv.querySelector("canvas"), 0, 0);
+        ctx.fillStyle = "#33691e";
+        ctx.textAlign = "center";
+        ctx.font = "bold 25px Noto Sans KR";
+        ctx.fillText(`${s.id} ${s.name}`, 128, 285);
+        ctx.font = "bold 18px Noto Sans KR";
+        ctx.fillText(`(${s.day})`, 128, 315);
+        pdf.addImage(
+          canvas.toDataURL("image/png"),
+          "PNG",
+          20 + (i % 3) * 60,
+          20 + Math.floor((i % 9) / 3) * 82,
+          45,
+          60
+        );
+        if ((i + 1) % 9 === 0 && i < finalList.length - 1) {
+          pdf.addPage();
+        }
+      }
+      pdf.save("학생_QR명단.pdf");
     }
   </script>
 </body>
