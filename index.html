@@ -80,7 +80,7 @@
   <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
   
   <script>
-    // 본인의 Apps Script 웹 앱 URL로 변경하세요.
+    // 본인의 Apps Script 웹 앱 URL로 반드시 변경하세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let studentsData = [];
     
@@ -163,25 +163,18 @@
       location.reload();
     }
     
-    // ==========================================
-    // 💡 양식 다운로드 로직 변경 (요청하신 양식에 맞춤)
-    // ==========================================
     function downloadTemplate() {
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
         const rows = [
-          [`26 꿈꾸는 글마루 명단(${day}요일)`, "", "", "", ""], // 1행: 제목 (병합용)
-          ["", "", "", "", ""], // 2행: 빈 줄
-          ["학년", "학번", "이름", "1교시", "2교시"], // 3행: 헤더
-          ["1", "10114", "박하린", "", ""], // 4행: 예시 데이터
+          [`26 꿈꾸는 글마루 명단(${day}요일)`, "", "", "", ""], 
+          ["", "", "", "", ""],
+          ["학년", "학번", "이름", "1교시", "2교시"],
+          ["1", "10114", "박하린", "", ""],
           ["1", "10207", "노혜나", "", "X"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        
-        // 1행(A1~E1) 셀 병합 처리
         ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
-        
-        // 시트 추가 (이름: 월, 화, 수, 목, 금)
         XLSX.utils.book_append_sheet(wb, ws, day);
       });
       XLSX.writeFile(wb, "글마루_업로드_양식.xlsx");
@@ -196,21 +189,13 @@
           ["", "", "", "", ""],
           ["학년", "학번", "이름", "1교시", "2교시"]
         ];
-        
         studentsData
           .filter(s => s.day === day)
           .sort((a,b) => String(a.id).localeCompare(String(b.id)))
           .forEach(s => {
-            const grade = String(s.id).substring(0, 1); // 학번의 첫 글자를 학년으로 추출
-            wsData.push([
-              grade,
-              s.id,
-              s.name,
-              s.p1_exc || "",
-              s.p2_exc || ""
-            ]);
+            const grade = String(s.id).substring(0, 1);
+            wsData.push([grade, s.id, s.name, s.p1_exc || "", s.p2_exc || ""]);
           });
-          
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
         XLSX.utils.book_append_sheet(wb, ws, day);
@@ -219,7 +204,7 @@
     }
 
     // ==========================================
-    // 💡 엑셀 업로드 로직 (시트 이름 및 학번, 이름 열 자동 인식)
+    // 💡 최종 개선: 헤더 무시 '패턴 인식 스캔' 방식 도입
     // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
@@ -236,71 +221,56 @@
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
             if (json.length === 0) return;
 
-            // 1. 시트 이름에서 요일 추출 (월, 화, 수, 목, 금)
+            // 1. 요일 추출 (시트 탭 이름에서 월,화,수,목,금 추출)
             let sheetDay = "";
             const dayMatch = sn.match(/[월화수목금토일]/);
             if (dayMatch) {
               sheetDay = dayMatch[0];
             } else {
-              return; // 요일이 안 적힌 시트는 건너뜀
+              return; // 요일이 안 적힌 시트는 무시
             }
 
-            // 2. 헤더(열) 위치 찾기 ('학번', '이름', '1교시', '2교시')
-            let idIdx = -1, nameIdx = -1, p1Idx = -1, p2Idx = -1;
-            
-            // 파일 상단 10줄 내에서 헤더를 스캔
-            for (let i = 0; i < Math.min(json.length, 10); i++) {
+            // 2. 파일의 모든 칸을 뒤지면서 '학번(숫자)' 패턴 찾기
+            for (let i = 0; i < json.length; i++) {
               const row = json[i];
-              if (!row) continue;
+              if (!row || row.length < 2) continue; // 데이터가 없는 빈 줄은 무시
               
               for (let j = 0; j < row.length; j++) {
-                const val = String(row[j] || "").replace(/\s+/g, ""); 
-                if (val.includes("학번")) idIdx = j;
-                if (val === "이름" || val.includes("성명")) nameIdx = j;
-                if (val.includes("1교시")) p1Idx = j;
-                if (val.includes("2교시")) p2Idx = j;
-              }
-              // 학번과 이름 열을 찾으면 스캔 종료
-              if (idIdx !== -1 && nameIdx !== -1) break;
-            }
-            
-            // 3. 학생 데이터 추출
-            if (idIdx !== -1 && nameIdx !== -1) {
-              for (let i = 0; i < json.length; i++) {
-                const row = json[i];
-                if (!row || row.length < 2) continue; // 빈 줄 무시
+                const cellVal = String(row[j] || "").replace(/\s+/g, ""); // 공백 제거
                 
-                const idStr = String(row[idIdx] || "").trim();
-                const nameStr = String(row[nameIdx] || "").trim();
-                
-                // 헤더 줄이거나 학번 칸에 숫자가 없으면 건너뜀
-                if (idStr.includes("학번") || nameStr.includes("이름") || !/\d/.test(idStr)) continue;
-                
-                // 학번에서 숫자만 추출
-                const cleanId = idStr.replace(/[^0-9]/g, ""); 
-                
-                if (cleanId && nameStr) {
-                  const p1Mark = p1Idx !== -1 ? String(row[p1Idx] || "").trim().toUpperCase() : "";
-                  const p2Mark = p2Idx !== -1 ? String(row[p2Idx] || "").trim().toUpperCase() : "";
+                // 해당 셀이 4자리 또는 5자리 '숫자'로만 이루어져 있는지 확인 (예: 10114)
+                if (/^\d{4,5}$/.test(cellVal)) {
+                  const studentId = cellVal;
+                  const studentName = String(row[j+1] || "").trim(); // 바로 옆 칸을 이름으로 간주
                   
-                  // 'X', 'x', '결', 'O', '☒' 등 표시가 있으면 결석(X)으로 처리
-                  const isP1Exc = (p1Mark === "X" || p1Mark === "O" || p1Mark.includes("결") || p1Mark === "☒") ? "X" : "";
-                  const isP2Exc = (p2Mark === "X" || p2Mark === "O" || p2Mark.includes("결") || p2Mark === "☒") ? "X" : "";
-                  
-                  studentsData.push({
-                    id: cleanId,
-                    name: nameStr,
-                    day: sheetDay, 
-                    p1_exc: isP1Exc,
-                    p2_exc: isP2Exc
-                  });
+                  // 이름 칸에 데이터가 있고, '이름'이라는 제목 문구가 아니며 숫자만 있는게 아니라면 학생으로 확정
+                  if (studentName && !studentName.includes("이름") && !studentName.includes("성명") && !/^\d+$/.test(studentName)) {
+                    
+                    // 이름 바로 다음 칸들을 각각 1교시, 2교시로 간주
+                    const p1Mark = String(row[j+2] || "").trim().toUpperCase();
+                    const p2Mark = String(row[j+3] || "").trim().toUpperCase();
+                    
+                    // 결석 기호 인식 (X, 결, ☒ 등)
+                    const isP1Exc = (p1Mark.includes("X") || p1Mark.includes("결") || p1Mark.includes("☒")) ? "X" : "";
+                    const isP2Exc = (p2Mark.includes("X") || p2Mark.includes("결") || p2Mark.includes("☒")) ? "X" : "";
+                    
+                    studentsData.push({
+                      id: studentId,
+                      name: studentName,
+                      day: sheetDay,
+                      p1_exc: isP1Exc,
+                      p2_exc: isP2Exc
+                    });
+                    
+                    break; // 이 줄에서는 학생을 찾았으므로 다음 줄(row)로 넘어감
+                  }
                 }
               }
             }
           });
           
           if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 '학번'과 '이름' 열을 찾지 못했거나 양식이 비어있습니다.)");
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 '4~5자리 숫자(학번)'와 '이름' 패턴을 찾지 못했습니다.)");
             return;
           }
           
