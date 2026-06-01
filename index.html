@@ -203,41 +203,56 @@
         try {
           const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
           studentsData = [];
+          
           wb.SheetNames.forEach(sn => {
             // 1. 시트 이름에서 요일 추출 ("월요일" -> "월")
             const dayMatch = sn.match(/[월화수목금토일]/);
             const dayFromSheet = dayMatch ? dayMatch[0] : "";
-            // 요일이 적힌 시트가 아니면 건너뜀
-            if (!dayFromSheet) return;
+            
             const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1 });
-            // 2. 4번째 행(인덱스 3)부터 데이터 추출하도록 수정
-            for (let i = 3; i < json.length; i++) {
+            
+            // 2. 고정된 줄(4번째)부터 읽지 않고 0부터 스캔하되,
+            // 정규식을 이용해 B열이 숫자인 '진짜 학생 데이터'만 필터링합니다.
+            // (빈 줄이 생략되더라도 정확히 학생 데이터만 찾아냅니다)
+            for (let i = 0; i < json.length; i++) {
               const row = json[i];
               if (!row || row.length < 3) continue;
+              
               const id = String(row[1] || "").trim();    // B열: 학번
-              const name = String(row[2] || "").trim();  // C열: 이름/교시
-              // 학번 칸(B열)에 순수하게 '숫자'가 들어있고, 이름이 존재하는 줄만 학생으로 인식합니다.
-              // (이렇게 하면 위에 제목이 몇 줄이 있든 에러 없이 정확히 학생만 골라냅니다)
+              const name = String(row[2] || "").trim();  // C열: 성명
+              
+              // D열(index 3)에서 요일 추출 (시트 이름에 요일이 없는 경우 대비)
+              const dayFromRow = String(row[3] || "").trim();
+              const finalDay = dayFromSheet || (dayFromRow.match(/[월화수목금토일]/) ? dayFromRow.match(/[월화수목금토일]/)[0] : "");
+
+              // 학번(B열)에 숫자가 있고, 이름이 존재하는 줄만 학생으로 인식
               if (/^\d+$/.test(id) && name && name !== "이름/교시" && name !== "성명") {
-                // D열(인덱스 3)이 1교시, E열(인덱스 4)이 2교시
-                const p1Mark = String(row[3] || "").trim().toUpperCase();
-                const p2Mark = String(row[4] || "").trim().toUpperCase();
-                studentsData.push({
-                  id: id,
-                  name: name,
-                  day: dayFromSheet,
-                  p1_exc: (p1Mark === "X" || p1Mark === "O") ? "X" : "",
-                  p2_exc: (p2Mark === "X" || p2Mark === "O") ? "X" : ""
-                });
+                
+                // E열(index 4)이 1교시 제외, F열(index 5)이 2교시 제외
+                const p1Mark = String(row[4] || "").trim().toUpperCase();
+                const p2Mark = String(row[5] || "").trim().toUpperCase();
+                
+                if (finalDay) { // 요일 정보가 확인된 경우에만 추가
+                  studentsData.push({
+                    id: id,
+                    name: name,
+                    day: finalDay,
+                    p1_exc: (p1Mark === "X" || p1Mark === "O") ? "X" : "",
+                    p2_exc: (p2Mark === "X" || p2Mark === "O") ? "X" : ""
+                  });
+                }
               }
             }
           });
+          
           if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다. 엑셀 양식을 다시 확인해주세요.");
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: 시트명/D열에 요일이 없거나, B열(학번)에 숫자가 없는 경우)");
             return;
           }
+          
           document.getElementById("student-list").style.display = "block";
           document.getElementById("student-list").innerHTML = `⏳ 데이터를 서버로 전송 중입니다... (${studentsData.length}명)`;
+          
           await fetch(API_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -245,6 +260,7 @@
               students: studentsData
             })
           });
+          
           alert(`${studentsData.length}건의 명단을 업로드했습니다.`);
           location.reload();
         } catch (error) {
