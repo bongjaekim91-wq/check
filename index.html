@@ -204,7 +204,7 @@
     }
 
     // ==========================================
-    // 💡 최종 개선: 헤더 무시 '패턴 인식 스캔' 방식 도입
+    // 💡 최강 패턴 인식 스캔 (보이지 않는 여백/서식 모두 무시)
     // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
@@ -221,48 +221,61 @@
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
             if (json.length === 0) return;
 
-            // 1. 요일 추출 (시트 탭 이름에서 월,화,수,목,금 추출)
-            let sheetDay = "";
+            // 요일 추출 (시트 이름에서 월,화,수,목,금 추출)
+            let sheetDay = "공통";
             const dayMatch = sn.match(/[월화수목금토일]/);
             if (dayMatch) {
               sheetDay = dayMatch[0];
             } else {
-              return; // 요일이 안 적힌 시트는 무시
+              return; // 요일이 안 적힌 시트는 건너뜀
             }
 
-            // 2. 파일의 모든 칸을 뒤지면서 '학번(숫자)' 패턴 찾기
+            // 아주 느슨한 데이터 탐색: 파일의 모든 칸을 뒤지며 패턴 찾기
             for (let i = 0; i < json.length; i++) {
               const row = json[i];
               if (!row || row.length < 2) continue; // 데이터가 없는 빈 줄은 무시
               
+              let foundId = "";
+              let idColIndex = -1;
+
+              // 1. 한 줄에서 학번(숫자 4자리 이상 연속 포함)을 찾음
               for (let j = 0; j < row.length; j++) {
-                const cellVal = String(row[j] || "").replace(/\s+/g, ""); // 공백 제거
+                const cellVal = String(row[j] || "").replace(/\s+/g, ""); // 모든 공백 제거
+                const idMatch = cellVal.match(/\d{4,5}/); // 4~5자리 숫자가 '포함'되어 있으면 낚아챔
                 
-                // 해당 셀이 4자리 또는 5자리 '숫자'로만 이루어져 있는지 확인 (예: 10114)
-                if (/^\d{4,5}$/.test(cellVal)) {
-                  const studentId = cellVal;
-                  const studentName = String(row[j+1] || "").trim(); // 바로 옆 칸을 이름으로 간주
+                if (idMatch) {
+                  foundId = idMatch[0];
+                  idColIndex = j;
+                  break; // 학번을 찾았으면 멈춤
+                }
+              }
+
+              // 2. 학번을 찾았다면 그 우측 칸들 중에서 한글이 포함된 칸을 이름으로 간주
+              if (foundId && idColIndex !== -1) {
+                for (let k = idColIndex + 1; k < row.length; k++) {
+                  const nextCell = String(row[k] || "").trim();
                   
-                  // 이름 칸에 데이터가 있고, '이름'이라는 제목 문구가 아니며 숫자만 있는게 아니라면 학생으로 확정
-                  if (studentName && !studentName.includes("이름") && !studentName.includes("성명") && !/^\d+$/.test(studentName)) {
+                  // '이름'이라는 제목 문구가 아니며, 최소 2글자 이상이고 문자가 포함된 경우
+                  if (nextCell && !nextCell.includes("이름") && !nextCell.includes("성명") && nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell)) {
+                    const foundName = nextCell;
                     
-                    // 이름 바로 다음 칸들을 각각 1교시, 2교시로 간주
-                    const p1Mark = String(row[j+2] || "").trim().toUpperCase();
-                    const p2Mark = String(row[j+3] || "").trim().toUpperCase();
+                    // 이름 칸 다음 두 칸을 1교시, 2교시 기록으로 간주
+                    const p1Mark = String(row[k+1] || "").trim().toUpperCase();
+                    const p2Mark = String(row[k+2] || "").trim().toUpperCase();
                     
-                    // 결석 기호 인식 (X, 결, ☒ 등)
+                    // 결석 기호 인식 (X, 결, ☒ 등 어떠한 문자든 결석으로 폭넓게 수용)
                     const isP1Exc = (p1Mark.includes("X") || p1Mark.includes("결") || p1Mark.includes("☒")) ? "X" : "";
                     const isP2Exc = (p2Mark.includes("X") || p2Mark.includes("결") || p2Mark.includes("☒")) ? "X" : "";
                     
                     studentsData.push({
-                      id: studentId,
-                      name: studentName,
+                      id: foundId,
+                      name: foundName,
                       day: sheetDay,
                       p1_exc: isP1Exc,
                       p2_exc: isP2Exc
                     });
                     
-                    break; // 이 줄에서는 학생을 찾았으므로 다음 줄(row)로 넘어감
+                    break; // 학생 한 명을 찾았으므로 나머지 칸 스캔 중지 후 다음 줄로 이동
                   }
                 }
               }
@@ -270,7 +283,7 @@
           });
           
           if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 '4~5자리 숫자(학번)'와 '이름' 패턴을 찾지 못했습니다.)");
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 학번과 이름 패턴을 전혀 찾지 못했습니다. 엑셀의 빈 셀 병합이나 서식을 확인해주세요.)");
             return;
           }
           
