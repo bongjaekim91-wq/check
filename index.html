@@ -4,112 +4,135 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>서현고등학교 꿈꾸는 글마루 출석관리 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { font-family: 'Noto Sans KR', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; display: flex; flex-direction: column; align-items: center; }
-    h1 { color: #2c3e50; font-weight: 900; font-size: 2em; margin-bottom: 5px; text-align: center; }
-    h2 { color: #27ae60; font-weight: 700; font-size: 1.2em; margin-bottom: 25px; text-align: center; }
-    .card { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px; width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box; text-align: center; }
-    .notice { background: #fffde7; border: 1px solid #fff59d; color: #795548; padding: 15px; border-radius: 8px; font-size: 0.95em; line-height: 1.6; margin-bottom: 20px; font-weight: bold; }
-    input[type="text"], input[type="password"], input[type="date"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; box-sizing: border-box; text-align: center; }
-    .btn { display: inline-block; width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; text-decoration: none; box-sizing: border-box; }
-    .btn:hover { background: #219150; }
-    .btn-outline { background: white; color: #27ae60; border: 2px solid #27ae60; }
-    .btn-outline:hover { background: #e8f5e9; }
-    .btn-danger { background: #e74c3c; }
-    .btn-danger:hover { background: #c0392b; }
-    .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 10px; }
+    /* 전체 배경 및 폰트 설정 (이전 버전의 부드러운 톤) */
+    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+    h1 { color: #2b7a2b; font-size: 1.4rem; margin: 0 0 5px 0; }
+    h2 { color: #555; font-size: 1.1rem; margin: 0 0 15px 0; font-weight: normal; }
+    
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px; width: 100%; max-width: 550px; text-align: center; box-sizing: border-box; }
+    .notice { background: #fffde7; border: 1px solid #f2e3a8; color: #666; padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 15px; }
+    
+    /* 입력창 디자인 (컴팩트하게) */
+    input[type="text"], input[type="password"], input[type="date"] { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; text-align: center; color: #333; }
+    
+    /* 레이아웃 그룹화 (한 화면에 들어오도록) */
+    .row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+    .row > * { flex: 1; }
+    
+    .label-text { font-size: 0.8rem; color: #777; font-weight: bold; margin-bottom: 3px; display: block; text-align: left; }
+    .section-divider { border-top: 1px dashed #e0e0e0; margin: 15px 0; }
+
+    /* 은은한 파스텔톤 버튼 디자인 */
+    .btn { display: inline-block; width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; color: #444; text-decoration: none; box-sizing: border-box; transition: filter 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .btn:hover { filter: brightness(0.95); }
+    
+    .btn-green-light { background-color: #e8f5e9; } /* 양식/명단 다운 */
+    .btn-green { background-color: #c8e6c9; color: #2b7a2b; } /* 신청 명단 업로드 */
+    .btn-red { background-color: #ffcdd2; color: #c62828; } /* 명단 초기화 */
+    .btn-blue { background-color: #bbdefb; color: #1565c0; } /* 감독교사 QR */
+    .btn-purple { background-color: #e1bee7; color: #6a1b9a; } /* 대시보드/통계 */
+    .btn-orange { background-color: #ffe0b2; color: #e65100; } /* 학생 QR 생성 (구분 강조) */
+    .btn-gray { background-color: #f5f5f5; color: #666; } /* 로그아웃 */
+
+    .file-upload-wrapper { position: relative; overflow: hidden; width: 100%; }
     .file-upload-wrapper input[type="file"] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; }
-    .date-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
-    #qr-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; }
-    .qr-card { border: 1px solid #ccc; padding: 15px; border-radius: 8px; text-align: center; background: #fff; width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .qr-card img { margin: 0 auto 10px auto; display: block; }
-    .qr-card p { margin: 0; font-size: 0.9em; font-weight: bold; color: #333; }
-    .footer { margin-top: 20px; color: #7f8c8d; font-size: 0.85em; text-align: center; }
+    
+    #qr-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; max-height: 200px; overflow-y: auto; }
+    .qr-card { border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; background: #fff; width: 110px; }
+    .qr-card img { margin: 0 auto 5px auto; display: block; width: 80px; height: 80px; }
+    .qr-card p { margin: 0; font-size: 0.8rem; font-weight: bold; color: #333; }
+    
+    .footer { margin-top: 15px; color: #999; font-size: 0.75rem; }
     .hidden { display: none; }
+    
+    /* 인쇄 시 QR코드만 보이게 */
+    @media print {
+      body * { visibility: hidden; }
+      #qr-container, #qr-container * { visibility: visible; }
+      #qr-container { position: absolute; left: 0; top: 0; width: 100%; max-height: none; overflow: visible; }
+    }
   </style>
 </head>
 <body>
-  <h1>서현고등학교</h1>
-  <h2>꿈꾸는 글마루 출석관리 시스템</h2>
-
-  <!-- 로그인 화면 -->
+  
+  <!-- 🔐 로그인 화면 (이전 버전 복구) -->
   <div class="card" id="login-screen">
+    <h1>서현고등학교</h1>
+    <h2>꿈꾸는 글마루 출석관리 시스템</h2>
     <div class="notice">
-      출석 인정 시간<br>1교시 18:00~19:40 / 2교시 19:41~21:40
+      <b>출석 인정 시간</b><br>1교시 18:00~19:40 / 2교시 19:41~21:40
     </div>
     <input type="text" id="admin-id" placeholder="아이디">
     <input type="password" id="admin-pw" placeholder="비밀번호">
-    <button class="btn" onclick="login()">로그인</button>
+    <button class="btn btn-green" onclick="login()">로그인</button>
   </div>
 
-  <!-- 메인 관리 화면 -->
+  <!-- ⚙️ 메인 관리 화면 (스크롤 없는 콤팩트 레이아웃) -->
   <div class="card hidden" id="main-screen">
-    <div class="notice">
-      출석 인정 시간<br>1교시 18:00~19:40 / 2교시 19:41~21:40
+    <h1 style="font-size: 1.2rem;">출석관리 시스템</h1>
+    <div class="notice" style="margin-bottom: 10px; padding: 8px;">
+      출석 인정 시간: 1교시 18:00~19:40 / 2교시 19:41~21:40
     </div>
     
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-      <a href="https://docs.google.com/spreadsheets/d/1B0q88z322iN-wF0b5O4D-wL_8_23x0F0E3Z_U809U7s/copy" target="_blank" class="btn btn-outline">📥 양식 다운로드</a>
-      <button class="btn btn-outline" onclick="downloadCurrentStudents()">📋 현재 명단 다운</button>
+    <!-- 1. 양식 및 다운로드 -->
+    <div class="row">
+      <a href="https://docs.google.com/spreadsheets/d/1B0q88z322iN-wF0b5O4D-wL_8_23x0F0E3Z_U809U7s/copy" target="_blank" class="btn btn-green-light">📥 양식 다운로드</a>
+      <button class="btn btn-green-light" onclick="downloadCurrentStudents()">📋 현재 명단 다운로드</button>
     </div>
 
-    <!-- 💡 업그레이드: 기간 설정 업로드 -->
-    <h3 style="margin-top: 20px; color: #2c3e50;">📅 명단 운영 기간 설정</h3>
-    <div class="date-row">
-      <div style="flex:1; text-align:left;">
-        <label style="font-size:0.85em; color:#666; font-weight:bold;">시작일</label>
-        <input type="date" id="uploadStartDate">
-      </div>
-      <div style="flex:1; text-align:left;">
-        <label style="font-size:0.85em; color:#666; font-weight:bold;">종료일</label>
-        <input type="date" id="uploadEndDate">
-      </div>
+    <!-- 2. 기간 설정 및 업로드 -->
+    <div style="text-align: left;">
+      <span class="label-text">📅 운영 기간 설정 및 업로드</span>
     </div>
-    
+    <div class="row">
+      <input type="date" id="uploadStartDate" title="시작일">
+      <span style="flex: 0.1; color:#999;">~</span>
+      <input type="date" id="uploadEndDate" title="종료일">
+    </div>
     <div class="file-upload-wrapper">
-      <button class="btn">📤 명단 엑셀 업로드</button>
+      <button class="btn btn-green">📤 신청 명단 업로드</button>
       <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
     </div>
-    <p id="upload-status" style="color:#27ae60; font-weight:bold; margin-bottom:20px;"></p>
+    <p id="upload-status" style="color:#2b7a2b; font-weight:bold; font-size:0.85rem; margin:5px 0 0 0;"></p>
 
-    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-
-    <button class="btn btn-danger" onclick="resetRoster()">🗑️ 학생 명단 초기화 (기간 종료 시)</button>
-    
-    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-
-    <a href="scan.html" target="_blank" class="btn btn-outline" style="background:#3498db; color:white; border:none;">👨‍🏫 감독교사 스캐너 열기</a>
-    <a href="dashboard.html" target="_blank" class="btn btn-outline" style="background:#9b59b6; color:white; border:none;">📊 대시보드(통계/출석부) 열기</a>
-    
-    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-
-    <!-- 💡 업그레이드: 기준일 지정 QR 코드 생성 -->
-    <h3 style="margin-top: 20px; color: #2c3e50;">📷 학생 QR 코드 생성</h3>
-    <div style="text-align:left; margin-bottom:10px;">
-      <label style="font-size:0.85em; color:#666; font-weight:bold;">조회 기준일 (해당 기간 명단 불러오기)</label>
-      <input type="date" id="qrTargetDate">
+    <!-- 3. 명단 초기화 -->
+    <div class="row" style="margin-top: 10px;">
+      <button class="btn btn-red" onclick="resetRoster()">🗑️ 명단 초기화</button>
     </div>
-    <button class="btn btn-outline" onclick="loadStudentsForQR()">명단 로드 및 QR 생성</button>
-    <button class="btn hidden" id="print-qr-btn" onclick="window.print()">🖨️ 생성된 QR 코드 인쇄</button>
     
+    <div class="section-divider"></div>
+
+    <!-- 4. 바로가기 버튼 -->
+    <div class="row">
+      <a href="scan.html" target="_blank" class="btn btn-blue">👨‍🏫 감독교사 QR 다운로드</a>
+      <a href="dashboard.html" target="_blank" class="btn btn-purple">📊 기간별 통계 및 출석부 인쇄</a>
+    </div>
+    
+    <!-- 5. 학생 QR 코드 생성 -->
+    <div style="text-align: left;">
+      <span class="label-text">📷 조회 기준일 설정 및 QR 생성</span>
+    </div>
+    <div class="row">
+      <input type="date" id="qrTargetDate" style="flex: 1; margin: 0;">
+      <button class="btn btn-orange" style="flex: 1.5; margin: 0;" onclick="loadStudentsForQR()">🖨️ 학생 QR 코드 생성</button>
+    </div>
+    
+    <button class="btn btn-gray hidden" id="print-qr-btn" onclick="window.print()" style="margin-top: 10px;">생성된 QR 코드 인쇄하기</button>
     <div id="qr-container"></div>
     
-    <button class="btn btn-outline" onclick="logout()" style="margin-top:30px;">로그아웃</button>
-  </div>
-
-  <div class="footer">
-    Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
+    <div class="section-divider"></div>
+    <button class="btn btn-gray" onclick="logout()" style="width: 50%;">로그아웃</button>
+    
+    <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
   </div>
 
   <script>
-    // ⚠️ 새 버전으로 배포한 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요!
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     
     window.onload = function() {
-      // 오늘 날짜 기본 세팅
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
@@ -143,25 +166,17 @@
       const startDate = document.getElementById("uploadStartDate").value;
       const endDate = document.getElementById("uploadEndDate").value;
       
-      if (!startDate || !endDate) {
-        alert("업로드할 명단의 [시작일]과 [종료일]을 반드시 선택해주세요.");
-        event.target.value = '';
-        return;
-      }
-      if (startDate > endDate) {
-        alert("시작일이 종료일보다 늦을 수 없습니다.");
-        event.target.value = '';
-        return;
-      }
+      if (!startDate || !endDate) { alert("명단의 [시작일]과 [종료일]을 선택해주세요."); event.target.value = ''; return; }
+      if (startDate > endDate) { alert("시작일이 종료일보다 늦을 수 없습니다."); event.target.value = ''; return; }
 
       const reader = new FileReader();
-      document.getElementById("upload-status").innerText = "엑셀 파일 분석 중... ⏳";
+      const statusText = document.getElementById("upload-status");
+      statusText.innerText = "엑셀 파일 분석 중... ⏳";
       
       reader.onload = function(e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, {type: 'array'});
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
         
         let students = [];
         jsonData.forEach(row => {
@@ -174,48 +189,21 @@
           }
         });
         
-        if (students.length === 0) {
-          alert("유효한 학생 데이터가 없습니다. 양식을 확인해주세요.");
-          document.getElementById("upload-status").innerText = "";
-          event.target.value = '';
-          return;
-        }
+        if (students.length === 0) { alert("학생 데이터가 없습니다."); statusText.innerText = ""; event.target.value = ''; return; }
+        if(!confirm(`총 ${students.length}명을 [${startDate} ~ ${endDate}] 기간으로 업로드하시겠습니까?`)) { statusText.innerText = ""; event.target.value = ''; return; }
 
-        if(!confirm(`총 ${students.length}명의 학생을 [${startDate} ~ ${endDate}] 기간으로 업로드하시겠습니까?`)) {
-          document.getElementById("upload-status").innerText = "";
-          event.target.value = '';
-          return;
-        }
-
-        document.getElementById("upload-status").innerText = "서버로 데이터 전송 중... 🚀";
+        statusText.innerText = "서버 전송 중... 🚀";
         
-        // 💡 업그레이드: 시작일/종료일 데이터를 함께 서버로 전송
         fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ 
-            action: "uploadStudents", 
-            startDate: startDate, 
-            endDate: endDate, 
-            students: students 
-          })
+          method: "POST", headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "uploadStudents", startDate: startDate, endDate: endDate, students: students })
         })
         .then(res => res.json())
         .then(res => {
-          if (res.success) {
-            document.getElementById("upload-status").innerText = "✅ 업로드 완료! (기간 설정됨)";
-            setTimeout(() => { document.getElementById("upload-status").innerText = ""; }, 3000);
-          } else {
-            alert("업로드 실패: " + res.message);
-            document.getElementById("upload-status").innerText = "❌ 업로드 실패";
-          }
+          if (res.success) { statusText.innerText = "✅ 업로드 완료!"; setTimeout(() => { statusText.innerText = ""; }, 3000); } 
+          else { alert("실패: " + res.message); statusText.innerText = "❌ 업로드 실패"; }
           event.target.value = '';
-        })
-        .catch(err => {
-          alert("서버 연결 오류");
-          document.getElementById("upload-status").innerText = "❌ 오류 발생";
-          event.target.value = '';
-        });
+        }).catch(err => { alert("오류"); statusText.innerText = "❌ 오류 발생"; event.target.value = ''; });
       };
       reader.readAsArrayBuffer(file);
     }
@@ -229,75 +217,44 @@
         .then(res => res.json())
         .then(res => {
           document.getElementById("upload-status").innerText = "";
-          if (!res.list || res.list.length === 0) {
-            alert("해당 기준일에 등록된 명단이 없습니다.");
-            return;
-          }
+          if (!res.list || res.list.length === 0) { alert("명단이 없습니다."); return; }
           const wsData = [["학번", "이름", "요일", "1교시제외", "2교시제외"]];
           res.list.forEach(s => { wsData.push([s.id, s.name, s.day, s.p1_exc, s.p2_exc]); });
-          const wb = XLSX.utils.book_new();
-          const ws = XLSX.utils.aoa_to_sheet(wsData);
-          XLSX.utils.book_append_sheet(wb, ws, "학생명단");
+          const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), "학생명단");
           XLSX.writeFile(wb, `글마루명단_${targetDate}기준.xlsx`);
-        })
-        .catch(() => {
-          document.getElementById("upload-status").innerText = "";
-          alert("다운로드 중 오류가 발생했습니다.");
-        });
+        }).catch(() => { document.getElementById("upload-status").innerText = ""; alert("다운로드 오류"); });
     }
 
     function resetRoster() {
-      if(!confirm("⚠️ 경고: 전체 명단이 삭제 처리됩니다.\n정말 초기화하시겠습니까?")) return;
-      document.getElementById("upload-status").innerText = "초기화 진행 중... ⏳";
-      fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "resetRosterOnly" })
-      })
+      if(!confirm("⚠️ 전체 명단이 삭제됩니다. 초기화하시겠습니까?")) return;
+      document.getElementById("upload-status").innerText = "초기화 중... ⏳";
+      fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "resetRosterOnly" }) })
       .then(res => res.json())
-      .then(res => {
-        alert(res.success ? "명단이 초기화되었습니다." : "실패: " + res.message);
-        document.getElementById("upload-status").innerText = "";
-      });
+      .then(res => { alert(res.success ? "초기화되었습니다." : "실패: " + res.message); document.getElementById("upload-status").innerText = ""; });
     }
 
-    // 💡 업그레이드: 기준일 기반으로 학생 불러오기
     function loadStudentsForQR() {
       const targetDate = document.getElementById("qrTargetDate").value;
       if(!targetDate) { alert("조회 기준일을 선택해주세요."); return; }
 
-      document.getElementById("upload-status").innerText = "학생 데이터 불러오는 중... ⏳";
+      document.getElementById("upload-status").innerText = "QR 생성 중... ⏳";
       fetch(`${API_URL}?action=getStudents&date=${targetDate}`)
         .then(res => res.json())
         .then(res => {
           document.getElementById("upload-status").innerText = "";
-          const container = document.getElementById("qr-container");
-          container.innerHTML = "";
-          if (!res.list || res.list.length === 0) {
-            alert(`선택하신 날짜(${targetDate})에 활성화된 학생 데이터가 없습니다.`);
-            document.getElementById("print-qr-btn").classList.add("hidden");
-            return;
-          }
+          const container = document.getElementById("qr-container"); container.innerHTML = "";
+          if (!res.list || res.list.length === 0) { alert(`해당 날짜(${targetDate})에 데이터가 없습니다.`); document.getElementById("print-qr-btn").classList.add("hidden"); return; }
           
-          let uniqueStudents = {};
-          res.list.forEach(s => { uniqueStudents[s.id] = s.name; });
-
+          let uniqueStudents = {}; res.list.forEach(s => { uniqueStudents[s.id] = s.name; });
           Object.keys(uniqueStudents).forEach(id => {
-            const card = document.createElement("div");
-            card.className = "qr-card";
+            const card = document.createElement("div"); card.className = "qr-card";
             const qrDiv = document.createElement("div");
-            new QRCode(qrDiv, { text: `https://seohyun.hs.kr?id=${id}`, width: 100, height: 100 });
-            const p = document.createElement("p");
-            p.innerText = `${uniqueStudents[id]} (${id})`;
-            card.appendChild(qrDiv); card.appendChild(p);
-            container.appendChild(card);
+            new QRCode(qrDiv, { text: `https://seohyun.hs.kr?id=${id}`, width: 80, height: 80 });
+            const p = document.createElement("p"); p.innerText = `${uniqueStudents[id]}\n(${id})`;
+            card.appendChild(qrDiv); card.appendChild(p); container.appendChild(card);
           });
           document.getElementById("print-qr-btn").classList.remove("hidden");
-        })
-        .catch(() => {
-          document.getElementById("upload-status").innerText = "";
-          alert("데이터를 불러오지 못했습니다.");
-        });
+        }).catch(() => { document.getElementById("upload-status").innerText = ""; alert("오류 발생"); });
     }
   </script>
 </body>
