@@ -25,16 +25,18 @@
     .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
     
-    .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
-    .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; display: flex; align-items: center; }
+    /* 🌟 상단 타이틀 영역 1줄 완벽 유지 (flex-wrap: nowrap, gap 적용) */
+    .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; flex-wrap: nowrap; gap: 10px; overflow-x: auto; }
+    .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.25rem; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
     
-    /* 상단 액션 버튼 스타일 */
-    .action-btns button { border: none; border-radius: 6px; padding: 10px 16px; color: white; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
+    /* 🌟 상단 액션 버튼 여백 및 크기 최소화 */
+    .action-btns { display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; flex-shrink: 0; }
+    .action-btns button { border: none; border-radius: 6px; padding: 8px 10px; color: white; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; white-space: nowrap; margin: 0; }
+    
     .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
     .btn-add { background-color: #dd6b20; } .btn-add:hover { background-color: #c05621; }
     .btn-save { background-color: #805ad5; } .btn-save:hover { background-color: #6b46c1; }
     .btn-print { background-color: #38a169; } .btn-print:hover { background-color: #2f855a; }
-    /* 🌟 당일 초기화 버튼 스타일 추가 */
     .btn-reset { background-color: #e53e3e; } .btn-reset:hover { background-color: #c53030; }
     
     /* 통계/조회용 전용 버튼 스타일 */
@@ -42,7 +44,7 @@
     .btn-tab-action:hover { background-color: #499dd6; }
     .btn-tab-print { background-color: #6dbb71; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
     .btn-tab-print:hover { background-color: #5ba85e; }
-
+    
     .add-student-form { background-color: #fffaf0; border: 1px solid #fbd38d; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: none; }
     .add-student-form input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
@@ -57,7 +59,7 @@
     
     /* 통계 탭 그래프 컨테이너 */
     .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
-
+    
     /* 화면에서는 인쇄 영역 숨기기 */
     #printArea { display: none; }
     /* ==========================================
@@ -106,24 +108,25 @@
       <button class="tab-btn" onclick="switchTab('tab-stats', this)">📈 기간별 통계 현황</button>
     </div>
     <div class="content-box">
-      
       <!-- 탭 1: 일일 출석부 -->
       <div id="tab-daily" class="tab-content active">
         <div class="date-picker-container">
           <span>조회 날짜:</span>
           <input type="date" id="datePicker" onchange="loadDailyData()">
         </div>
+        
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
-            <!-- 🌟 당일 초기화 버튼 추가됨 -->
+            <!-- 버튼 크기 축소 및 간격 반영 -->
             <button class="btn-reset" onclick="resetDailyData()">🗑️ 당일 초기화</button>
-            <button class="btn-qr" onclick="loadDailyData()">🔄 QR 스캔 반영</button>
+            <button class="btn-qr" onclick="loadDailyData()">🔄 QR 반영</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
-            <button class="btn-save" onclick="savePdf()">💾 출석부 PDF 저장</button>
-            <button class="btn-print" onclick="window.print()">🖨️ 출석부 인쇄</button>
+            <button class="btn-save" onclick="savePdf()">💾 PDF 저장</button>
+            <button class="btn-print" onclick="window.print()">🖨️ 인쇄</button>
           </div>
         </div>
+
         <div id="addStudentSection" class="add-student-form">
           <h3 style="margin-top:0; color:#dd6b20;">➕ 당일 출석부 학생 추가</h3>
           <p style="font-size:0.9rem; color:#666;">다른 요일 학생이나 명단에 없는 학생이 참석한 경우 입력합니다.</p>
@@ -151,7 +154,6 @@
           </tbody>
         </table>
       </div>
-      
       <!-- 탭 2: 개인별 출결 현황 -->
       <div id="tab-individual" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
@@ -173,7 +175,6 @@
           </tbody>
         </table>
       </div>
-      
       <!-- 탭 3: 기간별 통계 현황 (디자인 개선된 막대 그래프) -->
       <div id="tab-stats" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
@@ -182,12 +183,10 @@
           <button class="btn-tab-action" onclick="renderStats()">📊 통계 조회</button>
           <button class="btn-tab-print" onclick="printStats()">🖨️ 인쇄</button>
         </div>
-        
         <!-- 막대 그래프 영역 -->
         <div class="chart-container">
           <canvas id="statsChart" height="120"></canvas>
         </div>
-
         <h2 style="color: #2b7a2b; margin-top:30px;">📋 기간별 학생 상세 출석률</h2>
         <table id="statsTable">
           <thead>
@@ -201,51 +200,42 @@
         </table>
       </div>
     </div>
-    
     <div class="footer">
       Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
     </div>
   </div>
   <!-- 🖨️ 인쇄 전용 영역 -->
   <div id="printArea"></div>
-  
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    
     let cachedStudents = [];
     let cachedLogs = [];
     let cachedChanges = [];
     let cacheLoaded = false;
     let currentDailyData = null;
-    let myChart = null; 
-
+    let myChart = null;
+    
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const localFirst = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
-      
       document.getElementById('datePicker').value = localToday;
       document.getElementById('indivStartDate').value = localFirst;
       document.getElementById('indivEndDate').value = localToday;
       document.getElementById('statStartDate').value = localFirst;
       document.getElementById('statEndDate').value = localToday;
-      
-      // Chart.js 데이터 라벨 플러그인 등록
       Chart.register(ChartDataLabels);
-      
       loadDailyData();
     });
     
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
-    
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
-      
       if (tabId === 'tab-individual' || tabId === 'tab-stats') {
         ensureDataLoaded();
       }
@@ -265,8 +255,13 @@
         .then(res => res.json())
         .then(response => {
           showLoading(false);
-          const teacherName = response.teacherText || "미입력";
-          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1.1rem; color:#666; margin-left:15px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
+          
+          // 🌟 수동처리, 관리자 등 불필요한 단어 필터링 로직 추가
+          let rawTeacherStr = response.teacherText || "";
+          let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
+          let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : "미입력";
+          
+          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
           
           if(response.success) {
             currentDailyData = response;
@@ -278,25 +273,23 @@
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
     }
-
-    // 🌟 당일 초기화 기능 추가
+    
     function resetDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!confirm(`⚠️ 경고: ${dateStr} 날짜의 모든 '출결 기록'과 '수동으로 추가/삭제한 명단'이 완전히 초기화됩니다.\n정말 초기화하시겠습니까?`)) return;
-      
       showLoading(true);
       fetch(`${API_URL}?${new URLSearchParams({ action: 'resetDailyAttendance', date: dateStr }).toString()}`)
         .then(res => res.json())
-        .then(res => { 
-          if(res.success) { 
+        .then(res => {
+          if(res.success) {
             alert(`${dateStr} 출석부가 초기화되었습니다.`);
-            cacheLoaded = false; 
-            loadDailyData(); 
-          } 
-          else { 
-            showLoading(false); 
-            alert("초기화 실패: " + (res.message || "서버 오류")); 
-          } 
+            cacheLoaded = false;
+            loadDailyData();
+          }
+          else {
+            showLoading(false);
+            alert("초기화 실패: " + (res.message || "서버 오류"));
+          }
         })
         .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
@@ -352,7 +345,13 @@
     
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
-      const dateStr = data.date; const day = data.day; const teacherText = data.teacherText || "미입력";
+      const dateStr = data.date; const day = data.day;
+      
+      // 인쇄용 감독교사 텍스트도 필터링
+      let rawTeacherStr = data.teacherText || "";
+      let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
+      const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : "미입력";
+
       let logMap = {}; let extraRows = [];
       if(data.logs) {
         data.logs.forEach(log => {
@@ -377,7 +376,7 @@
           let info = getPrintStatusInfo(student, period);
           if(info.type === "st-excluded") return;
           total++;
-          if(info.type === "st-present" || info.type === "st-extra") { present++; if(info.type === "st-extra") extra++; } 
+          if(info.type === "st-present" || info.type === "st-extra") { present++; if(info.type === "st-extra") extra++; }
           else { absentNames.push(student.name + "(" + student.id + ")"); }
         });
         return { total, present, absent: total - present, extra, absentNames };
@@ -399,7 +398,7 @@
         <table class="print-table">
           <tr><th class="bg-primary" style="width:6%">번호</th><th class="bg-primary" style="width:14%">학번</th><th class="bg-primary" style="width:15%">이름</th><th class="bg-primary" style="width:15%">구분</th><th class="bg-primary" style="width:20%">1교시</th><th class="bg-primary" style="width:20%">2교시</th><th class="bg-primary" style="width:10%">비고</th></tr>
       `;
-      if(data.roster.length === 0) { html += `<tr><td colspan="7">해당 요일 출석 대상 학생 없음</td></tr>`; } 
+      if(data.roster.length === 0) { html += `<tr><td colspan="7">해당 요일 출석 대상 학생 없음</td></tr>`; }
       else {
         data.roster.forEach((student, idx) => {
           let s1 = getPrintStatusInfo(student, "1교시"); let s2 = getPrintStatusInfo(student, "2교시");
@@ -449,7 +448,7 @@
       showLoading(true);
       fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: p1, p2: p2, teacher: '관리자' }).toString()}`)
         .then(res => res.json()).then(res => {
-          if(res.success) { document.getElementById('addId').value = ''; document.getElementById('addName').value = ''; document.getElementById('addP1').checked = false; document.getElementById('addP2').checked = false; cacheLoaded = false; loadDailyData(); } 
+          if(res.success) { document.getElementById('addId').value = ''; document.getElementById('addName').value = ''; document.getElementById('addP1').checked = false; document.getElementById('addP2').checked = false; cacheLoaded = false; loadDailyData(); }
           else { showLoading(false); alert(res.message); }
         }).catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
@@ -474,7 +473,7 @@
           else alert("저장 실패: " + res.message);
         }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
     }
-
+    
     // --- 통계용 공통 로직 ---
     async function ensureDataLoaded() {
       if (cacheLoaded) return;
@@ -490,7 +489,6 @@
       } catch(e) { alert("통계 데이터를 서버에서 불러오는 중 오류가 발생했습니다."); }
       showLoading(false);
     }
-    
     function populateStudentSelect() {
       const sel = document.getElementById("indivStudentSelect");
       sel.innerHTML = '<option value="">▼ 학생을 선택하세요</option>';
@@ -501,7 +499,6 @@
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
-
     function getDatesInRange(start, end) {
       const dateArray = [];
       let currentDate = new Date(start); const stopDate = new Date(end);
@@ -514,7 +511,6 @@
       }
       return dateArray;
     }
-
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let isP1Target = (sDay === dayStr && p1_exc !== '제외');
       let isP2Target = (sDay === dayStr && p2_exc !== '제외');
@@ -526,7 +522,6 @@
       }
       let p1Log = cachedLogs.find(l => l.timestamp.startsWith(dateStr) && l.id === id && l.period === '1교시');
       let p2Log = cachedLogs.find(l => l.timestamp.startsWith(dateStr) && l.id === id && l.period === '2교시');
-      
       function calcStatus(isTarget, log) {
         if (log) return { text: log.status, type: (log.status === '추가출석' || log.status === '수동입력') ? 'extra' : 'present', teacher: log.teacher };
         if (isTarget) return { text: '미출석', type: 'absent', teacher: '-' };
@@ -534,20 +529,17 @@
       }
       return { p1: calcStatus(isP1Target, p1Log), p2: calcStatus(isP2Target, p2Log), isTargetAny: isP1Target || isP2Target || p1Log || p2Log };
     }
-
     function renderIndividual() {
       const id = document.getElementById("indivStudentSelect").value;
       const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
       tbody.innerHTML = "";
       if(!id) { title.innerText = "학생을 선택해주세요"; return; }
-      
       let sMap = {};
       cachedStudents.forEach(s => sMap[s.id] = s);
       cachedChanges.forEach(c => { if(!sMap[c.id]) sMap[c.id] = { id: c.id, name: c.name, day: '', p1_exc: '제외', p2_exc: '제외' }; });
       const st = sMap[id];
       title.innerText = `🧑‍🎓 ${st.name} (${st.id}) 학생 출결 현황`;
       const dateArr = getDatesInRange(document.getElementById("indivStartDate").value, document.getElementById("indivEndDate").value);
-      
       dateArr.forEach(d => {
         let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
         if(stat.isTargetAny) {
@@ -558,7 +550,6 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='5'>해당 기간에 출결 데이터 또는 대상일이 없습니다.</td></tr>";
     }
-
     function printIndividual() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("indivStartDate").value; const end = document.getElementById("indivEndDate").value;
@@ -567,12 +558,10 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
-
     // 🌟 디자인 개선된 그래프 그리기 함수
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
       if (myChart) myChart.destroy();
-
       myChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -613,14 +602,14 @@
             }
           },
           scales: {
-            y: { 
-              beginAtZero: true, 
+            y: {
+              beginAtZero: true,
               grace: '15%', // 최대값 위로 15% 여백 생성 (라벨 잘림 방지)
               ticks: { stepSize: 5, font: { size: 12 } },
               grid: { color: '#f0f0f0' }, // 연한 배경 선
               border: { display: false }
             },
-            x: { 
+            x: {
               ticks: { font: { size: 13, weight: 'bold', family: 'Malgun Gothic' } },
               grid: { display: false }, // 세로선 숨김
               border: { display: false }
@@ -629,33 +618,26 @@
         }
       });
     }
-
     // 🌟 통계 조회 함수
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
       const dateArr = getDatesInRange(start, end);
-      
       let sMap = {};
       cachedStudents.forEach(s => { sMap[s.id] = { id: s.id, name: s.name, day: s.day, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; });
       cachedChanges.forEach(c => { if(!sMap[c.id]) sMap[c.id] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; });
-      
       let chartLabels = []; let chartPresentData = []; let chartAbsentData = [];
-
       dateArr.forEach(d => {
         let dailyPresentCount = 0; let dailyAbsentCount = 0;
-
         Object.values(sMap).forEach(st => {
           let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
           let isTarget = (stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded');
           let attendedAny = (stat.p1.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'present' || stat.p2.type === 'extra');
-          
           if (isTarget) {
             if (attendedAny) dailyPresentCount++; else dailyAbsentCount++;
           } else if (attendedAny) {
              dailyPresentCount++;
           }
-
           if(stat.p1.type !== 'excluded') st.target++;
           if(stat.p2.type !== 'excluded') st.target++;
           if(stat.p1.type === 'present' || stat.p1.type === 'extra') st.present++;
@@ -665,15 +647,12 @@
           if(stat.p2.type === 'extra') st.extra++;
           if(stat.p2.type === 'absent') st.absent++;
         });
-
         if (dailyPresentCount > 0 || dailyAbsentCount > 0) {
           const shortDate = d.date.substring(5);
           chartLabels.push(`${shortDate}(${d.day})`); chartPresentData.push(dailyPresentCount); chartAbsentData.push(dailyAbsentCount);
         }
       });
-      
       drawStatsChart(chartLabels, chartPresentData, chartAbsentData);
-
       const tbody = document.getElementById("statsBody");
       tbody.innerHTML = "";
       Object.values(sMap).sort((a,b) => a.id.localeCompare(b.id)).forEach(st => {
@@ -685,7 +664,6 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
     }
-
     function printStats() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
