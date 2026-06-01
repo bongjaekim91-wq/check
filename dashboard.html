@@ -4,93 +4,37 @@
   <meta charset="UTF-8">
   <title>서현고등학교 글마루 출결 대시보드</title>
   <style>
-    /* 전체 배경 및 폰트 설정 */
-    body {
-      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-      background-color: #f1f8ed;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-    }
+    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 20px; }
     .container { max-width: 1200px; margin: 0 auto; }
-    /* 상단 헤더 박스 */
-    .header-box {
-      background: white; border-radius: 12px; padding: 20px 25px;
-      display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px;
-    }
+    .header-box { background: white; border-radius: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
     .header-box h1 { margin: 0; font-size: 1.5rem; color: #2b7a2b; }
-    .btn-home {
-      background-color: #3e8e41; color: white; text-decoration: none;
-      padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 0.95rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+    .btn-home { background-color: #3e8e41; color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .btn-home:hover { background-color: #2e6d30; }
-    /* 노란색 안내 박스 */
-    .info-box {
-      background-color: #fffde7; border: 1px solid #f2e3a8; border-radius: 8px;
-      padding: 18px 25px; color: #666; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;
-    }
-    /* 탭 메뉴 */
+    .info-box { background-color: #fffde7; border: 1px solid #f2e3a8; border-radius: 8px; padding: 18px 25px; color: #666; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; }
     .tab-container { display: flex; gap: 15px; margin-bottom: 20px; }
-    .tab-btn {
-      flex: 1; background: white; border: none; padding: 18px; border-radius: 12px;
-      font-size: 1.05rem; font-weight: bold; color: #2b7a2b; cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
+    .tab-btn { flex: 1; background: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.05rem; font-weight: bold; color: #2b7a2b; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .tab-btn.active { background-color: #81c784; color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    /* 메인 콘텐츠 화이트 박스 */
-    .content-box {
-      background: white; border-radius: 12px; padding: 30px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-height: 400px;
-    }
-    /* 날짜 선택기 */
+    .content-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-height: 400px; }
     .date-picker-container { text-align: center; margin-bottom: 30px; }
     .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
-    .date-picker-container input[type="date"] {
-      border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px;
-      font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none;
-    }
-    /* 테이블 제목 및 액션 버튼들 */
-    .table-header-row {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;
-    }
+    .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
+    .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
     .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; }
-    .action-btns button {
-      border: none; border-radius: 6px; padding: 10px 16px; color: white;
-      font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .btn-qr { background-color: #3182ce; }
-    .btn-add { background-color: #dd6b20; }
-    .btn-save { background-color: #805ad5; }
-    .btn-print { background-color: #38a169; }
-    /* 학생 추가 폼 */
-    .add-student-form {
-      background-color: #fffaf0; border: 1px solid #fbd38d; padding: 20px;
-      border-radius: 8px; margin-bottom: 20px; display: none;
-    }
-    .add-student-form input[type="text"] {
-      padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px;
-    }
-    /* 메인 테이블 스타일 */
+    .action-btns button { border: none; border-radius: 6px; padding: 10px 16px; color: white; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-qr { background-color: #3182ce; } .btn-add { background-color: #dd6b20; } .btn-save { background-color: #805ad5; } .btn-print { background-color: #38a169; }
+    .add-student-form { background-color: #fffaf0; border: 1px solid #fbd38d; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: none; }
+    .add-student-form input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
     th, td { border: 1px solid #e0e0e0; padding: 15px 10px; text-align: center; }
     th { background-color: #e8f5e9; color: #2b7a2b; font-weight: bold; border-color: #c8e6c9; }
-    /* 상태별 색상 */
-    .status-present { color: #3182ce; font-weight: bold; } /* 출석-파랑 */
-    .status-extra { color: #3182ce; font-weight: bold; } /* 추가출석-파랑 */
-    .status-absent { color: #e53e3e; font-weight: bold; } /* 미출석-빨강 */
-    .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; } /* 제외-회색 취소선 */
+    .status-present { color: #3182ce; font-weight: bold; } 
+    .status-extra { color: #3182ce; font-weight: bold; } 
+    .status-absent { color: #e53e3e; font-weight: bold; } 
+    .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; } 
     .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
-    .loading-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center;
-      z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none;
-    }
+    .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
   </style>
 </head>
 <body>
@@ -192,6 +136,7 @@
       document.getElementById('datePicker').value = localToday;
       loadDailyData();
     });
+    
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -203,6 +148,7 @@
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
     }
+    
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
@@ -219,14 +165,14 @@
         });
     }
     
-    // 특정 기호 포함 시 제외로 판별하는 로직
+    // 특정 기호 포함 시 제외로 판별하는 로직 (강화됨)
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
-      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석' || strVal === '수동출석') {
+      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') {
         return false;
       }
-      return true;
+      return true; // 그 외의 텍스트(제외, X, -, / 등)는 모두 제외 처리
     }
     
     function renderTable(data) {
@@ -236,34 +182,36 @@
         tbody.innerHTML = '<tr><td colspan="7">해당 날짜에 등록된 학생이 없습니다.</td></tr>';
         return;
       }
+      
       data.roster.forEach(function(student, index) {
         let p1Status = '미출석'; let p2Status = '미출석';
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
         
-        // 1. 로그 데이터 확인
+        // 1. 서버가 보내준 데이터 중 제외 키워드가 있는지 다중 검사 (강력한 제외 판단)
+        let isP1Excluded = isExcludedMark(student.p1) || isExcludedMark(student.p1_exc) || isExcludedMark(student['1교시']) || student.p1_exc === "제외";
+        let isP2Excluded = isExcludedMark(student.p2) || isExcludedMark(student.p2_exc) || isExcludedMark(student['2교시']) || student.p2_exc === "제외";
+
+        if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
+        if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
+        
+        // 2. 실제 스캔 출석 로그 데이터 덮어쓰기
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
               if(log.period === '1교시') {
-                p1Status = log.status;
-                p1Class = (log.status === '추가출석' || log.status === '수동출석') ? 'status-extra' : 'status-present';
-                if(isExcludedMark(log.status)) { p1Status = '제외'; p1Class = 'status-excluded'; }
+                if(!isExcludedMark(log.status) && log.status !== '제외') {
+                  p1Status = log.status;
+                  p1Class = (log.status === '추가출석' || log.status === '수동출석') ? 'status-extra' : 'status-present';
+                }
               }
               if(log.period === '2교시') {
-                p2Status = log.status;
-                p2Class = (log.status === '추가출석' || log.status === '수동출석') ? 'status-extra' : 'status-present';
-                if(isExcludedMark(log.status)) { p2Status = '제외'; p2Class = 'status-excluded'; }
+                if(!isExcludedMark(log.status) && log.status !== '제외') {
+                  p2Status = log.status;
+                  p2Class = (log.status === '추가출석' || log.status === '수동출석') ? 'status-extra' : 'status-present';
+                }
               }
             }
           });
-        }
-        
-        // 2. 명단(엑셀 업로드 데이터)에 빈칸이 아닌 기호/글자가 있다면 무조건 '제외'
-        if(isExcludedMark(student.p1) || isExcludedMark(student.p1_exc) || isExcludedMark(student['1교시'])) {
-          if (p1Status === '미출석') { p1Status = '제외'; p1Class = 'status-excluded'; }
-        }
-        if(isExcludedMark(student.p2) || isExcludedMark(student.p2_exc) || isExcludedMark(student['2교시'])) {
-          if (p2Status === '미출석') { p2Status = '제외'; p2Class = 'status-excluded'; }
         }
         
         // ★ 상태가 '제외' 이거나 '미출석'인 경우에만 관리탭에 수동 출석 버튼 활성화
@@ -297,4 +245,103 @@
     function manualAttend(id, name, period) {
       const dateStr = document.getElementById('datePicker').value;
       const today = new Date();
-      const offset = today.getTimezoneOffset() *
+      const offset = today.getTimezoneOffset() * 60000;
+      const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
+      
+      if (dateStr !== localToday) {
+        alert("수동 출석 처리는 당일 출석부에서만 가능합니다.");
+        return;
+      }
+      if(!confirm(`${name}(${id}) 학생을 ${period}교시 '수동 출석'으로 처리하시겠습니까?\n(제외 또는 미출석 상태가 출석으로 변경됩니다)`)) return;
+      
+      showLoading(true);
+      const p1 = (period === 1);
+      const p2 = (period === 2);
+      
+      const qs = new URLSearchParams({
+        action: 'addDailyStudent',
+        date: dateStr,
+        id: id,
+        name: name,
+        p1: p1,
+        p2: p2,
+        teacher: '수동처리(대시보드)'
+      }).toString();
+      
+      fetch(`${API_URL}?${qs}`)
+        .then(res => res.json())
+        .then(res => {
+          if(res.success) {
+            loadDailyData(); 
+          } else {
+            showLoading(false);
+            alert(res.message);
+          }
+        })
+        .catch(err => { showLoading(false); alert("오류: " + err.message); });
+    }
+
+    function addDailyStudent() {
+      const dateStr = document.getElementById('datePicker').value;
+      const today = new Date();
+      const offset = today.getTimezoneOffset() * 60000;
+      const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
+      if (dateStr !== localToday) { alert("학생 추가는 당일 출석부에서만 가능합니다."); return; }
+      const id = document.getElementById('addId').value.trim();
+      const name = document.getElementById('addName').value.trim();
+      const p1 = document.getElementById('addP1').checked;
+      const p2 = document.getElementById('addP2').checked;
+      if (!id || (!p1 && !p2)) { alert("학번을 입력하고 최소 1개의 교시를 선택해주세요."); return; }
+      showLoading(true);
+      const qs = new URLSearchParams({
+        action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: p1, p2: p2, teacher: '대시보드관리자'
+      }).toString();
+      fetch(`${API_URL}?${qs}`)
+        .then(res => res.json())
+        .then(res => {
+          if(res.success) {
+            document.getElementById('addId').value = ''; document.getElementById('addName').value = '';
+            document.getElementById('addP1').checked = false; document.getElementById('addP2').checked = false;
+            loadDailyData();
+          } else { showLoading(false); alert(res.message); }
+        })
+        .catch(err => { showLoading(false); alert("오류: " + err.message); });
+    }
+    
+    function removeStudent(studentId) {
+      const dateStr = document.getElementById('datePicker').value;
+      if(!confirm(studentId + " 학생을 오늘 명단에서 삭제하시겠습니까?")) return;
+      showLoading(true);
+      const qs = new URLSearchParams({
+        action: 'removeDailyStudent', date: dateStr, id: studentId, teacher: '대시보드관리자'
+      }).toString();
+      fetch(`${API_URL}?${qs}`)
+        .then(res => res.json())
+        .then(res => {
+          if(res.success) loadDailyData();
+          else { showLoading(false); alert(res.message); }
+        })
+        .catch(err => { showLoading(false); alert("오류: " + err.message); });
+    }
+    
+    function savePdf() {
+      const dateStr = document.getElementById('datePicker').value;
+      if(!confirm(dateStr + " 출석부를 PDF로 저장하시겠습니까?\n(약 10~15초 정도 소요됩니다.)")) return;
+      showLoading(true);
+      const qs = new URLSearchParams({
+        action: 'saveDailyPdf', date: dateStr, teacher: '관리자'
+      }).toString();
+      fetch(`${API_URL}?${qs}`)
+        .then(res => res.json())
+        .then(res => {
+          showLoading(false);
+          if(res.success) {
+            alert("저장 성공!\n파일명: " + res.fileName);
+            if(res.fileUrl) window.open(res.fileUrl, '_blank');
+          } else { alert("저장 실패: " + res.message); }
+        })
+        .catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
+    }
+  </script>
+</body>
+</html>
