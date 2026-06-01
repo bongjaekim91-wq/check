@@ -157,43 +157,43 @@
     function downloadTemplate() {
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
+        // 새 양식에 맞게 헤더 수정 (A:학번, B:성명, C:요일, D:1교시, E:2교시, F:생성일, G:삭제일)
         const rows = [
-          [`2026 명단(${day}요일)`],
-          [],
-          [],
-          ["학년", "학번", "성명", "요일", "1교시 제외(X)", "2교시 제외(X)"],
-          ["1", "10101", "홍길동", day, "", ""],
-          ["1", "10102", "김글마루", day, "", "X"]
+          ["학번", "성명", "요일", "1교시", "2교시", "생성일", "삭제일"],
+          ["10101", "홍길동", day, "", "", "", ""],
+          ["10102", "김글마루", day, "", "X", "", ""]
         ];
         const ws = XLSX.utils.aoa_to_sheet(rows);
         XLSX.utils.book_append_sheet(wb, ws, day);
       });
-      XLSX.writeFile(wb, "출석부_양식.xlsx");
+      XLSX.writeFile(wb, "출석부_양식(새버전).xlsx");
     }
     function downloadExistingRoster() {
       if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
-        const wsData = [["학년","학번","성명","요일","1교시 제외(X)","2교시 제외(X)"]];
+        // 새 양식에 맞게 헤더 및 데이터 구조 수정
+        const wsData = [["학번","성명","요일","1교시","2교시","생성일","삭제일"]];
         studentsData
           .filter(s => s.day === day)
           .sort((a,b) => String(a.id).localeCompare(String(b.id)))
           .forEach(s => {
             wsData.push([
-              String(s.id).charAt(0),
               s.id,
               s.name,
               s.day,
               s.p1_exc || "",
-              s.p2_exc || ""
+              s.p2_exc || "",
+              "", // 생성일 비워둠
+              ""  // 삭제일 비워둠
             ]);
           });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), day);
       });
-      XLSX.writeFile(wb, "현재_출석명단.xlsx");
+      XLSX.writeFile(wb, "현재_출석명단(새버전).xlsx");
     }
     // ==========================================
-    // 💡 엑셀 업로드 로직 완전 교체 (스마트 인식 방식)
+    // 💡 엑셀 업로드 로직 (새로운 열 구조 반영)
     // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
@@ -211,28 +211,27 @@
             
             const json = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1 });
             
-            // 2. 고정된 줄(4번째)부터 읽지 않고 0부터 스캔하되,
-            // 정규식을 이용해 B열이 숫자인 '진짜 학생 데이터'만 필터링합니다.
-            // (빈 줄이 생략되더라도 정확히 학생 데이터만 찾아냅니다)
+            // 2. 모든 줄을 스캔하며 '학번' 열(A열)에 숫자가 있는 진짜 데이터만 추출
             for (let i = 0; i < json.length; i++) {
               const row = json[i];
-              if (!row || row.length < 3) continue;
+              if (!row || row.length < 2) continue;
               
-              const id = String(row[1] || "").trim();    // B열: 학번
-              const name = String(row[2] || "").trim();  // C열: 성명
+              // 새 양식에 맞춰 인덱스 변경 (A열: 0, B열: 1, C열: 2, D열: 3, E열: 4)
+              const id = String(row[0] || "").trim();    // A열(index 0): 학번
+              const name = String(row[1] || "").trim();  // B열(index 1): 성명
               
-              // D열(index 3)에서 요일 추출 (시트 이름에 요일이 없는 경우 대비)
-              const dayFromRow = String(row[3] || "").trim();
+              // C열(index 2)에서 요일 추출
+              const dayFromRow = String(row[2] || "").trim();
               const finalDay = dayFromSheet || (dayFromRow.match(/[월화수목금토일]/) ? dayFromRow.match(/[월화수목금토일]/)[0] : "");
 
-              // 학번(B열)에 숫자가 있고, 이름이 존재하는 줄만 학생으로 인식
-              if (/^\d+$/.test(id) && name && name !== "이름/교시" && name !== "성명") {
+              // 학번(A열)에 숫자가 있고, 이름이 존재하는 줄만 학생으로 인식
+              if (/^\d+$/.test(id) && name && name !== "성명") {
                 
-                // E열(index 4)이 1교시 제외, F열(index 5)이 2교시 제외
-                const p1Mark = String(row[4] || "").trim().toUpperCase();
-                const p2Mark = String(row[5] || "").trim().toUpperCase();
+                // D열(index 3)이 1교시, E열(index 4)이 2교시
+                const p1Mark = String(row[3] || "").trim().toUpperCase();
+                const p2Mark = String(row[4] || "").trim().toUpperCase();
                 
-                if (finalDay) { // 요일 정보가 확인된 경우에만 추가
+                if (finalDay) { 
                   studentsData.push({
                     id: id,
                     name: name,
@@ -246,7 +245,7 @@
           });
           
           if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다.\n(원인: 시트명/D열에 요일이 없거나, B열(학번)에 숫자가 없는 경우)");
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: A열에 학번(숫자)이 없거나 양식이 맞지 않음)");
             return;
           }
           
@@ -268,7 +267,7 @@
         }
       };
       reader.readAsArrayBuffer(file);
-      e.target.value = ''; // 똑같은 파일 다시 선택 가능하도록 초기화
+      e.target.value = ''; 
     });
     // ==========================================
     function getBaseUrl() {
