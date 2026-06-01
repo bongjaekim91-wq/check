@@ -146,10 +146,8 @@
     <input type="password" id="shared-pw" placeholder="비밀번호">
     <button type="button" class="btn" onclick="loginTeacher()">로그인 및 스캔 시작</button>
   </div>
-  
   <div class="card" id="scan-screen" style="display:none;">
     <h1>📷 출석 스캐너</h1>
-    
     <div class="period-selector">
       <p style="margin:0 0 10px 0; color:#2e7d32; font-weight:bold;">✅ 진행할 교시를 선택하세요</p>
       <select id="scan-period" style="font-weight:bold; color:#2e7d32; border-color:#4caf50; background-color:white;">
@@ -157,16 +155,12 @@
         <option value="2교시">2교시 출석 처리</option>
       </select>
     </div>
-
     <p style="color:#666; font-size:.9em; margin-bottom:15px;">
       학생의 QR코드를 비춰주세요.
     </p>
-    
     <button class="btn btn-camera" id="start-btn" onclick="startScanner()">🚀 카메라 켜기, 스캔 시작</button>
     <div id="reader"></div>
-    
     <button class="btn btn-extra" onclick="toggleExtraPanel()">➕ 학생 수동 추가입력</button>
-    
     <div class="extra-panel" id="extra-panel">
       <h3>학생 수동 출석 입력</h3>
       <div style="font-size:.9em; color:#6a1b9a; text-align:center; margin-bottom:10px;">
@@ -177,25 +171,21 @@
       <input type="text" id="extra-name" placeholder="이름 입력, 명단에 있는 학생은 생략 가능">
       <button class="btn btn-extra" onclick="submitExtraAttendance()">추가 출석 처리</button>
     </div>
-    
     <div id="result-box" style="display:none; margin-top:20px;">
       <h2 id="result-msg" style="color:#2e7d32; margin-bottom:10px;">-</h2>
-      <div class="stats-box" id="stats-content">데이터 대기 중...</div>
+      <div class="stats-box" id="stats-content">데이터 대기 대기 중...</div>
     </div>
-    
     <button class="btn btn-outline" onclick="logoutTeacher()" style="margin-top: 20px;">로그아웃</button>
   </div>
-  
   <div class="footer">
     Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
   </div>
-
   <script>
     // ⚠️ 새 버전으로 배포한 최신 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let html5QrCode = null;
     let isScanning = false;
-
+    
     window.addEventListener("DOMContentLoaded", () => {
       const pwInput = document.getElementById("shared-pw");
       const idInput = document.getElementById("teacher-name");
@@ -256,14 +246,11 @@
         alert("진행할 교시를 선택해주세요.");
         return;
       }
-
       document.getElementById("start-btn").style.display = "none";
       document.getElementById("reader").style.display = "block";
-      
       if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
       }
-      
       html5QrCode.start(
         { facingMode:"environment" },
         { fps:10, qrbox:{ width:250, height:250 } },
@@ -282,7 +269,6 @@
     function onScanSuccess(decodedText) {
       if (!isScanning) return;
       isScanning = false;
-      
       const studentId = extractStudentId(decodedText);
       if (!studentId) {
         showResult(false, "학생 QR을 다시 비춰주세요.", "QR 데이터에서 학생 ID를 찾지 못했습니다.");
@@ -330,55 +316,49 @@
     async function processAttendance(studentId) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
-      
       if (!selectedPeriod) {
         alert("교시가 선택되지 않았습니다.");
         isScanning = true;
         return;
       }
-
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
       const statsContent = document.getElementById("stats-content");
-      
       resultBox.style.display = "block";
       resultMsg.style.color = "#f57c00";
       resultMsg.innerText = `⏳ ${selectedPeriod} 출석 처리 중...`;
       statsContent.innerHTML = "데이터 동기화 중...";
-      
       try {
-        const fetchUrl = 
+        const fetchUrl =
           `${API_URL}?action=attend` +
           `&id=${encodeURIComponent(studentId)}` +
           `&teacher=${encodeURIComponent(tName)}` +
           `&period=${encodeURIComponent(selectedPeriod)}` +
           `&t=${Date.now()}`;
-          
         const response = await fetch(fetchUrl);
         const result = await response.json();
         
-        // 해당 요일 출석 대상이 아닌 경우, 감독 교사의 수동 승인 UI 렌더링
-        if (result.code === "NOT_SCHEDULED") {
+        // 💡 제외된 학생이거나 해당 요일 대상이 아닐 때 "O교시 출석대상자가 아닙니다." 표시 및 수동 승인 유도
+        if (result.code === "NOT_SCHEDULED" || result.code === "EXCLUDED" || (result.message && result.message.includes("제외"))) {
           resultMsg.style.color = "#c62828";
-          resultMsg.innerText = "⚠️ 해당 요일 출석 대상이 아닙니다.";
+          resultMsg.innerText = `⚠️ ${selectedPeriod} 출석대상자가 아닙니다.`;
           statsContent.innerHTML = `
             <div style="text-align:center; padding: 10px;">
               <p style="color:#c62828; font-weight:bold; margin-bottom: 10px; font-size: 1.1em;">
-                ${result.studentName}(${studentId}) 학생은 오늘 등록된 요일이 아닙니다.
+                ${result.studentName || "해당"}(${studentId}) 학생은 ${selectedPeriod} 출석대상자가 아닙니다.<br>(해당 요일 대상 아님 또는 제외 처리됨)
               </p>
               <p style="font-size: 0.9em; color:#666; margin-bottom: 20px;">
-                ${result.message}
+                학생이 출석을 희망할 경우 아래 버튼을 눌러 수동으로 승인할 수 있습니다.
               </p>
-              <button class="btn btn-extra" onclick="submitExtraAttendanceDirect('${studentId}', '${result.studentName}')">
-                👉 강제로 수동 출석(추가출석) 승인하기
+              <button class="btn btn-extra" onclick="submitExtraAttendanceDirect('${studentId}', '${result.studentName || '미상'}')">
+                👉 수동 출석(추가출석) 승인하기
               </button>
               <button class="btn btn-outline" onclick="cancelManualAdd()" style="margin-top:10px;">
-                ❌ 취소하고 스캔 계속하기
+                ❌ 취소하고 다음 학생 스캔하기
               </button>
             </div>
           `;
-          // 선택을 기다려야 하므로 isScanning = true 로직을 타지 않고 여기서 종료
-          return; 
+          return;
         }
 
         resultMsg.style.color = result.success ? "#2e7d32" : "#c62828";
@@ -389,47 +369,40 @@
         resultMsg.innerText = "❌ 서버 접속 실패";
         statsContent.innerHTML = "네트워크 또는 서버 상태를 확인해주세요.";
       }
-      
       setTimeout(() => {
         isScanning = true;
       }, 2000);
     }
 
-    // 대상 외 학생을 강제로 '추가 출석' 처리하는 함수
+    // 대상 외 학생 또는 제외된 학생을 강제로 '수동 출석' 처리하는 함수
     async function submitExtraAttendanceDirect(id, name) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
-
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
       const statsContent = document.getElementById("stats-content");
-      
       resultBox.style.display = "block";
       resultMsg.style.color = "#f57c00";
       resultMsg.innerText = `⏳ ${name} 학생 추가 출석 처리 중...`;
       statsContent.innerHTML = "데이터 동기화 중...";
-      
       try {
-        const fetchUrl = 
+        const fetchUrl =
           `${API_URL}?action=extraAttend` +
           `&id=${encodeURIComponent(id)}` +
           `&name=${encodeURIComponent(name)}` +
           `&teacher=${encodeURIComponent(tName)}` +
           `&period=${encodeURIComponent(selectedPeriod)}` +
           `&t=${Date.now()}`;
-          
         const response = await fetch(fetchUrl);
         const result = await response.json();
-        
         resultMsg.style.color = result.success ? "#2e7d32" : "#c62828";
-        resultMsg.innerText = (result.success ? "✅ " : "⚠️ ") + (result.message || "");
+        resultMsg.innerText = (result.success ? "✅ 수동 승인 완료: " : "⚠️ ") + (result.message || "");
         renderStatsBox(result);
       } catch (e) {
         resultMsg.style.color = "#c62828";
         resultMsg.innerText = "❌ 서버 접속 실패";
         statsContent.innerHTML = "네트워크 또는 서버 상태를 확인해주세요.";
       }
-      
       setTimeout(() => {
         isScanning = true;
       }, 2000);
@@ -439,11 +412,9 @@
     function cancelManualAdd() {
       const statsContent = document.getElementById("stats-content");
       const resultMsg = document.getElementById("result-msg");
-      
       resultMsg.style.color = "#666";
       resultMsg.innerText = "취소되었습니다. 다음 학생을 스캔하세요.";
       statsContent.innerHTML = "";
-      
       isScanning = true;
     }
 
@@ -453,7 +424,6 @@
       const name = document.getElementById("extra-name").value.trim();
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
-
       if (!id) {
         alert("학번을 입력해주세요.");
         return;
@@ -462,32 +432,26 @@
         alert("교시가 선택되지 않았습니다.");
         return;
       }
-
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
       const statsContent = document.getElementById("stats-content");
-      
       resultBox.style.display = "block";
       resultMsg.style.color = "#f57c00";
       resultMsg.innerText = `⏳ ${selectedPeriod} 추가 출석 처리 중...`;
       statsContent.innerHTML = "데이터 동기화 중...";
-      
       try {
-        const fetchUrl = 
+        const fetchUrl =
           `${API_URL}?action=extraAttend` +
           `&id=${encodeURIComponent(id)}` +
           `&name=${encodeURIComponent(name)}` +
           `&teacher=${encodeURIComponent(tName)}` +
           `&period=${encodeURIComponent(selectedPeriod)}` +
           `&t=${Date.now()}`;
-          
         const response = await fetch(fetchUrl);
         const result = await response.json();
-        
         resultMsg.style.color = result.success ? "#2e7d32" : "#c62828";
         resultMsg.innerText = (result.success ? "✅ " : "⚠️ ") + (result.message || "");
         renderStatsBox(result);
-        
         if (result.success) {
           document.getElementById("extra-id").value = "";
           document.getElementById("extra-name").value = "";
