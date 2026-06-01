@@ -51,32 +51,39 @@
       <button class="btn btn-solid" onclick="checkLogin()">로그인</button>
     </div>
   </div>
+  
   <div class="container" id="main-screen" style="display:none; max-width:500px;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
       <div id="current-time" class="time-text"></div>
     </div>
+    
     <div class="notice">
       출석 인정 시간<br>
       1교시 18:00~19:40 / 2교시 19:41~21:40
     </div>
+    
     <div class="btn-group">
       <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
       <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
     </div>
+    
     <div class="btn-group">
       <label class="btn btn-outline" for="excel-upload">📤 명단 업로드</label>
       <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none;">
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
+    
     <div class="btn-group">
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 QR</button>
       <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
     </div>
+    
     <a href="dashboard.html" class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;">📊 기간별 통계 및 출석부 인쇄</a>
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
     <div id="student-list"></div>
   </div>
+  
   <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
   
   <script>
@@ -167,7 +174,7 @@
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
         const rows = [
-          [`26 꿈꾸는 글마루 명단(${day}요일)`, "", "", "", ""], 
+          [`26 꿈꾸는 글마루 명단(${day}요일)`, "", "", "", ""],
           ["", "", "", "", ""],
           ["학년", "학번", "이름", "1교시", "2교시"],
           ["1", "10114", "박하린", "", ""],
@@ -202,9 +209,9 @@
       });
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
-
+    
     // ==========================================
-    // 💡 최강 패턴 인식 스캔 (보이지 않는 여백/서식 모두 무시)
+    // 💡 모든 형식(.xlsx, .xls, .csv) 완벽 지원 & 패턴 인식 스캔
     // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
@@ -213,77 +220,75 @@
       const reader = new FileReader();
       reader.onload = async function(ev) {
         try {
+          // 어떤 형식의 파일이든 ArrayBuffer로 읽어들여 SheetJS가 자동 파싱하도록 처리
           const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
           studentsData = [];
           
           wb.SheetNames.forEach(sn => {
             const sheet = wb.Sheets[sn];
-            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            // CSV나 특이한 서식에서도 데이터를 강제로 텍스트 배열로 뽑아냄
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
             if (json.length === 0) return;
 
-            // 요일 추출 (시트 이름에서 월,화,수,목,금 추출)
+            // 1. 요일 추출 (.csv 파일은 시트 이름이 파일명인 경우가 많아 첫 번째 줄 탐색 추가)
             let sheetDay = "공통";
             const dayMatch = sn.match(/[월화수목금토일]/);
             if (dayMatch) {
               sheetDay = dayMatch[0];
             } else {
-              return; // 요일이 안 적힌 시트는 건너뜀
+              const firstRowText = json.length > 0 ? String(json[0].join("")) : "";
+              const titleMatch = firstRowText.match(/[월화수목금토일]/);
+              if (titleMatch) sheetDay = titleMatch[0];
             }
 
-            // 아주 느슨한 데이터 탐색: 파일의 모든 칸을 뒤지며 패턴 찾기
+            // 2. 정확한 헤더 위치 찾기
+            let colId = -1, colName = -1, colP1 = -1, colP2 = -1;
+            
+            for (let i = 0; i < Math.min(json.length, 15); i++) {
+              const row = json[i];
+              if (!row) continue;
+              for (let j = 0; j < row.length; j++) {
+                const val = String(row[j]).replace(/\s+/g, "");
+                if (val.includes("학번")) colId = j;
+                if (val.includes("이름") || val.includes("성명")) colName = j;
+                if (val.includes("1교시")) colP1 = j;
+                if (val.includes("2교시")) colP2 = j;
+              }
+              if (colId !== -1 && colName !== -1) break; 
+            }
+
+            // 3. 학생 데이터 추출
             for (let i = 0; i < json.length; i++) {
               const row = json[i];
-              if (!row || row.length < 2) continue; // 데이터가 없는 빈 줄은 무시
+              if (!row || row.length < 2) continue;
               
-              let foundId = "";
-              let idColIndex = -1;
+              let foundId = "", foundName = "", isP1Exc = "", isP2Exc = "";
 
-              // 1. 한 줄에서 학번(숫자 4자리 이상 연속 포함)을 찾음
-              for (let j = 0; j < row.length; j++) {
-                const cellVal = String(row[j] || "").replace(/\s+/g, ""); // 모든 공백 제거
-                const idMatch = cellVal.match(/\d{4,5}/); // 4~5자리 숫자가 '포함'되어 있으면 낚아챔
+              if (colId !== -1 && colName !== -1) {
+                const idVal = String(row[colId]).replace(/\s+/g, "");
+                const nameVal = String(row[colName]).trim();
                 
-                if (idMatch) {
-                  foundId = idMatch[0];
-                  idColIndex = j;
-                  break; // 학번을 찾았으면 멈춤
-                }
-              }
-
-              // 2. 학번을 찾았다면 그 우측 칸들 중에서 한글이 포함된 칸을 이름으로 간주
-              if (foundId && idColIndex !== -1) {
-                for (let k = idColIndex + 1; k < row.length; k++) {
-                  const nextCell = String(row[k] || "").trim();
+                if (idVal.match(/^\d{4,5}$/) && nameVal && !nameVal.includes("이름")) {
+                  foundId = idVal;
+                  foundName = nameVal;
                   
-                  // '이름'이라는 제목 문구가 아니며, 최소 2글자 이상이고 문자가 포함된 경우
-                  if (nextCell && !nextCell.includes("이름") && !nextCell.includes("성명") && nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell)) {
-                    const foundName = nextCell;
-                    
-                    // 이름 칸 다음 두 칸을 1교시, 2교시 기록으로 간주
-                    const p1Mark = String(row[k+1] || "").trim().toUpperCase();
-                    const p2Mark = String(row[k+2] || "").trim().toUpperCase();
-                    
-                    // 결석 기호 인식 (X, 결, ☒ 등 어떠한 문자든 결석으로 폭넓게 수용)
-                    const isP1Exc = (p1Mark.includes("X") || p1Mark.includes("결") || p1Mark.includes("☒")) ? "X" : "";
-                    const isP2Exc = (p2Mark.includes("X") || p2Mark.includes("결") || p2Mark.includes("☒")) ? "X" : "";
-                    
-                    studentsData.push({
-                      id: foundId,
-                      name: foundName,
-                      day: sheetDay,
-                      p1_exc: isP1Exc,
-                      p2_exc: isP2Exc
-                    });
-                    
-                    break; // 학생 한 명을 찾았으므로 나머지 칸 스캔 중지 후 다음 줄로 이동
+                  if (colP1 !== -1) {
+                    const p1Mark = String(row[colP1]).trim().toUpperCase();
+                    isP1Exc = (p1Mark.includes("X") || p1Mark.includes("결") || p1Mark.includes("☒")) ? "X" : "";
                   }
+                  if (colP2 !== -1) {
+                    const p2Mark = String(row[colP2]).trim().toUpperCase();
+                    isP2Exc = (p2Mark.includes("X") || p2Mark.includes("결") || p2Mark.includes("☒")) ? "X" : "";
+                  }
+                  
+                  studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
                 }
               }
             }
           });
           
           if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 학번과 이름 패턴을 전혀 찾지 못했습니다. 엑셀의 빈 셀 병합이나 서식을 확인해주세요.)");
+            alert("업로드할 학생 데이터가 없습니다.\n(원인: 파일 내에서 학번/이름 패턴을 찾지 못했습니다.)");
             return;
           }
           
@@ -297,15 +302,16 @@
               students: studentsData
             })
           });
-          
           alert(`${studentsData.length}건의 명단을 정상적으로 업로드했습니다.`);
           location.reload();
         } catch (error) {
           alert("명단 업로드 중 오류가 발생했습니다: " + error.message);
         }
       };
+      
+      // 바이너리 데이터로 읽어 인코딩 문제를 최소화
       reader.readAsArrayBuffer(file);
-      e.target.value = ''; 
+      e.target.value = ''; // 같은 파일을 다시 업로드할 수 있도록 초기화
     });
     // ==========================================
 
@@ -360,6 +366,7 @@
       });
       const finalList = Array.from(uniqueMap.values())
         .sort((a,b) => String(a.id).localeCompare(String(b.id)));
+        
       for (let i = 0; i < finalList.length; i++) {
         const s = finalList[i];
         const qrDiv = document.createElement("div");
