@@ -25,7 +25,7 @@
     .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
     .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
-    .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; }
+    .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; display: flex; align-items: center; }
     .action-btns button { border: none; border-radius: 6px; padding: 10px 16px; color: white; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .btn-qr { background-color: #3182ce; } .btn-add { background-color: #dd6b20; } .btn-save { background-color: #805ad5; } .btn-print { background-color: #38a169; }
     
@@ -105,6 +105,7 @@
           <input type="date" id="datePicker" onchange="loadDailyData()">
         </div>
         <div class="table-header-row">
+          <!-- 🌟 감독교사 이름이 표시될 제목 영역 -->
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
             <button class="btn-qr" onclick="loadDailyData()">🔄 QR 스캔 반영</button>
@@ -172,7 +173,7 @@
           <button class="btn-tab-print" onclick="printStats()">🖨️ 인쇄</button>
         </div>
         
-        <!-- 🌟 막대 그래프 영역 추가 -->
+        <!-- 막대 그래프 영역 -->
         <div class="chart-container">
           <canvas id="statsChart" height="100"></canvas>
         </div>
@@ -245,7 +246,7 @@
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
     }
     
-    // --- 일일 출석부 로직 (원본 동일) ---
+    // --- 일일 출석부 로직 ---
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
@@ -254,7 +255,11 @@
         .then(res => res.json())
         .then(response => {
           showLoading(false);
-          document.getElementById('tableTitle').innerText = dateStr + " 글마루 출석부";
+          
+          // 🌟 감독교사 이름 표시 로직 추가
+          const teacherName = response.teacherText || "미입력";
+          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1.1rem; color:#666; margin-left:15px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
+          
           if(response.success) {
             currentDailyData = response;
             renderTable(response);
@@ -536,7 +541,7 @@
     // 🌟 그래프 그리기 함수
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
-      if (myChart) myChart.destroy(); // 기존 그래프 삭제 후 다시 그리기
+      if (myChart) myChart.destroy();
 
       myChart = new Chart(ctx, {
         type: 'bar',
@@ -564,15 +569,12 @@
           plugins: {
             legend: { position: 'top', labels: { font: { size: 14 } } },
             title: { display: true, text: '일별 글마루 참여 및 결석 인원', font: { size: 18, weight: 'bold' }, padding: { bottom: 20 } },
-            // 데이터 라벨 (숫자 표시) 플러그인 설정
             datalabels: {
               color: '#ffffff',
               font: { weight: 'bold', size: 14 },
               anchor: 'center',
               align: 'center',
-              formatter: function(value) {
-                return value > 0 ? value + '명' : ''; // 0명이면 표시 안함
-              }
+              formatter: function(value) { return value > 0 ? value + '명' : ''; }
             }
           },
           scales: {
@@ -583,7 +585,7 @@
       });
     }
 
-    // 🌟 통계 조회 함수 (테이블 + 그래프 모두 처리)
+    // 🌟 통계 조회 함수
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
@@ -593,30 +595,22 @@
       cachedStudents.forEach(s => { sMap[s.id] = { id: s.id, name: s.name, day: s.day, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; });
       cachedChanges.forEach(c => { if(!sMap[c.id]) sMap[c.id] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; });
       
-      // 그래프용 데이터 배열
-      let chartLabels = [];
-      let chartPresentData = [];
-      let chartAbsentData = [];
+      let chartLabels = []; let chartPresentData = []; let chartAbsentData = [];
 
       dateArr.forEach(d => {
-        let dailyPresentCount = 0;
-        let dailyAbsentCount = 0;
+        let dailyPresentCount = 0; let dailyAbsentCount = 0;
 
         Object.values(sMap).forEach(st => {
           let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
-          
-          // 그래프용 카운팅: 오늘 출석 대상자이거나, 추가로 출석한 경우
           let isTarget = (stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded');
           let attendedAny = (stat.p1.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'present' || stat.p2.type === 'extra');
           
           if (isTarget) {
-            if (attendedAny) dailyPresentCount++;
-            else dailyAbsentCount++;
+            if (attendedAny) dailyPresentCount++; else dailyAbsentCount++;
           } else if (attendedAny) {
-             dailyPresentCount++; // 대상자가 아니어도 추가로 온 학생
+             dailyPresentCount++;
           }
 
-          // 개인별 통계 테이블용 누적 데이터 계산
           if(stat.p1.type !== 'excluded') st.target++;
           if(stat.p2.type !== 'excluded') st.target++;
           if(stat.p1.type === 'present' || stat.p1.type === 'extra') st.present++;
@@ -627,19 +621,14 @@
           if(stat.p2.type === 'absent') st.absent++;
         });
 
-        // 주말 등 아무도 오지 않은 날은 그래프에서 제외 (원하시면 if문 삭제 가능)
         if (dailyPresentCount > 0 || dailyAbsentCount > 0) {
-          const shortDate = d.date.substring(5); // "2024-05-12" -> "05-12"
-          chartLabels.push(`${shortDate}(${d.day})`);
-          chartPresentData.push(dailyPresentCount);
-          chartAbsentData.push(dailyAbsentCount);
+          const shortDate = d.date.substring(5);
+          chartLabels.push(`${shortDate}(${d.day})`); chartPresentData.push(dailyPresentCount); chartAbsentData.push(dailyAbsentCount);
         }
       });
       
-      // 1. 그래프 그리기 호출
       drawStatsChart(chartLabels, chartPresentData, chartAbsentData);
 
-      // 2. 하단 상세 표 그리기
       const tbody = document.getElementById("statsBody");
       tbody.innerHTML = "";
       Object.values(sMap).sort((a,b) => a.id.localeCompare(b.id)).forEach(st => {
@@ -655,10 +644,8 @@
     function printStats() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
-      // 인쇄 시에는 하단에 있는 '표'만 깔끔하게 출력되도록 설정합니다.
       let html = `<h1 class="print-title">기간별 통계 현황</h1><div class="print-subtitle">조회기간: ${start} ~ ${end}</div><table class="print-table">` + document.getElementById('statsTable').innerHTML + `</table>`;
-      printDiv.innerHTML = html; 
-      window.print();
+      printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
   </script>
