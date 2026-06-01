@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>서현고등학교 글마루 출결 대시보드</title>
   <style>
+    /* 전체 배경 및 폰트 설정 */
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 20px; }
     .container { max-width: 1200px; margin: 0 auto; }
     .header-box { background: white; border-radius: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
@@ -35,6 +36,40 @@
     .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; } 
     .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
+
+    /* ==========================================
+       🖨️ 인쇄 전용 스타일 (예전 깔끔한 양식 복구)
+       ========================================== */
+    @media print {
+      body { background-color: #fff !important; padding: 0 !important; margin: 0 !important; }
+      .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+      
+      /* 불필요한 UI 모두 숨기기 */
+      .header-box, .info-box, .tab-container, .date-picker-container, 
+      .action-btns, .add-student-form, .footer, #loading {
+        display: none !important;
+      }
+      .content-box { box-shadow: none !important; padding: 0 !important; min-height: auto !important; }
+      
+      /* 타이틀 스타일 중앙 정렬 및 흑백 */
+      .table-header-row { border-bottom: none !important; margin-bottom: 20px !important; display: block !important; text-align: center !important; }
+      #tableTitle { font-size: 24pt !important; color: #000 !important; }
+
+      /* 테이블 선명하게 흑백 처리 */
+      table { width: 100% !important; border-collapse: collapse !important; }
+      th, td { border: 1px solid #000 !important; padding: 12px 5px !important; font-size: 11pt !important; color: #000 !important; text-align: center !important; }
+      th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      
+      /* 7번째 열(관리 버튼 열) 숨기기 */
+      th:nth-child(7), td:nth-child(7) { display: none !important; }
+      
+      /* 글자 색상 무시하고 검은색(제외는 취소선 유지) */
+      .status-present, .status-extra, .status-absent { color: #000 !important; font-weight: bold !important; }
+      .status-excluded { color: #555 !important; font-weight: normal !important; text-decoration: line-through !important; }
+      
+      /* 용지 여백 설정 */
+      @page { margin: 15mm; size: A4 portrait; }
+    }
   </style>
 </head>
 <body>
@@ -157,6 +192,8 @@
         .then(res => res.json())
         .then(response => {
           showLoading(false);
+          // 🖨️ 인쇄 시 제목에 조회 날짜 표시
+          document.getElementById('tableTitle').innerText = dateStr + " 글마루 출석부";
           if(response.success) renderTable(response);
           else alert("데이터 불러오기 실패: " + response.message);
         })
@@ -165,14 +202,13 @@
         });
     }
     
-    // 특정 기호 포함 시 제외로 판별하는 로직 (강화됨)
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
       if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') {
         return false;
       }
-      return true; // 그 외의 텍스트(제외, X, -, / 등)는 모두 제외 처리
+      return true; 
     }
     
     function renderTable(data) {
@@ -187,14 +223,12 @@
         let p1Status = '미출석'; let p2Status = '미출석';
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
         
-        // 1. 서버가 보내준 데이터 중 제외 키워드가 있는지 다중 검사 (강력한 제외 판단)
         let isP1Excluded = isExcludedMark(student.p1) || isExcludedMark(student.p1_exc) || isExcludedMark(student['1교시']) || student.p1_exc === "제외";
         let isP2Excluded = isExcludedMark(student.p2) || isExcludedMark(student.p2_exc) || isExcludedMark(student['2교시']) || student.p2_exc === "제외";
 
         if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
         if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
         
-        // 2. 실제 스캔 출석 로그 데이터 덮어쓰기
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
@@ -214,7 +248,6 @@
           });
         }
         
-        // ★ 상태가 '제외' 이거나 '미출석'인 경우에만 관리탭에 수동 출석 버튼 활성화
         let p1Btn = (p1Status === '제외' || p1Status === '미출석') 
           ? `<button style="background:#4299e1; border:none; color:white; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:2px; font-size:0.85rem;" onclick="manualAttend('${student.id}', '${student.name}', 1)">1교시 출석</button>` 
           : '';
@@ -241,7 +274,6 @@
       });
     }
 
-    // ★ 수동 출석 처리 함수 ★
     function manualAttend(id, name, period) {
       const dateStr = document.getElementById('datePicker').value;
       const today = new Date();
