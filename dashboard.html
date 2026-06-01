@@ -18,14 +18,23 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .content-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-height: 400px; }
-    .date-picker-container { text-align: center; margin-bottom: 30px; }
-    .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
+    
+    .date-picker-container { text-align: center; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+    .date-picker-container span { font-weight: bold; margin-right: 5px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
+    
     .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
     .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; }
     .action-btns button { border: none; border-radius: 6px; padding: 10px 16px; color: white; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     
     .btn-qr { background-color: #3182ce; } .btn-add { background-color: #dd6b20; } .btn-reset { background-color: #e53e3e; } .btn-save { background-color: #805ad5; } .btn-print { background-color: #38a169; }
+    
+    /* 🌟 새로 추가된 통계/조회용 버튼 스타일 (크고 부드러운 색상) */
+    .btn-tab-action { background-color: #4ea8de; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
+    .btn-tab-action:hover { background-color: #3b8cc6; }
+    .btn-tab-print { background-color: #68b36b; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
+    .btn-tab-print:hover { background-color: #559c58; }
+
     .add-student-form { background-color: #fffaf0; border: 1px solid #fbd38d; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: none; }
     .add-student-form input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
@@ -38,6 +47,7 @@
     .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
     #printArea { display: none; }
+    
     /* 인쇄 전용 스타일 */
     @media print {
       body > * { display: none !important; }
@@ -85,7 +95,7 @@
     <div class="content-box">
       <!-- 탭 1: 일일 출석부 -->
       <div id="tab-daily" class="tab-content active">
-        <div class="date-picker-container">
+        <div class="date-picker-container" style="justify-content: center;">
           <span>조회 날짜:</span>
           <input type="date" id="datePicker" onchange="loadDailyData()">
         </div>
@@ -125,11 +135,11 @@
         <div class="date-picker-container">
           <span>조회 기간:</span>
           <input type="date" id="indivStartDate"> ~ <input type="date" id="indivEndDate">
-          <select id="indivStudentSelect" onchange="renderIndividual()" style="margin-left:10px; padding: 8px 12px; border: 2px solid #81c784; border-radius: 6px; font-size:1.05rem;">
+          <select id="indivStudentSelect" onchange="renderIndividual()" style="padding: 8px 12px; border: 2px solid #81c784; border-radius: 6px; font-size:1.05rem;">
             <option value="">데이터를 불러오는 중...</option>
           </select>
-          <button class="btn-qr" onclick="renderIndividual()" style="margin-left:5px;">조회</button>
-          <button class="btn-print" onclick="printIndividual()">🖨️ 인쇄</button>
+          <button class="btn-tab-action" onclick="renderIndividual()">🔍 조회</button>
+          <button class="btn-tab-print" onclick="printIndividual()">🖨️ 인쇄</button>
         </div>
         <h3 id="indivName" style="color:#2b7a2b; text-align:center; margin-top:0;">학생을 선택해주세요</h3>
         <table id="individualTable">
@@ -147,8 +157,8 @@
         <div class="date-picker-container">
           <span>조회 기간:</span>
           <input type="date" id="statStartDate"> ~ <input type="date" id="statEndDate">
-          <button class="btn-qr" onclick="renderStats()" style="margin-left: 10px;">통계 조회</button>
-          <button class="btn-print" onclick="printStats()">🖨️ 인쇄</button>
+          <button class="btn-tab-action" onclick="renderStats()">📊 통계 조회</button>
+          <button class="btn-tab-print" onclick="printStats()">🖨️ 인쇄</button>
         </div>
         <h2 style="color: #2b7a2b;">📈 기간별 학생 출석률 요약</h2>
         <table id="statsTable">
