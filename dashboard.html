@@ -24,10 +24,18 @@
     .date-picker-container { text-align: center; margin-bottom: 30px; }
     .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
+    
     .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
     .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.4rem; display: flex; align-items: center; }
-    .action-btns button { border: none; border-radius: 6px; padding: 10px 16px; color: white; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .btn-qr { background-color: #3182ce; } .btn-add { background-color: #dd6b20; } .btn-save { background-color: #805ad5; } .btn-print { background-color: #38a169; }
+    
+    /* 상단 액션 버튼 스타일 */
+    .action-btns button { border: none; border-radius: 6px; padding: 10px 16px; color: white; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
+    .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
+    .btn-add { background-color: #dd6b20; } .btn-add:hover { background-color: #c05621; }
+    .btn-save { background-color: #805ad5; } .btn-save:hover { background-color: #6b46c1; }
+    .btn-print { background-color: #38a169; } .btn-print:hover { background-color: #2f855a; }
+    /* 🌟 당일 초기화 버튼 스타일 추가 */
+    .btn-reset { background-color: #e53e3e; } .btn-reset:hover { background-color: #c53030; }
     
     /* 통계/조회용 전용 버튼 스타일 */
     .btn-tab-action { background-color: #5ab1ea; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
@@ -48,12 +56,12 @@
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
     
     /* 통계 탭 그래프 컨테이너 */
-    .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 20px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
 
     /* 화면에서는 인쇄 영역 숨기기 */
     #printArea { display: none; }
     /* ==========================================
-       🖨️ 인쇄 전용 스타일 (PDF 저장 양식 완벽 구현)
+       🖨️ 인쇄 전용 스타일
        ========================================== */
     @media print {
       body > * { display: none !important; }
@@ -82,7 +90,7 @@
   </style>
 </head>
 <body>
-  <div id="loading" class="loading-overlay">데이터를 서버에서 동기화 중입니다... ⏳</div>
+  <div id="loading" class="loading-overlay">데이터를 서버에서 처리 중입니다... ⏳</div>
   <div class="container">
     <div class="header-box">
       <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
@@ -98,6 +106,7 @@
       <button class="tab-btn" onclick="switchTab('tab-stats', this)">📈 기간별 통계 현황</button>
     </div>
     <div class="content-box">
+      
       <!-- 탭 1: 일일 출석부 -->
       <div id="tab-daily" class="tab-content active">
         <div class="date-picker-container">
@@ -105,13 +114,14 @@
           <input type="date" id="datePicker" onchange="loadDailyData()">
         </div>
         <div class="table-header-row">
-          <!-- 🌟 감독교사 이름이 표시될 제목 영역 -->
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
+            <!-- 🌟 당일 초기화 버튼 추가됨 -->
+            <button class="btn-reset" onclick="resetDailyData()">🗑️ 당일 초기화</button>
             <button class="btn-qr" onclick="loadDailyData()">🔄 QR 스캔 반영</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
-            <button class="btn-save" onclick="savePdf()">💾 일일 PDF 저장</button>
-            <button class="btn-print" onclick="window.print()">🖨️ 일일 출석부 인쇄</button>
+            <button class="btn-save" onclick="savePdf()">💾 출석부 PDF 저장</button>
+            <button class="btn-print" onclick="window.print()">🖨️ 출석부 인쇄</button>
           </div>
         </div>
         <div id="addStudentSection" class="add-student-form">
@@ -164,7 +174,7 @@
         </table>
       </div>
       
-      <!-- 탭 3: 기간별 통계 현황 (그래프 추가) -->
+      <!-- 탭 3: 기간별 통계 현황 (디자인 개선된 막대 그래프) -->
       <div id="tab-stats" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
           <span>조회 기간:</span>
@@ -175,7 +185,7 @@
         
         <!-- 막대 그래프 영역 -->
         <div class="chart-container">
-          <canvas id="statsChart" height="100"></canvas>
+          <canvas id="statsChart" height="120"></canvas>
         </div>
 
         <h2 style="color: #2b7a2b; margin-top:30px;">📋 기간별 학생 상세 출석률</h2>
@@ -207,7 +217,7 @@
     let cachedChanges = [];
     let cacheLoaded = false;
     let currentDailyData = null;
-    let myChart = null; // 그래프 객체 저장 변수
+    let myChart = null; 
 
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
@@ -255,8 +265,6 @@
         .then(res => res.json())
         .then(response => {
           showLoading(false);
-          
-          // 🌟 감독교사 이름 표시 로직 추가
           const teacherName = response.teacherText || "미입력";
           document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1.1rem; color:#666; margin-left:15px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
           
@@ -269,6 +277,28 @@
           }
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
+    }
+
+    // 🌟 당일 초기화 기능 추가
+    function resetDailyData() {
+      const dateStr = document.getElementById('datePicker').value;
+      if(!confirm(`⚠️ 경고: ${dateStr} 날짜의 모든 '출결 기록'과 '수동으로 추가/삭제한 명단'이 완전히 초기화됩니다.\n정말 초기화하시겠습니까?`)) return;
+      
+      showLoading(true);
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'resetDailyAttendance', date: dateStr }).toString()}`)
+        .then(res => res.json())
+        .then(res => { 
+          if(res.success) { 
+            alert(`${dateStr} 출석부가 초기화되었습니다.`);
+            cacheLoaded = false; 
+            loadDailyData(); 
+          } 
+          else { 
+            showLoading(false); 
+            alert("초기화 실패: " + (res.message || "서버 오류")); 
+          } 
+        })
+        .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
     
     function isExcludedMark(val) {
@@ -538,7 +568,7 @@
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
 
-    // 🌟 그래프 그리기 함수
+    // 🌟 디자인 개선된 그래프 그리기 함수
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
       if (myChart) myChart.destroy();
@@ -551,35 +581,50 @@
             {
               label: '참여 학생 수',
               data: presentData,
-              backgroundColor: 'rgba(76, 175, 80, 0.8)', // Green
-              borderColor: '#388e3c',
-              borderWidth: 1
+              backgroundColor: '#5ab1ea', // 소프트 블루
+              borderRadius: 6, // 둥근 모서리
+              borderWidth: 0,
+              barPercentage: 0.6 // 막대 두께 조정
             },
             {
               label: '결석 학생 수',
               data: absentData,
-              backgroundColor: 'rgba(244, 67, 54, 0.8)', // Red
-              borderColor: '#d32f2f',
-              borderWidth: 1
+              backgroundColor: '#ff8a8a', // 소프트 코랄 레드
+              borderRadius: 6,
+              borderWidth: 0,
+              barPercentage: 0.6
             }
           ]
         },
         options: {
           responsive: true,
+          // 상단 여백 추가 (라벨이 잘리지 않도록)
+          layout: { padding: { top: 30 } },
           plugins: {
-            legend: { position: 'top', labels: { font: { size: 14 } } },
-            title: { display: true, text: '일별 글마루 참여 및 결석 인원', font: { size: 18, weight: 'bold' }, padding: { bottom: 20 } },
+            legend: { position: 'top', labels: { font: { size: 14, family: 'Malgun Gothic' } } },
+            title: { display: true, text: '일별 글마루 참여 및 결석 현황', font: { size: 18, weight: 'bold', family: 'Malgun Gothic' }, padding: { bottom: 20 }, color: '#333' },
             datalabels: {
-              color: '#ffffff',
-              font: { weight: 'bold', size: 14 },
-              anchor: 'center',
-              align: 'center',
+              color: '#555', // 글자색 (다크 그레이)
+              anchor: 'end', // 막대 끝 기준
+              align: 'top', // 막대 바깥쪽 위로 배치
+              offset: 2, // 막대와 글자 사이 간격
+              font: { weight: 'bold', size: 13, family: 'Malgun Gothic' },
               formatter: function(value) { return value > 0 ? value + '명' : ''; }
             }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 12 } } },
-            x: { ticks: { font: { size: 12, weight: 'bold' } } }
+            y: { 
+              beginAtZero: true, 
+              grace: '15%', // 최대값 위로 15% 여백 생성 (라벨 잘림 방지)
+              ticks: { stepSize: 5, font: { size: 12 } },
+              grid: { color: '#f0f0f0' }, // 연한 배경 선
+              border: { display: false }
+            },
+            x: { 
+              ticks: { font: { size: 13, weight: 'bold', family: 'Malgun Gothic' } },
+              grid: { display: false }, // 세로선 숨김
+              border: { display: false }
+            }
           }
         }
       });
