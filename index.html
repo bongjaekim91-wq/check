@@ -70,13 +70,11 @@
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
     <div class="btn-group">
-      <!-- 🌟 버튼 이름 변경 완료 (감독교사 QR -> 감독교사 인증 QR) -->
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 인증 QR</button>
       <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
     </div>
     <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50;" onclick="location.href='dashboard.html'">📊 기간별 통계 및 출석부 인쇄</button>
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
-    <!-- 요약 정보(로드 건수, 최근 업로드 시간, 요일별 통계)가 표시될 영역 -->
     <div id="student-list"></div>
   </div>
   <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
@@ -129,21 +127,18 @@
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-    // 학생 명단 로드 및 요일별 인원 통계 요약 표시
     async function loadExistingStudents() {
       try {
         const res = await fetch(`${API_URL}?action=getStudents`);
         const data = await res.json();
         studentsData = Array.isArray(data) ? data : (data.list || []);
         if (studentsData.length > 0) {
-          // 1. 요일별 인원 카운트 계산
           const dayCounts = { "월": 0, "화": 0, "수": 0, "목": 0, "금": 0, "토": 0, "일": 0 };
           studentsData.forEach(s => {
             if (s.day && dayCounts[s.day] !== undefined) {
               dayCounts[s.day]++;
             }
           });
-          // 2. 카운트된 결과 텍스트 생성 (예: 월: 30명, 화: 25명...)
           const daysOrder = ["월", "화", "수", "목", "금", "토", "일"];
           let summaryParts = [];
           daysOrder.forEach(day => {
@@ -152,7 +147,6 @@
             }
           });
           const daySummaryText = summaryParts.length > 0 ? summaryParts.join(' &nbsp;|&nbsp; ') : '요일 정보 없음';
-          // 3. 화면 업데이트
           document.getElementById("student-list").innerHTML =
             `<div style="font-weight:bold; font-size:1.1em; color:var(--text-main); margin-bottom:5px;">
               ✅ ${studentsData.length}건 로드 완료
@@ -220,7 +214,7 @@
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
     // ==========================================
-    // 💡 최강 패턴 인식 스캔
+    // 💡 최강 패턴 인식 스캔 및 중복 체크
     // ==========================================
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
@@ -308,8 +302,30 @@
           });
           if (studentsData.length === 0) {
             alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 학번과 이름 패턴을 전혀 찾지 못했습니다. 엑셀의 빈 셀 병합이나 서식을 확인해주세요.)");
+            e.target.value = '';
             return;
           }
+
+          // ----------------------------------------------------
+          // 🆕 학번 중복 체크 및 경고 로직 추가
+          // ----------------------------------------------------
+          const idCounts = {};
+          studentsData.forEach(s => {
+            idCounts[s.id] = (idCounts[s.id] || 0) + 1;
+          });
+          
+          const duplicates = Object.keys(idCounts).filter(id => idCounts[id] > 1);
+          if (duplicates.length > 0) {
+            const dupMsg = duplicates.map(id => `${id}(${idCounts[id]}번)`).join(", ");
+            const confirmMsg = `⚠️ 엑셀 명단에 중복된 학번이 발견되었습니다.\n\n[중복 학번]\n${dupMsg}\n\n* 학생이 여러 요일에 출석하는 경우 중복 표시될 수 있습니다.\n이대로 명단 업로드를 진행하시겠습니까?`;
+            
+            if (!confirm(confirmMsg)) {
+              e.target.value = ''; // 파일 선택 초기화
+              return; // 업로드 취소
+            }
+          }
+          // ----------------------------------------------------
+
           document.getElementById("student-list").style.display = "block";
           document.getElementById("student-list").innerHTML = `⏳ 데이터를 서버로 전송 중입니다... (${studentsData.length}명)`;
           await fetch(API_URL, {
