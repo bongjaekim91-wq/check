@@ -164,14 +164,14 @@
       const userName = responsePayload.name;
 
       /* (선택) 특정 도메인(예: 학교 메일)만 허용하려면 아래 주석을 해제하고 도메인을 수정하세요.
-      if (!userEmail.endsWith("@seohyeon.hs.kr")) {
+      if (!userEmail.endsWith("@seohyun.hs.kr")) {
         alert("학교 공식 계정으로만 로그인할 수 있습니다.");
         return;
       }
       */
 
       // 관리자 이메일을 여기에 지정합니다 (기존 "admin" 아이디 역할)
-      const role = userEmail === "admin@seohyeon.hs.kr" ? "admin" : "supervisor";
+      const role = userEmail === "kbj1109@seohyun.hs.kr" ? "admin" : "supervisor";
       
       // 기존과 동일하게 세션 스토리지에 저장하여 다른 페이지와 연동되게 함
       sessionStorage.setItem("userRole", role);
