@@ -142,10 +142,13 @@
       1교시 18:00~19:40<br>
       2교시 20:00~21:40
     </div>
-    <input type="text" id="teacher-name" placeholder="아이디, 감독자 이름 입력" autocomplete="off">
-    <input type="password" id="shared-pw" placeholder="비밀번호">
-    <button type="button" class="btn" onclick="loginTeacher()">로그인 및 스캔 시작</button>
+    
+    <!-- 💡 감독교사/admin 아이디 및 비밀번호 입력란 -->
+    <input type="text" id="login-id" placeholder="감독교사 이름 또는 admin 입력" autocomplete="off">
+    <input type="password" id="login-pw" placeholder="비밀번호 입력">
+    <button type="button" class="btn" onclick="loginScanner()">로그인 및 스캔 시작</button>
   </div>
+  
   <div class="card" id="scan-screen" style="display:none;">
     <h1>📷 출석 스캐너</h1>
     <div class="period-selector">
@@ -175,11 +178,12 @@
       <h2 id="result-msg" style="color:#2e7d32; margin-bottom:10px;">-</h2>
       <div class="stats-box" id="stats-content">데이터 대기 대기 중...</div>
     </div>
-    <button class="btn btn-outline" onclick="logoutTeacher()" style="margin-top: 20px;">로그아웃</button>
+    <button class="btn btn-outline" onclick="logoutScanner()" style="margin-top: 20px;">로그아웃</button>
   </div>
   <div class="footer">
     Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
   </div>
+  
   <script>
     // ⚠️ 새 버전으로 배포한 최신 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
@@ -187,18 +191,12 @@
     let isScanning = false;
     
     window.addEventListener("DOMContentLoaded", () => {
-      const pwInput = document.getElementById("shared-pw");
-      const idInput = document.getElementById("teacher-name");
-      if (pwInput) {
-        pwInput.addEventListener("keyup", function(event) {
-          if (event.key === "Enter") loginTeacher();
-        });
-      }
-      if (idInput) {
-        idInput.addEventListener("keyup", function(event) {
-          if (event.key === "Enter") loginTeacher();
-        });
-      }
+      // 엔터키 입력 시 로그인 처리
+      const pwInput = document.getElementById("login-pw");
+      const idInput = document.getElementById("login-id");
+      if (pwInput) pwInput.addEventListener("keyup", (e) => { if (e.key === "Enter") loginScanner(); });
+      if (idInput) idInput.addEventListener("keyup", (e) => { if (e.key === "Enter") loginScanner(); });
+      
       const savedTeacherName = sessionStorage.getItem("teacherName");
       if (savedTeacherName) {
         showScanScreen();
@@ -210,17 +208,45 @@
       }
     });
 
-    function showScanScreen() {
-      document.getElementById("auth-screen").style.display = "none";
-      document.getElementById("scan-screen").style.display = "block";
+    // 당일 날짜를 YYYYMMDD 형식으로 반환하는 함수
+    function getTodayPassword() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}${month}${day}`; // 예: 20260730
     }
 
-    function loginTeacher() {
-      const tName = document.getElementById("teacher-name").value.trim();
-      const tPw = document.getElementById("shared-pw").value;
-      if (!tName) return alert("아이디, 감독자 이름을 입력해주세요.");
-      if (tPw !== "1234") return alert("비밀번호가 틀렸습니다.");
-      sessionStorage.setItem("teacherName", tName);
+    // 💡 로그인 검증 로직
+    function loginScanner() {
+      const loginId = document.getElementById("login-id").value.trim();
+      const loginPw = document.getElementById("login-pw").value.trim();
+
+      if (!loginId) return alert("아이디(감독교사 이름 또는 admin)를 입력해주세요.");
+      if (!loginPw) return alert("비밀번호를 입력해주세요.");
+
+      const todayPw = getTodayPassword(); // 당일 날짜 생성
+
+      // 1. 관리자(admin) 계정 확인
+      if (loginId === "admin" && loginPw === "7895301") {
+        sessionStorage.setItem("teacherName", "관리자(admin)");
+        handleLoginSuccess();
+        return;
+      }
+
+      // 2. 일반 감독교사 계정 확인 (아이디: 교사이름, 비밀번호: 당일날짜)
+      if (loginId !== "admin" && loginPw === todayPw) {
+        sessionStorage.setItem("teacherName", loginId);
+        handleLoginSuccess();
+        return;
+      }
+
+      // 일치하는 조건이 없는 경우
+      alert("아이디 또는 비밀번호가 올바르지 않습니다.\n(교사 비밀번호는 당일 날짜 8자리입니다. 예: 20260730)");
+    }
+
+    // 로그인 성공 시 공통 처리 함수
+    function handleLoginSuccess() {
       showScanScreen();
       const directId = getIdFromCurrentUrl();
       if (directId) {
@@ -229,17 +255,23 @@
       }
     }
 
-    function logoutTeacher() {
+    function showScanScreen() {
+      document.getElementById("auth-screen").style.display = "none";
+      document.getElementById("scan-screen").style.display = "block";
+    }
+
+    function logoutScanner() {
       if (!confirm("로그아웃하시겠습니까?")) return;
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
 
+    /* --- 이하 기존 스캐너 동작 로직 --- */
+
     function toggleExtraPanel() {
       const panel = document.getElementById("extra-panel");
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     }
-
     function startScanner() {
       const selectedPeriod = document.getElementById("scan-period").value;
       if (!selectedPeriod) {
@@ -265,7 +297,6 @@
         isScanning = false;
       });
     }
-
     function onScanSuccess(decodedText) {
       if (!isScanning) return;
       isScanning = false;
@@ -277,7 +308,6 @@
       }
       processAttendance(studentId);
     }
-
     function extractStudentId(decodedText) {
       const text = String(decodedText || "").trim();
       if (!text) return "";
@@ -296,13 +326,11 @@
       }
       return text;
     }
-
     function getIdFromCurrentUrl() {
       const params = new URLSearchParams(location.search);
       const id = params.get("id");
       return id ? id.trim() : "";
     }
-
     function showResult(success, message, detailHtml) {
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
@@ -312,7 +340,6 @@
       resultMsg.innerText = message;
       statsContent.innerHTML = detailHtml || "";
     }
-
     async function processAttendance(studentId) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
@@ -338,7 +365,6 @@
         const response = await fetch(fetchUrl);
         const result = await response.json();
         
-        // 💡 제외된 학생이거나 해당 요일 대상이 아닐 때 "O교시 출석대상자가 아닙니다." 표시 및 수동 승인 유도
         if (result.code === "NOT_SCHEDULED" || result.code === "EXCLUDED" || (result.message && result.message.includes("제외"))) {
           resultMsg.style.color = "#c62828";
           resultMsg.innerText = `⚠️ ${selectedPeriod} 출석대상자가 아닙니다.`;
@@ -360,7 +386,6 @@
           `;
           return;
         }
-
         resultMsg.style.color = result.success ? "#2e7d32" : "#c62828";
         resultMsg.innerText = (result.success ? "✅ " : "⚠️ ") + (result.message || "");
         renderStatsBox(result);
@@ -373,8 +398,6 @@
         isScanning = true;
       }, 2000);
     }
-
-    // 대상 외 학생 또는 제외된 학생을 강제로 '수동 출석' 처리하는 함수
     async function submitExtraAttendanceDirect(id, name) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
@@ -407,8 +430,6 @@
         isScanning = true;
       }, 2000);
     }
-
-    // 수동 승인을 취소하고 다시 스캔 모드로 복귀하는 함수
     function cancelManualAdd() {
       const statsContent = document.getElementById("stats-content");
       const resultMsg = document.getElementById("result-msg");
@@ -417,8 +438,6 @@
       statsContent.innerHTML = "";
       isScanning = true;
     }
-
-    // 기존의 수동 텍스트 박스 입력 (명단 외 학생 처리용)
     async function submitExtraAttendance() {
       const id = document.getElementById("extra-id").value.trim();
       const name = document.getElementById("extra-name").value.trim();
@@ -462,7 +481,6 @@
         statsContent.innerHTML = "네트워크 또는 서버 상태를 확인해주세요.";
       }
     }
-
     function renderStatsBox(result) {
       const statsContent = document.getElementById("stats-content");
       if (result.stats) {
