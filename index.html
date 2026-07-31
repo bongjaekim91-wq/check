@@ -7,10 +7,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  
-  <!-- 🌟 구글 로그인 라이브러리 추가 -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
@@ -21,10 +17,8 @@
     .date-text { font-size:1.1em; color:#558b2f; font-weight:700; }
     .time-text { font-size:2.4em; font-weight:900; color:#2e7d32; }
     .notice { background:#fffde7; border:1px solid #fff59d; padding:12px; border-radius:10px; font-size:.92em; color:#795548; margin-bottom:15px; line-height:1.5; }
-    .login-form { display:flex; flex-direction:column; gap:15px; margin-top:20px; text-align:center; align-items: center; justify-content: center; min-height: 120px; }
-    .input-group { display:flex; flex-direction:column; gap:5px; }
-    .input-group label { font-weight:bold; font-size:.9em; color:var(--primary-dark); }
-    input[type="text"], input[type="password"] { padding:15px; font-size:1em; border:2px solid #c8e6c9; border-radius:10px; outline:none; width:100%; box-sizing:border-box; }
+    .login-form { display:flex; flex-direction:column; gap:10px; margin-top:20px; text-align:center; align-items: center; justify-content: center; }
+    input[type="text"], input[type="password"] { padding:15px; font-size:0.95em; border:2px solid #c8e6c9; border-radius:10px; outline:none; width:100%; box-sizing:border-box; text-align: center;}
     .btn { padding:14px; font-size:1.03em; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; border:none; min-height:55px; margin-top:10px; transition:.2s; text-decoration:none; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }
     .btn-solid { background:var(--primary-color); color:white; }
     .btn-outline { background:white; border:2px solid var(--primary-color); color:var(--primary-dark); }
@@ -34,7 +28,6 @@
     .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
     #student-list { margin-top:15px; padding:15px; border-radius:10px; background:#e8f5e9; display:none; }
     .footer { margin-top:30px; font-size:.85em; color:#7f8c8d; text-align:center; }
-    /* 🌟 추가된 로딩 화면 CSS */
     .pdf-loading-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(255, 255, 255, 0.85);
@@ -50,7 +43,6 @@
   </style>
 </head>
 <body>
-  <!-- 🌟 추가된 로딩 화면 HTML -->
   <div id="pdf-loading" class="pdf-loading-overlay">
     <div class="pdf-spinner-text">
       학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳
@@ -64,24 +56,14 @@
       1교시 18:00~19:40 / 2교시 20:40~21:40
     </div>
     
-    <!-- 🌟 수정된 로그인 폼 영역 (구글 로그인 버튼) -->
+    <!-- 🌟 관리자 및 감독교사 공용 로그인 폼 -->
     <div class="login-form">
-      <div id="g_id_onload"
-           data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-           data-callback="handleCredentialResponse"
-           data-auto_prompt="false">
-      </div>
-      <div class="g_id_signin"
-           data-type="standard"
-           data-size="large"
-           data-theme="outline"
-           data-text="sign_in_with"
-           data-shape="rectangular"
-           data-logo_alignment="left">
-      </div>
+      <input type="text" id="login-id" placeholder="아이디 (admin 또는 교사 이름)" autocomplete="off">
+      <input type="password" id="login-pw" placeholder="비밀번호 (관리자암호 또는 당일날짜 8자리)">
+      <button type="button" class="btn btn-solid" onclick="login()">로그인</button>
     </div>
   </div>
-
+  
   <div class="container" id="main-screen" style="display:none; max-width:500px;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
@@ -108,13 +90,20 @@
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
     <div id="student-list"></div>
   </div>
+  
   <div class="footer">Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.</div>
-
+  
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let studentsData = [];
-
+    
     window.onload = function() {
+      // 엔터키 로그인 지원
+      const pwInput = document.getElementById("login-pw");
+      const idInput = document.getElementById("login-id");
+      if(pwInput) pwInput.addEventListener("keyup", (e) => { if(e.key === "Enter") login(); });
+      if(idInput) idInput.addEventListener("keyup", (e) => { if(e.key === "Enter") login(); });
+
       if (sessionStorage.getItem("userRole")) {
         document.getElementById("login-screen").style.display = "none";
         document.getElementById("main-screen").style.display = "block";
@@ -124,7 +113,7 @@
         loadExistingStudents();
       }
     };
-
+    
     function updateClock() {
       const now = new Date();
       const d = ["일","월","화","수","목","금","토"];
@@ -133,50 +122,52 @@
       document.getElementById("current-time").innerText =
         now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
     }
-
+    
     function applyRoleUI(role) {
       const delBtn = document.getElementById("delete-all-btn");
       if (role === "admin") {
         delBtn.disabled = false;
         delBtn.classList.remove("btn-disabled");
       } else {
+        // 감독교사(supervisor)인 경우 명단 초기화 버튼 비활성화
         delBtn.disabled = true;
         delBtn.classList.add("btn-disabled");
         delBtn.innerText = "🚫 관리자전용";
       }
     }
 
-    // 🌟 추가된 JWT 디코딩 함수 (구글 로그인 토큰 해석)
-    function decodeJwtResponse(token) {
-      let base64Url = token.split('.')[1];
-      let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
-    }
+    // 🌟 통합 로그인 로직 (관리자 + 감독교사)
+    function login() {
+      const id = document.getElementById("login-id").value.trim();
+      const pw = document.getElementById("login-pw").value.trim();
 
-    // 🌟 수정된 로그인 처리 로직 (구글 로그인 성공 시 실행)
-    function handleCredentialResponse(response) {
-      const responsePayload = decodeJwtResponse(response.credential);
-      
-      const userEmail = responsePayload.email;
-      const userName = responsePayload.name;
-
-      /* (선택) 특정 도메인(예: 학교 메일)만 허용하려면 아래 주석을 해제하고 도메인을 수정하세요.
-      if (!userEmail.endsWith("@seohyun.hs.kr")) {
-        alert("학교 공식 계정으로만 로그인할 수 있습니다.");
+      if (!id || !pw) {
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
         return;
       }
-      */
 
-      // 관리자 이메일을 여기에 지정합니다 (기존 "admin" 아이디 역할)
-      const role = userEmail === "kbj1109@seohyun.hs.kr" ? "admin" : "supervisor";
-      
-      // 기존과 동일하게 세션 스토리지에 저장하여 다른 페이지와 연동되게 함
-      sessionStorage.setItem("userRole", role);
-      sessionStorage.setItem("teacherName", userName); // 감독자 이름으로 구글 프로필 이름 사용
-      location.reload();
+      // 1. 관리자(admin) 계정 확인
+      if (id === "admin" && pw === "7895301") {
+        sessionStorage.setItem("userRole", "admin");
+        sessionStorage.setItem("teacherName", "관리자(admin)");
+        location.reload();
+        return;
+      }
+
+      // 2. 당일 감독교사 계정 확인 (비밀번호 = 당일 날짜 8자리)
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const todayString = `${yyyy}${mm}${dd}`;
+
+      if (pw === todayString) {
+        sessionStorage.setItem("userRole", "supervisor");
+        sessionStorage.setItem("teacherName", id); // 입력한 이름을 교사 이름으로 저장
+        location.reload();
+      } else {
+        alert("아이디 또는 비밀번호가 올바르지 않습니다.\n(감독교사 비밀번호: 당일 날짜 8자리)");
+      }
     }
 
     function logout() {
@@ -185,9 +176,8 @@
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-
-    /* --- 이하 기존 엑셀/PDF 관련 로직은 전혀 수정 없이 원본 그대로 유지됩니다 --- */
-
+    
+    /* --- 이하 기존 엑셀/PDF 관련 로직 유지 --- */
     async function loadExistingStudents() {
       try {
         const res = await fetch(`${API_URL}?action=getStudents`);
@@ -225,7 +215,6 @@
         alert("학생명단을 불러오지 못했습니다.");
       }
     }
-    
     async function deleteExistingRoster() {
       if (sessionStorage.getItem("userRole") !== "admin") {
         return alert("관리자 권한이 없습니다.");
@@ -237,7 +226,6 @@
       });
       location.reload();
     }
-    
     function downloadTemplate() {
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
@@ -254,7 +242,6 @@
       });
       XLSX.writeFile(wb, "글마루_업로드_양식.xlsx");
     }
-    
     function downloadExistingRoster() {
       if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
       const wb = XLSX.utils.book_new();
@@ -277,7 +264,6 @@
       });
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
-    
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -398,11 +384,9 @@
       reader.readAsArrayBuffer(file);
       e.target.value = '';
     });
-    
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
-    
     function downloadTeacherQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
@@ -433,7 +417,6 @@
         pdf.save("감독교사_전용QR.pdf");
       }, 100);
     }
-    
     async function generatePDF() {
       if (studentsData.length === 0) return alert("학생명단이 없습니다.");
       document.getElementById("pdf-loading").style.display = "flex";
