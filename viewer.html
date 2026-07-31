@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>서현고등학교 글마루 출결 조회 (열람 전용)</title>
+  <!-- Chart.js 및 데이터 라벨 플러그인 로드 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <style>
+    /* 전체 배경 및 폰트 설정 */
+    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header-box { background: white; border-radius: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
+    .header-box h1 { margin: 0; font-size: 1.5rem; color: #2b7a2b; }
+    
+    .info-box { background-color: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 18px 25px; color: #1565c0; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; font-weight: bold; }
+    
+    .tab-container { display: flex; gap: 15px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; background: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.05rem; font-weight: bold; color: #2b7a2b; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .tab-btn.active { background-color: #81c784; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .content-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); min-height: 400px; }
+    
+    .date-picker-container { text-align: center; margin-bottom: 30px; }
+    .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
+    .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
+    
+    .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; flex-wrap: nowrap; gap: 10px; overflow-x: auto; }
+    .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.25rem; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
+    
+    .action-btns { display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; flex-shrink: 0; }
+    .action-btns button { border: none; border-radius: 6px; padding: 8px 10px; color: white; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; white-space: nowrap; margin: 0; }
+    .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
+    .btn-riro { background-color: #2c5282; } .btn-riro:hover { background-color: #2a4365; }
+    
+    .btn-tab-action { background-color: #5ab1ea; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
+    .btn-tab-action:hover { background-color: #499dd6; }
+    
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { border: 1px solid #e0e0e0; padding: 15px 10px; text-align: center; }
+    th { background-color: #e8f5e9; color: #2b7a2b; font-weight: bold; border-color: #c8e6c9; }
+    .status-present { color: #3182ce; font-weight: bold; }
+    .status-extra { color: #3182ce; font-weight: bold; }
+    .status-absent { color: #e53e3e; font-weight: bold; }
+    .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; }
+    
+    .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
+    .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
+    
+    /* 통계 탭 그래프 컨테이너 */
+    .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading-overlay">데이터를 실시간으로 불러오는 중입니다... ⏳</div>
+  
+  <div class="container">
+    <div class="header-box">
+      <h1>📊 서현고등학교 글마루 출결 현황 조회</h1>
+    </div>
+    
+    <!-- 안내 문구를 열람 전용으로 변경 -->
+    <div class="info-box">
+      ℹ️ 이 페이지는 선생님들을 위한 열람 전용 페이지입니다.<br>
+      출결 상태 수정이나 명단 변경은 당일 감독교사 및 관리자만 출석관리 시스템에서 처리할 수 있습니다.
+    </div>
+
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="switchTab('tab-daily', this)">📅 일일 출석부</button>
+      <button class="tab-btn" onclick="switchTab('tab-individual', this)">🧑‍🎓 개인별 출결 현황</button>
+      <button class="tab-btn" onclick="switchTab('tab-stats', this)">📈 기간별 통계 현황</button>
+    </div>
+
+    <div class="content-box">
+      <!-- 탭 1: 일일 출석부 -->
+      <div id="tab-daily" class="tab-content active">
+        <div class="date-picker-container">
+          <span>조회 날짜:</span>
+          <input type="date" id="datePicker" onchange="loadDailyData()">
+        </div>
+        
+        <div class="table-header-row">
+          <h2 id="tableTitle">글마루 출석부</h2>
+          <div class="action-btns">
+            <!-- 조회용 버튼만 남김 -->
+            <button class="btn-qr" onclick="loadDailyData()">🔄 새로고침</button>
+            <button class="btn-riro" onclick="window.open('https://seohyun.riroschool.kr/', '_blank')">🔗 리로스쿨 연결</button>
+          </div>
+        </div>
+        
+        <table id="rosterTable">
+          <thead>
+            <tr>
+              <th>연번</th>
+              <th>학번</th>
+              <th>이름</th>
+              <th>구분</th>
+              <th>1교시</th>
+              <th>2교시</th>
+              <!-- 관리(수동출석/삭제) 열 제거됨 -->
+            </tr>
+          </thead>
+          <tbody id="rosterBody">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 탭 2: 개인별 출결 현황 -->
+      <div id="tab-individual" class="tab-content">
+        <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
+          <span>조회 기간:</span>
+          <input type="date" id="indivStartDate"> ~ <input type="date" id="indivEndDate">
+          <select id="indivStudentSelect" onchange="renderIndividual()" style="padding: 8px 12px; border: 2px solid #81c784; border-radius: 6px; font-size:1.05rem; margin-left:10px;">
+            <option value="">데이터를 불러오는 중...</option>
+          </select>
+          <button class="btn-tab-action" onclick="renderIndividual()">🔍 조회</button>
+        </div>
+        <h3 id="indivName" style="color:#2b7a2b; text-align:center; margin-top:0;">학생을 선택해주세요</h3>
+        <table id="individualTable">
+          <thead>
+            <tr><th>날짜</th><th>요일</th><th>1교시</th><th>2교시</th><th>처리교사</th></tr>
+          </thead>
+          <tbody id="indivBody">
+            <tr><td colspan="5">학생을 선택하거나 조회 기간을 설정하세요.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 탭 3: 기간별 통계 현황 -->
+      <div id="tab-stats" class="tab-content">
+        <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
+          <span>조회 기간:</span>
+          <input type="date" id="statStartDate"> ~ <input type="date" id="statEndDate">
+          <button class="btn-tab-action" onclick="renderStats()">📊 통계 조회</button>
+        </div>
+        
+        <div class="chart-container">
+          <canvas id="statsChart" height="120"></canvas>
+        </div>
+        
+        <h2 style="color: #2b7a2b; margin-top:30px;">📋 기간별 학생 상세 출석률</h2>
+        <table id="statsTable">
+          <thead>
+            <tr>
+              <th>학번</th><th>이름</th><th>등록요일</th><th>대상 교시</th><th>출석</th><th>결석</th><th>추가/수동</th><th>출석률</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody">
+            <tr><td colspan="8">기간 설정 후 [통계 조회] 버튼을 눌러주세요.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
+    </div>
+  </div>
+
+  <script>
+    // 🌟 서버 주소 (기존 백엔드와 동일하게 연동)
+    const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    
+    let cachedStudents = [];
+    let cachedLogs = [];
+    let cachedChanges = [];
+    let cacheLoaded = false;
+    let myChart = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const today = new Date();
+      const offset = today.getTimezoneOffset() * 60000;
+      const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const localFirst = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
+      
+      document.getElementById('datePicker').value = localToday;
+      document.getElementById('indivStartDate').value = localFirst;
+      document.getElementById('indivEndDate').value = localToday;
+      document.getElementById('statStartDate').value = localFirst;
+      document.getElementById('statEndDate').value = localToday;
+      
+      loadDailyData();
+      
+      try {
+        Chart.register(ChartDataLabels);
+      } catch(e) {
+        console.warn("Chart.js 플러그인 로드 대기중...");
+      }
+    });
+
+    function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+    
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+      if (tabId === 'tab-individual' || tabId === 'tab-stats') {
+        ensureDataLoaded();
+      }
+    }
+
+    // --- 일일 출석부 로직 (조회 전용) ---
+    function loadDailyData() {
+      const dateStr = document.getElementById('datePicker').value;
+      if(!dateStr) return;
+      showLoading(true);
+      fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
+        .then(res => res.json())
+        .then(response => {
+          showLoading(false);
+          let rawTeacherStr = response.teacherText || "";
+          let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
+          let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : "미입력";
+          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
+          if(response.success) {
+            renderTable(response);
+          } else {
+            alert("데이터 불러오기 실패: " + (response.message || "알 수 없는 오류"));
+          }
+        })
+        .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
+    }
+
+    function isExcludedMark(val) {
+      if (val === undefined || val === null) return false;
+      const strVal = String(val).trim();
+      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
+      return true;
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('rosterBody');
+      tbody.innerHTML = '';
+      if(!data.roster || data.roster.length === 0) {
+        // 관리 열이 삭제되었으므로 colspan을 7에서 6으로 변경
+        tbody.innerHTML = '<tr><td colspan="6">해당 날짜에 등록된 학생이 없습니다.</td></tr>';
+        return;
+      }
+      data.roster.forEach(function(student, index) {
+        let p1Status = '미출석'; let p2Status = '미출석';
+        let p1Class = 'status-absent'; let p2Class = 'status-absent';
+        
+        let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
+        let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
+        if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
+        if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
+        
+        if(data.logs) {
+          data.logs.forEach(function(log) {
+            if(log.id === student.id) {
+              if(log.period === '1교시') {
+                if(!isExcludedMark(log.status) && log.status !== '제외') { p1Status = log.status; p1Class = (log.status === '추가출석' || log.status === '수동입력') ? 'status-extra' : 'status-present'; }
+              }
+              if(log.period === '2교시') {
+                if(!isExcludedMark(log.status) && log.status !== '제외') { p2Status = log.status; p2Class = (log.status === '추가출석' || log.status === '수동입력') ? 'status-extra' : 'status-present'; }
+              }
+            }
+          });
+        }
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td style="font-weight:bold;">${student.id}</td>
+          <td style="font-weight:bold;">${student.name}</td>
+          <td>${student.source || '기본명단'}</td>
+          <td class="${p1Class}">${p1Status}</td>
+          <td class="${p2Class}">${p2Status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- 통계용 공통 로직 ---
+    async function ensureDataLoaded() {
+      if (cacheLoaded) return;
+      showLoading(true);
+      try {
+        const t = new Date().getTime();
+        const [stRes, logRes, chRes] = await Promise.all([
+          fetch(`${API_URL}?action=getStudents&_t=${t}`).then(r => r.json()),
+          fetch(`${API_URL}?action=getLogs&_t=${t}`).then(r => r.json()),
+          fetch(`${API_URL}?action=getDailyChanges&_t=${t}`).then(r => r.json())
+        ]);
+        cachedStudents = Array.isArray(stRes) ? stRes : (stRes.list || []);
+        cachedLogs = Array.isArray(logRes) ? logRes : (logRes.list || []);
+        cachedChanges = Array.isArray(chRes) ? chRes : (chRes.list || []);
+        cacheLoaded = true;
+        populateStudentSelect();
+      } catch(e) { alert("통계 데이터를 서버에서 불러오는 중 오류가 발생했습니다."); }
+      showLoading(false);
+    }
+
+    function populateStudentSelect() {
+      const sel = document.getElementById("indivStudentSelect");
+      sel.innerHTML = '<option value="">▼ 학생을 선택하세요</option>';
+      let map = {};
+      cachedStudents.forEach(s => map[s.id] = s);
+      cachedChanges.forEach(c => { if(!map[c.id]) map[c.id] = { id: c.id, name: c.name, day: '추가등록' }; });
+      Object.values(map).sort((a,b) => a.id.localeCompare(b.id)).forEach(s => {
+        const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
+      });
+    }
+
+    function getDatesInRange(start, end) {
+      const dateArray = [];
+      let currentDate = new Date(start); const stopDate = new Date(end);
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      while (currentDate <= stopDate) {
+        const offset = currentDate.getTimezoneOffset() * 60000;
+        const localD = new Date(currentDate.getTime() - offset).toISOString().split('T')[0];
+        dateArray.push({ date: localD, day: days[currentDate.getDay()] });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return dateArray;
+    }
+
+    function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
+      let isP1Target = (sDay === dayStr && p1_exc !== '제외');
+      let isP2Target = (sDay === dayStr && p2_exc !== '제외');
+      let changes = cachedChanges.filter(c => c.date === dateStr && c.id === id);
+      let lastChange = changes.length > 0 ? changes[changes.length - 1] : null;
+      if (lastChange) {
+        if (lastChange.status === 'REMOVE') { isP1Target = false; isP2Target = false; }
+        else if (lastChange.status === 'ADD') { isP1Target = lastChange.p1; isP2Target = lastChange.p2; }
+      }
+      let p1Log = cachedLogs.find(l => l.timestamp.startsWith(dateStr) && l.id === id && l.period === '1교시');
+      let p2Log = cachedLogs.find(l => l.timestamp.startsWith(dateStr) && l.id === id && l.period === '2교시');
+      function calcStatus(isTarget, log) {
+        if (log) return { text: log.status, type: (log.status === '추가출석' || log.status === '수동입력') ? 'extra' : 'present', teacher: log.teacher };
+        if (isTarget) return { text: '미출석', type: 'absent', teacher: '-' };
+        return { text: '제외(대상아님)', type: 'excluded', teacher: '-' };
+      }
+      return { p1: calcStatus(isP1Target, p1Log), p2: calcStatus(isP2Target, p2Log), isTargetAny: isP1Target || isP2Target || p1Log || p2Log };
+    }
+
+    function renderIndividual() {
+      const id = document.getElementById("indivStudentSelect").value;
+      const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
+      tbody.innerHTML = "";
+      if(!id) { title.innerText = "학생을 선택해주세요"; return; }
+      let sMap = {};
+      cachedStudents.forEach(s => sMap[s.id] = s);
+      cachedChanges.forEach(c => { if(!sMap[c.id]) sMap[c.id] = { id: c.id, name: c.name, day: '', p1_exc: '제외', p2_exc: '제외' }; });
+      const st = sMap[id];
+      title.innerText = `🧑‍🎓 ${st.name} (${st.id}) 학생 출결 현황`;
+      const dateArr = getDatesInRange(document.getElementById("indivStartDate").value, document.getElementById("indivEndDate").value);
+      dateArr.forEach(d => {
+        let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
+        if(stat.isTargetAny) {
+          let tr = document.createElement("tr");
+          tr.innerHTML = `<td>${d.date}</td><td>${d.day}</td><td class="status-${stat.p1.type}">${stat.p1.text}</td><td class="status-${stat.p2.type}">${stat.p2.text}</td><td>${stat.p1.teacher !== '-' ? stat.p1.teacher : stat.p2.teacher !== '-' ? stat.p2.teacher : '-'}</td>`;
+          tbody.appendChild(tr);
+        }
+      });
+      if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='5'>해당 기간에 출결 데이터 또는 대상일이 없습니다.</td></tr>";
+    }
+
+    function drawStatsChart(labels, presentData, absentData) {
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      if (myChart) myChart.destroy();
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: '참여 학생 수', data: presentData, backgroundColor: '#5ab1ea', borderRadius: 6, borderWidth: 0, barPercentage: 0.6 },
+            { label: '결석 학생 수', data: absentData, backgroundColor: '#ff8a8a', borderRadius: 6, borderWidth: 0, barPercentage: 0.6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          layout: { padding: { top: 30 } },
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 14, family: 'Malgun Gothic' } } },
+            title: { display: true, text: '일별 글마루 참여 및 결석 현황', font: { size: 18, weight: 'bold', family: 'Malgun Gothic' }, padding: { bottom: 20 }, color: '#333' },
+            datalabels: {
+              color: '#555', anchor: 'end', align: 'top', offset: 2, font: { weight: 'bold', size: 13, family: 'Malgun Gothic' },
+              formatter: function(value) { return value > 0 ? value + '명' : ''; }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, grace: '15%', ticks: { stepSize: 5, font: { size: 12 } }, grid: { color: '#f0f0f0' }, border: { display: false } },
+            x: { ticks: { font: { size: 13, weight: 'bold', family: 'Malgun Gothic' } }, grid: { display: false }, border: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderStats() {
+      const start = document.getElementById("statStartDate").value;
+      const end = document.getElementById("statEndDate").value;
+      const dateArr = getDatesInRange(start, end);
+      let sMap = {};
+      cachedStudents.forEach(s => { sMap[s.id] = { id: s.id, name: s.name, day: s.day, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; });
+      cachedChanges.forEach(c => { if(!sMap[c.id]) sMap[c.id] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; });
+      let chartLabels = []; let chartPresentData = []; let chartAbsentData = [];
+      
+      dateArr.forEach(d => {
+        let dailyPresentCount = 0; let dailyAbsentCount = 0;
+        Object.values(sMap).forEach(st => {
+          let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
+          let isTarget = (stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded');
+          let attendedAny = (stat.p1.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'present' || stat.p2.type === 'extra');
+          if (isTarget) {
+            if (attendedAny) dailyPresentCount++; else dailyAbsentCount++;
+          } else if (attendedAny) {
+             dailyPresentCount++;
+          }
+          if(stat.p1.type !== 'excluded') st.target++;
+          if(stat.p2.type !== 'excluded') st.target++;
+          if(stat.p1.type === 'present' || stat.p1.type === 'extra') st.present++;
+          if(stat.p1.type === 'extra') st.extra++;
+          if(stat.p1.type === 'absent') st.absent++;
+          if(stat.p2.type === 'present' || stat.p2.type === 'extra') st.present++;
+          if(stat.p2.type === 'extra') st.extra++;
+          if(stat.p2.type === 'absent') st.absent++;
+        });
+        if (dailyPresentCount > 0 || dailyAbsentCount > 0) {
+          const shortDate = d.date.substring(5);
+          chartLabels.push(`${shortDate}(${d.day})`); chartPresentData.push(dailyPresentCount); chartAbsentData.push(dailyAbsentCount);
+        }
+      });
+      drawStatsChart(chartLabels, chartPresentData, chartAbsentData);
+      
+      const tbody = document.getElementById("statsBody");
+      tbody.innerHTML = "";
+      Object.values(sMap).sort((a,b) => a.id.localeCompare(b.id)).forEach(st => {
+        if(st.target === 0 && st.present === 0) return;
+        let rate = st.target > 0 ? Math.round((st.present / st.target) * 100) + "%" : "-";
+        let tr = document.createElement("tr");
+        tr.innerHTML = `<td>${st.id}</td><td style="font-weight:bold;">${st.name}</td><td>${st.day}</td><td>${st.target}</td><td class="status-present">${st.present}</td><td class="status-absent">${st.absent}</td><td class="status-extra">${st.extra}</td><td style="font-weight:bold; color:#7F6000; background:#FFF2CC;">${rate}</td>`;
+        tbody.appendChild(tr);
+      });
+      if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
+    }
+  </script>
+</body>
+</html>
