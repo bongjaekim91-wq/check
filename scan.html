@@ -142,13 +142,11 @@
       1교시 18:00~19:40<br>
       2교시 20:00~21:40
     </div>
-    
     <!-- 💡 감독교사/admin 아이디 및 비밀번호 입력란 -->
     <input type="text" id="login-id" placeholder="감독교사 이름 또는 admin 입력" autocomplete="off">
     <input type="password" id="login-pw" placeholder="비밀번호 입력">
     <button type="button" class="btn" onclick="loginScanner()">로그인 및 스캔 시작</button>
   </div>
-  
   <div class="card" id="scan-screen" style="display:none;">
     <h1>📷 출석 스캐너</h1>
     <div class="period-selector">
@@ -183,7 +181,6 @@
   <div class="footer">
     Copyright 2026. 서현고 교감 김봉재 All Rights Reserved.
   </div>
-  
   <script>
     // ⚠️ 새 버전으로 배포한 최신 앱스 스크립트 웹 앱 URL로 반드시 변경해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
@@ -196,7 +193,6 @@
       const idInput = document.getElementById("login-id");
       if (pwInput) pwInput.addEventListener("keyup", (e) => { if (e.key === "Enter") loginScanner(); });
       if (idInput) idInput.addEventListener("keyup", (e) => { if (e.key === "Enter") loginScanner(); });
-      
       const savedTeacherName = sessionStorage.getItem("teacherName");
       if (savedTeacherName) {
         showScanScreen();
@@ -207,7 +203,7 @@
         }
       }
     });
-
+    
     // 당일 날짜를 YYYYMMDD 형식으로 반환하는 함수
     function getTodayPassword() {
       const today = new Date();
@@ -216,35 +212,31 @@
       const day = String(today.getDate()).padStart(2, '0');
       return `${year}${month}${day}`; // 예: 20260730
     }
-
+    
     // 💡 로그인 검증 로직
     function loginScanner() {
       const loginId = document.getElementById("login-id").value.trim();
       const loginPw = document.getElementById("login-pw").value.trim();
-
       if (!loginId) return alert("아이디(감독교사 이름 또는 admin)를 입력해주세요.");
       if (!loginPw) return alert("비밀번호를 입력해주세요.");
-
       const todayPw = getTodayPassword(); // 당일 날짜 생성
-
+      
       // 1. 관리자(admin) 계정 확인
       if (loginId === "admin" && loginPw === "7895301") {
         sessionStorage.setItem("teacherName", "관리자(admin)");
         handleLoginSuccess();
         return;
       }
-
       // 2. 일반 감독교사 계정 확인 (아이디: 교사이름, 비밀번호: 당일날짜)
       if (loginId !== "admin" && loginPw === todayPw) {
         sessionStorage.setItem("teacherName", loginId);
         handleLoginSuccess();
         return;
       }
-
       // 일치하는 조건이 없는 경우
       alert("아이디 또는 비밀번호가 올바르지 않습니다.\n(교사 비밀번호는 당일 날짜 8자리입니다. 예: 20260730)");
     }
-
+    
     // 로그인 성공 시 공통 처리 함수
     function handleLoginSuccess() {
       showScanScreen();
@@ -254,24 +246,24 @@
         history.replaceState(null, "", location.pathname);
       }
     }
-
+    
     function showScanScreen() {
       document.getElementById("auth-screen").style.display = "none";
       document.getElementById("scan-screen").style.display = "block";
     }
-
+    
     function logoutScanner() {
       if (!confirm("로그아웃하시겠습니까?")) return;
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-
+    
     /* --- 이하 기존 스캐너 동작 로직 --- */
-
     function toggleExtraPanel() {
       const panel = document.getElementById("extra-panel");
       panel.style.display = panel.style.display === "block" ? "none" : "block";
     }
+    
     function startScanner() {
       const selectedPeriod = document.getElementById("scan-period").value;
       if (!selectedPeriod) {
@@ -297,6 +289,7 @@
         isScanning = false;
       });
     }
+    
     function onScanSuccess(decodedText) {
       if (!isScanning) return;
       isScanning = false;
@@ -308,6 +301,7 @@
       }
       processAttendance(studentId);
     }
+    
     function extractStudentId(decodedText) {
       const text = String(decodedText || "").trim();
       if (!text) return "";
@@ -326,11 +320,13 @@
       }
       return text;
     }
+    
     function getIdFromCurrentUrl() {
       const params = new URLSearchParams(location.search);
       const id = params.get("id");
       return id ? id.trim() : "";
     }
+    
     function showResult(success, message, detailHtml) {
       const resultBox = document.getElementById("result-box");
       const resultMsg = document.getElementById("result-msg");
@@ -340,6 +336,7 @@
       resultMsg.innerText = message;
       statsContent.innerHTML = detailHtml || "";
     }
+    
     async function processAttendance(studentId) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
@@ -398,6 +395,7 @@
         isScanning = true;
       }, 2000);
     }
+    
     async function submitExtraAttendanceDirect(id, name) {
       const tName = sessionStorage.getItem("teacherName") || "미상";
       const selectedPeriod = document.getElementById("scan-period").value;
@@ -430,6 +428,7 @@
         isScanning = true;
       }, 2000);
     }
+    
     function cancelManualAdd() {
       const statsContent = document.getElementById("stats-content");
       const resultMsg = document.getElementById("result-msg");
@@ -438,6 +437,7 @@
       statsContent.innerHTML = "";
       isScanning = true;
     }
+    
     async function submitExtraAttendance() {
       const id = document.getElementById("extra-id").value.trim();
       const name = document.getElementById("extra-name").value.trim();
@@ -481,6 +481,8 @@
         statsContent.innerHTML = "네트워크 또는 서버 상태를 확인해주세요.";
       }
     }
+    
+    // 💡 출석자 명단이 출력되도록 수정한 renderStatsBox 함수
     function renderStatsBox(result) {
       const statsContent = document.getElementById("stats-content");
       if (result.stats) {
@@ -489,11 +491,14 @@
           • 현재 출석:
           <span style="color:#2e7d32; font-weight:bold;">${result.stats.present}명</span>
           / ${result.stats.total}명<br>
+          <div style="margin-top:5px; margin-bottom:10px; font-size:.9em; color:#2e7d32; word-break:keep-all;">
+            [출석자 명단]<br>${result.stats.presentNames || "-"}
+          </div>
           • 결석:
           <span style="color:#c62828; font-weight:bold;">${result.stats.absent}명</span><br>
           • 추가 참석:
           <span style="color:#6a1b9a; font-weight:bold;">${result.stats.extra || 0}명</span>
-          <div style="margin-top:10px; font-size:.9em; color:#666;">
+          <div style="margin-top:10px; font-size:.9em; color:#c62828; word-break:keep-all;">
             [결석자 명단]<br>${result.stats.absentNames || "-"}
           </div>
         `;
