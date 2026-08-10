@@ -4,20 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>서현고등학교 꿈꾸는 글마루 출석 스캐너</title>
+  <!-- 💡 QR 코드 스캔을 위한 jsQR 라이브러리 추가 -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
     /* 전체 배경 및 폰트 설정 */
     body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: #f2f2f5; margin: 0; padding: 0; }
     
-    /* 상단 네이비 헤더 (이미지 반영) */
+    /* 상단 네이비 헤더 */
     .main-header { background-color: #2b4b73; color: white; text-align: center; padding: 25px 20px; font-size: 1.3rem; font-weight: bold; line-height: 1.5; }
     
-    /* 메인 컨테이너 (카드 스타일) */
+    /* 메인 컨테이너 */
     .container { max-width: 480px; margin: 30px auto; background: white; padding: 30px 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
     
     h2 { text-align: center; color: #2b4b73; font-size: 1.25rem; margin-top: 0; line-height: 1.4; }
     
-    /* 안내 박스 (왼쪽 테두리 포인트) */
+    /* 안내 박스 */
     .info-box { background-color: #eef2f6; padding: 15px 20px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #2b4b73; font-size: 0.95rem; color: #333; line-height: 1.6; }
+    .scan-info { text-align: center; font-size: 0.95rem; color: #555; margin-bottom: 15px; font-weight: bold; }
     
     /* 입력 폼 그룹 */
     .input-group { margin-bottom: 20px; text-align: left; }
@@ -28,6 +31,8 @@
     /* 버튼 스타일 */
     .btn-primary { width: 100%; padding: 15px; background-color: #2b4b73; color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-primary:hover { background-color: #1e3656; }
+    .btn-danger { background-color: #c0392b; }
+    .btn-danger:hover { background-color: #a93226; }
     .btn-logout { background-color: #7f8c8d; margin-top: 10px; }
     .btn-logout:hover { background-color: #606b6b; }
     .btn-success { background-color: #27ae60; margin-top: 10px; }
@@ -38,10 +43,15 @@
     .log-item:last-child { border-bottom: none; }
     .log-time { font-size: 0.8rem; color: #888; white-space: nowrap; margin-left: 10px; }
     
-    /* 탭 스타일 */
-    .tab-container { display: flex; margin-bottom: 20px; gap: 5px; }
-    .tab { flex: 1; padding: 12px; text-align: center; background: #f0f0f0; cursor: pointer; border-radius: 8px; font-weight: bold; color: #555; transition: 0.2s; }
+    /* 탭 스타일 (이미지 디자인 반영) */
+    .tab-container { display: flex; margin-bottom: 20px; gap: 10px; }
+    .tab { flex: 1; padding: 15px 10px; text-align: center; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; color: #2b4b73; border: 2px solid #2b4b73; transition: 0.2s; }
     .tab.active { background: #2b4b73; color: white; }
+    
+    /* 카메라 영역 스타일 */
+    #camera-wrapper { position: relative; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; background: #000; }
+    #preview { width: 100%; height: auto; display: block; object-fit: cover; }
+    .scan-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 60%; border: 3px dashed rgba(255, 255, 255, 0.8); border-radius: 10px; box-sizing: border-box; }
     
     /* 하단 카피라이트 */
     .footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #999; }
@@ -50,7 +60,6 @@
 </head>
 <body>
 
-<!-- 상단 헤더 -->
 <header class="main-header">
   서현고등학교 꿈꾸는 글마루 출석 스캐너
 </header>
@@ -85,24 +94,36 @@
   <!-- 메인 스캐너 화면 -->
   <div id="main-screen" style="display:none;">
     
+    <h2 style="margin-bottom: 20px;">📷 출석 스캐너</h2>
+
+    <div class="scan-info">✅ 진행할 교시를 선택하세요</div>
+    
     <div class="tab-container">
-      <div id="tab-1" class="tab active" onclick="setPeriod('1교시')">1교시 진행중</div>
-      <div id="tab-2" class="tab" onclick="setPeriod('2교시')">2교시 진행중</div>
+      <div id="tab-1" class="tab active" onclick="setPeriod('1교시')">1교시 출석 처리</div>
+      <div id="tab-2" class="tab" onclick="setPeriod('2교시')">2교시 출석 처리</div>
     </div>
     
-    <div class="info-box" style="text-align: center;">
-      학생의 QR코드를 카메라에 비춰주세요.
+    <!-- 📷 실제 카메라 화상 영역 -->
+    <div id="camera-wrapper">
+      <video id="preview" playsinline></video>
+      <div class="scan-guide"></div>
     </div>
+    <!-- QR 스캔용 숨김 캔버스 -->
+    <canvas id="qr-canvas" style="display:none;"></canvas>
 
-    <button class="btn-primary" onclick="toggleCamera()">🚀 카메라 켜기 / 스캔 시작</button>
+    <div class="scan-info" id="status-msg">학생의 QR코드를 비춰주세요.</div>
+
+    <button id="cam-btn" class="btn-primary" onclick="toggleCamera()">🚀 카메라 켜기 / 스캔 시작</button>
     
     <hr class="divider">
 
     <div class="input-group">
       <label>➕ 학생 수동 추가입력</label>
       <div style="font-size:0.85rem; color:#666; margin-bottom: 8px;">QR이 없는 학생이나 명단 외 학생을 입력합니다.</div>
-      <input type="text" id="manual-student" placeholder="학번 또는 이름 입력">
-      <button class="btn-primary btn-success" onclick="manualAttendance()">추가 출석 처리</button>
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="manual-student" placeholder="학번 입력 (예: 10101)" style="margin-bottom:0;">
+        <button class="btn-primary btn-success" style="width:100px; padding:14px;" onclick="manualAttendance()">입력</button>
+      </div>
     </div>
 
     <h4 style="color:#2b4b73; margin-bottom:10px;">처리 내역 (로그)</h4>
@@ -113,7 +134,6 @@
     <button class="btn-primary btn-logout" onclick="logout()">로그아웃</button>
   </div>
 
-  <!-- 카피라이트 변경 -->
   <div class="footer">
     Copyright 2026. 서현고등학교 All Rights Reserved.
   </div>
@@ -121,50 +141,38 @@
 </div>
 
 <script>
-  // 💡 요청하신 API 주소 등록
+  // 💡 구글 앱스 스크립트 API 주소 (동일하게 유지)
   const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
   
   let currentPeriod = '1교시';
+  
+  // 카메라 관련 변수
   let isScanning = false;
+  let videoStream = null;
+  let lastScannedId = null;
+  let scanCooldown = false;
+  const video = document.getElementById('preview');
+  const canvasElement = document.getElementById('qr-canvas');
+  const canvas = canvasElement.getContext('2d');
 
-  // 다음 날 오전 9시 시간 구하기
+  // --- 기존 로그인, 로그 유지 로직 ---
   function getNext9AM() {
     const now = new Date();
     const expire = new Date(now);
-    if (now.getHours() >= 9) {
-      expire.setDate(now.getDate() + 1);
-    }
+    if (now.getHours() >= 9) expire.setDate(now.getDate() + 1);
     expire.setHours(9, 0, 0, 0);
     return expire.getTime();
   }
 
-  // 오전 9시가 지났는지 체크하고 데이터 초기화하기
   function checkAndClearExpiredData() {
     const expireTime = localStorage.getItem("expireTime");
     if (expireTime && Date.now() > parseInt(expireTime)) {
-      localStorage.removeItem("attended_1교시");
-      localStorage.removeItem("attended_2교시");
       localStorage.removeItem("savedLogs");
       localStorage.removeItem("teacherName");
       localStorage.removeItem("expireTime");
     }
   }
 
-  // 교시별 출석한 학번 목록 가져오기
-  function getAttendedSet() {
-    checkAndClearExpiredData();
-    return new Set(JSON.parse(localStorage.getItem(`attended_${currentPeriod}`) || '[]'));
-  }
-
-  // 출석 완료된 학번 저장하기
-  function saveAttended(id) {
-    let s = getAttendedSet();
-    s.add(String(id));
-    localStorage.setItem(`attended_${currentPeriod}`, JSON.stringify([...s]));
-    localStorage.setItem("expireTime", getNext9AM());
-  }
-
-  // 처리 내역(로그) 추가 및 저장
   function addLog(name, id, statusText, isSuccess) {
     const list = document.getElementById("log-list");
     if (list.innerHTML.includes("데이터 대기 중...")) list.innerHTML = "";
@@ -175,31 +183,23 @@
     const html = `
       <div class="log-item">
         <div>
-          <span style="color:${color}; font-weight:bold;">${name} (${id})</span>
+          <span style="color:${color}; font-weight:bold;">${name || '이름없음'} (${id})</span>
           <div style="font-size:0.85rem; color:#666; margin-top:3px;">[${currentPeriod}] ${statusText}</div>
         </div>
         <div class="log-time">${timeStr}</div>
       </div>
     `;
     list.insertAdjacentHTML('afterbegin', html);
-    
     localStorage.setItem("savedLogs", list.innerHTML);
     localStorage.setItem("expireTime", getNext9AM());
   }
 
-  // 로그인 성공 처리
   function handleLoginSuccess() {
     const teacherName = document.getElementById("login-teacher").value.trim();
     const pw = document.getElementById("login-pw").value.trim();
     
-    if(teacherName === "") {
-      alert("감독교사 이름을 입력해주세요.");
-      return;
-    }
-    if(pw === "") {
-      alert("비밀번호를 입력해주세요.");
-      return;
-    }
+    if(teacherName === "") return alert("감독교사 이름을 입력해주세요.");
+    if(pw === "") return alert("비밀번호를 입력해주세요.");
 
     localStorage.setItem("teacherName", teacherName);
 
@@ -211,27 +211,18 @@
     else setPeriod("1교시");
     
     checkAndClearExpiredData();
-    
     const savedLogs = localStorage.getItem("savedLogs");
-    if (savedLogs) {
-      document.getElementById("log-list").innerHTML = savedLogs;
-    } else {
-      document.getElementById("log-list").innerHTML = '<div class="log-item" style="justify-content:center; color:#888;">데이터 대기 중...</div>';
-    }
+    if (savedLogs) document.getElementById("log-list").innerHTML = savedLogs;
   }
 
-  // 로그아웃 (데이터는 유지)
   function logout() {
-    if (isScanning) toggleCamera();
-    
+    if (isScanning) stopCamera();
     document.getElementById("login-teacher").value = "";
     document.getElementById("login-pw").value = "";
-    
     document.getElementById("auth-screen").style.display = "block";
     document.getElementById("main-screen").style.display = "none";
   }
 
-  // 교시 탭 설정 함수
   function setPeriod(period) {
     currentPeriod = period;
     document.getElementById("tab-1").classList.remove("active");
@@ -240,28 +231,147 @@
     if(period === '2교시') document.getElementById("tab-2").classList.add("active");
   }
 
-  // 카메라 토글 로직 (임시 구현)
+  // --- 📷 휴대폰 카메라 스캔 로직 ---
   function toggleCamera() {
-    isScanning = !isScanning;
-    if(isScanning) {
-      alert("카메라 스캔을 시작합니다. (QR 스캐너 연동 필요)");
+    if (isScanning) {
+      stopCamera();
     } else {
-      alert("카메라 스캔을 중지합니다.");
+      startCamera();
     }
   }
 
-  // 수동 출석 입력 처리
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(function(stream) {
+        videoStream = stream;
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true);
+        video.play();
+        
+        requestAnimationFrame(tick);
+        
+        isScanning = true;
+        document.getElementById('camera-wrapper').style.display = "block";
+        const btn = document.getElementById('cam-btn');
+        btn.innerHTML = "🛑 카메라 끄기";
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-danger');
+        document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
+      })
+      .catch(function(err) {
+        alert("카메라를 실행할 수 없습니다. 권한을 확인해주세요.\n(" + err.message + ")");
+      });
+  }
+
+  function stopCamera() {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+    }
+    isScanning = false;
+    document.getElementById('camera-wrapper').style.display = "none";
+    const btn = document.getElementById('cam-btn');
+    btn.innerHTML = "🚀 카메라 켜기 / 스캔 시작";
+    btn.classList.remove('btn-danger');
+    btn.classList.add('btn-primary');
+    document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
+  }
+
+  function tick() {
+    if (!isScanning) return;
+    
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvasElement.height = video.videoHeight;
+      canvasElement.width = video.videoWidth;
+      canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+      
+      const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+      // jsQR 라이브러리 사용
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+      
+      if (code && code.data !== "") {
+        // 중복 인식 방지 (쿨다운 2.5초)
+        if (lastScannedId !== code.data && !scanCooldown) {
+          processScannedData(code.data);
+        }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // QR 데이터 처리 및 서버 통신
+  function processScannedData(scannedData) {
+    // 보통 QR코드에는 학번이 들어있다고 가정
+    const studentId = scannedData.trim();
+    
+    lastScannedId = studentId;
+    scanCooldown = true;
+    
+    // 2.5초 후 쿨다운 해제
+    setTimeout(() => { scanCooldown = false; }, 2500);
+    
+    sendAttendanceToServer(studentId, "QR스캔");
+  }
+
+  // 수동 출석 입력
   function manualAttendance() {
     const input = document.getElementById("manual-student").value.trim();
-    if(!input) return alert("학번 또는 이름을 입력하세요.");
-    
-    saveAttended(input);
-    const teacher = localStorage.getItem("teacherName") || "감독교사";
-    
-    addLog("수동입력", input, `정상 출석 처리되었습니다. (처리자: ${teacher})`, true);
+    if(!input) return alert("학번을 입력하세요.");
+    sendAttendanceToServer(input, "수동입력");
     document.getElementById("manual-student").value = "";
+  }
+
+  // 서버(구글 앱스 스크립트)로 데이터 전송
+  function sendAttendanceToServer(id, methodStr) {
+    const teacher = localStorage.getItem("teacherName") || "감독교사";
+    const p1 = (currentPeriod === '1교시');
+    const p2 = (currentPeriod === '2교시');
     
-    // 향후 API_URL을 사용하여 서버로 데이터를 전송하는 로직을 이 부분에 추가할 수 있습니다.
+    // 로컬 시간(한국 시간 기준)으로 날짜 구하기
+    const dateStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+    // 스캔 진행 중 표시
+    document.getElementById('status-msg').innerText = `${id} 처리 중...⏳`;
+    document.getElementById('status-msg').style.color = "#c0392b";
+
+    // 💡 API 서버로 전송 (대시보드의 addDailyStudent 액션 활용)
+    const url = `${API_URL}?${new URLSearchParams({
+      action: 'addDailyStudent',
+      date: dateStr,
+      id: id,
+      name: "", // 서버에서 학번으로 이름 조회하도록 구성되어 있으면 빈칸 가능
+      p1: p1,
+      p2: p2,
+      teacher: teacher,
+      statusStr: methodStr,
+      _t: new Date().getTime()
+    }).toString()}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(res => {
+        if(res.success) {
+          addLog(res.studentName || '이름확인됨', id, `정상 출석 처리되었습니다. (${methodStr})`, true);
+          document.getElementById('status-msg').innerText = `✅ ${res.studentName || id} 처리 완료`;
+          document.getElementById('status-msg').style.color = "#27ae60";
+        } else {
+          addLog('오류', id, res.message || '서버 처리 실패', false);
+          document.getElementById('status-msg').innerText = `❌ 오류 발생`;
+          document.getElementById('status-msg').style.color = "#c0392b";
+        }
+        
+        // 2초 뒤 상태 메시지 복구
+        setTimeout(() => {
+          if(isScanning) {
+             document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
+             document.getElementById('status-msg').style.color = "#555";
+          }
+        }, 2000);
+      })
+      .catch(err => {
+        addLog('통신오류', id, err.message, false);
+      });
   }
 </script>
 
