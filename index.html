@@ -48,22 +48,19 @@
       학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳
     </div>
   </div>
-  
   <div class="container" id="login-screen">
     <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
     <div class="notice">
       출석 인정 시간<br>
       1교시 18:00~19:40 / 2교시 20:40~21:40
     </div>
-    
     <!-- 🌟 관리자 및 감독교사 공용 로그인 폼 -->
     <div class="login-form">
       <input type="text" id="login-id" placeholder="아이디 (admin 또는 교사 이름)" autocomplete="off">
-      <input type="password" id="login-pw" placeholder="비밀번호 (관리자암호 또는 당일날짜 8자리)">
+      <input type="password" id="login-pw" placeholder="비밀번호">
       <button type="button" class="btn btn-solid" onclick="login()">로그인</button>
     </div>
   </div>
-  
   <div class="container" id="main-screen" style="display:none; max-width:500px;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
@@ -79,7 +76,7 @@
       <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
     </div>
     <div class="btn-group">
-      <label class="btn btn-outline" for="excel-upload">📤 명단 업로드</label>
+      <label class="btn btn-outline" id="upload-btn" for="excel-upload">📤 명단 업로드</label>
       <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none;">
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
@@ -90,20 +87,15 @@
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
     <div id="student-list"></div>
   </div>
-  
   <div class="footer">Copyright 2026. 서현고등학교 All Rights Reserved.</div>
-  
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let studentsData = [];
-    
     window.onload = function() {
-      // 엔터키 로그인 지원
       const pwInput = document.getElementById("login-pw");
       const idInput = document.getElementById("login-id");
       if(pwInput) pwInput.addEventListener("keyup", (e) => { if(e.key === "Enter") login(); });
       if(idInput) idInput.addEventListener("keyup", (e) => { if(e.key === "Enter") login(); });
-
       if (sessionStorage.getItem("userRole")) {
         document.getElementById("login-screen").style.display = "none";
         document.getElementById("main-screen").style.display = "block";
@@ -113,7 +105,6 @@
         loadExistingStudents();
       }
     };
-    
     function updateClock() {
       const now = new Date();
       const d = ["일","월","화","수","목","금","토"];
@@ -123,29 +114,41 @@
         now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
     }
     
+    // 🌟 역할에 따른 UI 변경 (관리자 전용 기능 제어)
     function applyRoleUI(role) {
       const delBtn = document.getElementById("delete-all-btn");
+      const uploadBtn = document.getElementById("upload-btn"); // 명단 업로드 버튼 가져오기
+      
       if (role === "admin") {
         delBtn.disabled = false;
         delBtn.classList.remove("btn-disabled");
+        
+        if (uploadBtn) {
+          uploadBtn.classList.remove("btn-disabled");
+          uploadBtn.style.pointerEvents = "auto";
+        }
       } else {
-        // 감독교사(supervisor)인 경우 명단 초기화 버튼 비활성화
+        // 감독교사(supervisor)인 경우 명단 초기화 및 업로드 버튼 비활성화
         delBtn.disabled = true;
         delBtn.classList.add("btn-disabled");
         delBtn.innerText = "🚫 관리자전용";
+        
+        if (uploadBtn) {
+          uploadBtn.classList.add("btn-disabled");
+          uploadBtn.innerText = "🚫 관리자전용";
+          uploadBtn.style.pointerEvents = "none"; // 클릭 방지
+        }
       }
     }
-
+    
     // 🌟 통합 로그인 로직 (관리자 + 감독교사)
     function login() {
       const id = document.getElementById("login-id").value.trim();
       const pw = document.getElementById("login-pw").value.trim();
-
       if (!id || !pw) {
         alert("아이디와 비밀번호를 모두 입력해주세요.");
         return;
       }
-
       // 1. 관리자(admin) 계정 확인
       if (id === "admin" && pw === "7895301") {
         sessionStorage.setItem("userRole", "admin");
@@ -153,30 +156,28 @@
         location.reload();
         return;
       }
-
       // 2. 당일 감독교사 계정 확인 (비밀번호 = 당일 날짜 8자리)
       const now = new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const dd = String(now.getDate()).padStart(2, '0');
       const todayString = `${yyyy}${mm}${dd}`;
-
       if (pw === todayString) {
         sessionStorage.setItem("userRole", "supervisor");
-        sessionStorage.setItem("teacherName", id); // 입력한 이름을 교사 이름으로 저장
+        sessionStorage.setItem("teacherName", id); 
         location.reload();
       } else {
-        alert("아이디 또는 비밀번호가 올바르지 않습니다.\n(감독교사 비밀번호: 당일 날짜 8자리)");
+        // 안내 문구 삭제
+        alert("아이디 또는 비밀번호가 올바르지 않습니다.");
       }
     }
-
+    
     function logout() {
       if (!confirm("로그아웃하시겠습니까?")) return;
       sessionStorage.removeItem("userRole");
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-    
     /* --- 이하 기존 엑셀/PDF 관련 로직 유지 --- */
     async function loadExistingStudents() {
       try {
