@@ -144,13 +144,13 @@
         <table id="rosterTable">
           <thead>
             <tr>
-              <th style="width: 10%;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()" style="cursor:pointer;"> 연번</th>
-              <th>학번</th>
-              <th>이름</th>
-              <th>1교시</th>
-              <th>2교시</th>
-              <th style="width: 15%;">관리</th>
-              <th style="width: 25%;">비고</th>
+              <th style="width: 9%;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()" style="cursor:pointer;"> 연번</th>
+              <th style="width: 10%;">학번</th>
+              <th style="width: 12%;">이름</th>
+              <th style="width: 10%;">1교시</th>
+              <th style="width: 10%;">2교시</th>
+              <th style="width: 25%;">관리 (개별처리)</th>
+              <th style="width: 24%;">비고</th>
             </tr>
           </thead>
           <tbody id="rosterBody">
@@ -270,7 +270,6 @@
           showLoading(false);
           document.getElementById('checkAll').checked = false; 
           
-          // 💡 서버에서 받아온 교사 정보가 없으면 현재 로그인한 사람을 표시
           let rawTeacherStr = response.teacherText || "";
           let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
           let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
@@ -303,10 +302,11 @@
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
-      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
+      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '결석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
       return true;
     }
 
+    // 💡 렌더 테이블 (미출석 -> 결석 텍스트 변경 및 개별 처리 버튼 추가)
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       tbody.innerHTML = '';
@@ -315,7 +315,8 @@
         return;
       }
       data.roster.forEach(function(student, index) {
-        let p1Status = '미출석'; let p2Status = '미출석';
+        // 💡 기본 상태를 "결석"으로 표기
+        let p1Status = '결석'; let p2Status = '결석';
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
         let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
         let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
@@ -327,17 +328,44 @@
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
               if(log.period === '1교시') {
-                if(!isExcludedMark(log.status) && log.status !== '제외') { p1Status = log.status; p1Class = (log.status === '추가출석' || log.status === '수동입력') ? 'status-extra' : 'status-present'; }
+                if(!isExcludedMark(log.status) && log.status !== '제외') { 
+                  p1Status = (log.status === '미출석') ? '결석' : log.status; 
+                  p1Class = (p1Status === '추가출석' || p1Status === '수동입력' || p1Status === '수동출석') ? 'status-extra' : (p1Status === '결석' ? 'status-absent' : 'status-present'); 
+                }
               }
               if(log.period === '2교시') {
-                if(!isExcludedMark(log.status) && log.status !== '제외') { p2Status = log.status; p2Class = (log.status === '추가출석' || log.status === '수동입력') ? 'status-extra' : 'status-present'; }
+                if(!isExcludedMark(log.status) && log.status !== '제외') { 
+                  p2Status = (log.status === '미출석') ? '결석' : log.status; 
+                  p2Class = (p2Status === '추가출석' || p2Status === '수동입력' || p2Status === '수동출석') ? 'status-extra' : (p2Status === '결석' ? 'status-absent' : 'status-present'); 
+                }
               }
             }
           });
         }
         
-        let p1Btn = (p1Status === '제외' || p1Status === '미출석') ? `<button style="background:#4299e1; border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer; margin-right:2px; font-size:0.85rem;" onclick="manualAttend('${student.id}', '${student.name}', 1)">1교시 출석</button>` : '';
-        let p2Btn = (p2Status === '제외' || p2Status === '미출석') ? `<button style="background:#4299e1; border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer; margin-right:2px; font-size:0.85rem;" onclick="manualAttend('${student.id}', '${student.name}', 2)">2교시 출석</button>` : '';
+        // 💡 관리 열: 개별 [출석], [결석], [취소] 버튼 제공
+        const btnStyle1 = "background:#3182ce; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
+        const btnStyle2 = "background:#e53e3e; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
+        const btnStyle3 = "background:#718096; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
+        
+        let p1Btn = '';
+        if (p1Status !== '제외') {
+           p1Btn = `<div style="display:flex; gap:3px; justify-content:center; margin-bottom:4px;">
+                      <button style="${btnStyle1}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '수동출석')">1출석</button>
+                      <button style="${btnStyle2}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '결석')">1결석</button>
+                      <button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '미출석')" title="초기화">취소</button>
+                    </div>`;
+        }
+        
+        let p2Btn = '';
+        if (p2Status !== '제외') {
+           p2Btn = `<div style="display:flex; gap:3px; justify-content:center;">
+                      <button style="${btnStyle1}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '수동출석')">2출석</button>
+                      <button style="${btnStyle2}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '결석')">2결석</button>
+                      <button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '미출석')" title="초기화">취소</button>
+                    </div>`;
+        }
+
         let noteVal = student.note || '';
         
         const tr = document.createElement('tr');
@@ -348,10 +376,37 @@
           <td class="${p1Class}">${p1Status}</td>
           <td class="${p2Class}">${p2Status}</td>
           <td>${p1Btn}${p2Btn}</td>
-          <td><input type="text" style="width:90%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="특이사항 입력" value="${noteVal}" onchange="saveNote('${student.id}', this.value)"></td>
+          <td><input type="text" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="특이사항 입력" value="${noteVal}" onchange="saveNote('${student.id}', this.value)"></td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // 💡 개별 출결 처리 함수 추가
+    function processSingle(id, name, periodStr, statusParam) {
+      const dateStr = document.getElementById('datePicker').value;
+      const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+      if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
+      
+      let actText = statusParam === '미출석' ? '초기화(취소)' : statusParam;
+      
+      showLoading(true);
+      fetch(`${API_URL}?${new URLSearchParams({
+        action: 'markAttendance',
+        date: dateStr,
+        id: id,
+        name: name,
+        period: periodStr, 
+        status: statusParam,
+        teacher: loggedInUser,
+        _t: new Date().getTime()
+      }).toString()}`)
+      .then(res => res.json())
+      .then(res => {
+         if(res.success) { cacheLoaded = false; loadDailyData(); }
+         else { showLoading(false); alert("처리 실패: " + res.message); }
+      })
+      .catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
     }
 
     async function batchProcess(actionType) {
@@ -378,7 +433,7 @@
         actionText = "결석";
         statusParam = "결석";
       } else if (actionType === 'reset') {
-        actionText = "초기화(미출석)";
+        actionText = "초기화(취소)";
         statusParam = "미출석"; 
       }
 
@@ -423,17 +478,6 @@
       .catch(err => console.error("비고 저장 오류:", err));
     }
 
-    function manualAttend(id, name, period) {
-      const dateStr = document.getElementById('datePicker').value;
-      const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      if (dateStr !== localToday) { alert("수동 출석 처리는 당일 출석부에서만 가능합니다."); return; }
-      if(!confirm(`${name}(${id}) 학생을 ${period}교시 '수동 출석'으로 처리하시겠습니까?`)) return;
-      showLoading(true);
-      fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: (period===1), p2: (period===2), teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
-        .then(res => res.json()).then(res => { if(res.success) { cacheLoaded = false; loadDailyData(); } else { showLoading(false); alert(res.message); } })
-        .catch(err => { showLoading(false); alert("오류: " + err.message); });
-    }
-
     function addDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -461,11 +505,11 @@
         }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
     }
 
+    // 💡 인쇄 시 미출석을 결석으로 통일
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
       
-      // 💡 인쇄 시에도 로그인한 사용자 이름 반영
       let rawTeacherStr = data.teacherText || "";
       let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
       const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
@@ -475,18 +519,19 @@
         data.logs.forEach(log => {
           let time = log.timestamp.split(" ")[1].substring(0, 5);
           logMap[log.id + "_" + log.period] = { time: time, status: log.status, teacher: log.teacher || "미상" };
-          if(log.status === "추가출석" || log.status === "수동입력") { extraRows.push({ id: log.id, name: log.name, period: log.period, time: time, teacher: log.teacher || "미상" }); }
+          if(log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") { extraRows.push({ id: log.id, name: log.name, period: log.period, time: time, teacher: log.teacher || "미상" }); }
         });
       }
       function getPrintStatusInfo(student, period) {
         let log = logMap[student.id + "_" + period];
         if (log) {
-          if (log.status === "추가출석" || log.status === "수동입력") return { text: "추가/수동<br>" + log.time, type: "st-extra" };
+          if (log.status === '결석') return { text: "결석", type: "st-absent" };
+          if (log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") return { text: "추가/수동<br>" + log.time, type: "st-extra" };
           return { text: "출석<br>" + log.time, type: "st-present" };
         }
         let exc = period === "1교시" ? student.p1_exc : student.p2_exc;
         if (isExcludedMark(exc) || exc === "제외") return { text: "제외", type: "st-excluded" };
-        return { text: "미출석", type: "st-absent" };
+        return { text: "결석", type: "st-absent" }; // 기본값 미출석 -> 결석
       }
       function getPeriodStats(period) {
         let total = 0, present = 0, extra = 0; let absentNames = [];
@@ -509,7 +554,7 @@
           <tr><td class="bg-info">출석 인정 시간</td><td>1교시 18:00~19:40</td><td class="bg-info">2교시</td><td>19:41~21:40</td></tr>
         </table>
         <table class="print-table">
-          <tr><th class="bg-primary">구분</th><th class="bg-primary">대상</th><th class="bg-primary">출석</th><th class="bg-primary">미출석</th><th class="bg-primary">추가/수동</th><th class="bg-primary">출석률</th></tr>
+          <tr><th class="bg-primary">구분</th><th class="bg-primary">대상</th><th class="bg-primary">출석</th><th class="bg-primary">결석</th><th class="bg-primary">추가/수동</th><th class="bg-primary">출석률</th></tr>
           <tr><td class="bg-gray">1교시</td><td>${p1Stats.total}</td><td class="st-present">${p1Stats.present}</td><td class="st-absent">${p1Stats.absent}</td><td class="st-extra">${p1Stats.extra}</td><td style="background-color:#FFF2CC; font-weight:bold; color:#7F6000;">${rate1}</td></tr>
           <tr><td class="bg-gray">2교시</td><td>${p2Stats.total}</td><td class="st-present">${p2Stats.present}</td><td class="st-absent">${p2Stats.absent}</td><td class="st-extra">${p2Stats.extra}</td><td style="background-color:#FFF2CC; font-weight:bold; color:#7F6000;">${rate2}</td></tr>
         </table>
@@ -526,10 +571,10 @@
         });
       }
       html += `</table>`;
-      html += `<div class="print-section-title red">미출석자 명단</div>
+      html += `<div class="print-section-title red">결석자 명단</div>
         <table class="print-table">
-          <tr><td class="bg-absent-title" style="width:15%">1교시</td><td style="text-align:left;">${p1Stats.absentNames.length ? p1Stats.absentNames.join(", ") : "미출석자 없음"}</td></tr>
-          <tr><td class="bg-absent-title">2교시</td><td style="text-align:left;">${p2Stats.absentNames.length ? p2Stats.absentNames.join(", ") : "미출석자 없음"}</td></tr>
+          <tr><td class="bg-absent-title" style="width:15%">1교시</td><td style="text-align:left;">${p1Stats.absentNames.length ? p1Stats.absentNames.join(", ") : "결석자 없음"}</td></tr>
+          <tr><td class="bg-absent-title">2교시</td><td style="text-align:left;">${p2Stats.absentNames.length ? p2Stats.absentNames.join(", ") : "결석자 없음"}</td></tr>
         </table>`;
       if(extraRows.length > 0) {
         html += `<div class="print-section-title">추가/수동 출석자 목록</div><table class="print-table"><tr><th class="bg-extra-title">번호</th><th class="bg-extra-title">학번</th><th class="bg-extra-title">이름</th><th class="bg-extra-title">교시</th><th class="bg-extra-title">출석시각</th><th class="bg-extra-title">처리교사</th></tr>`;
@@ -540,7 +585,7 @@
         <table class="print-table" style="font-size:8pt; margin-bottom:0;">
           <tr><th class="bg-gray" style="width:20%">출석</th><td style="text-align:left;">정상 출석 처리된 학생</td></tr>
           <tr><th class="bg-gray">추가/수동</th><td style="text-align:left;">당일 명단에 추가되거나 대시보드에서 수동 처리된 학생</td></tr>
-          <tr><th class="bg-gray">미출석</th><td style="text-align:left;">출석 대상이나 기록이 없는 학생</td></tr>
+          <tr><th class="bg-gray">결석</th><td style="text-align:left;">출석 대상이나 기록이 없는 학생</td></tr>
           <tr><th class="bg-gray">제외</th><td style="text-align:left;">해당 교시 출석 대상이 아닌 학생 (결석 통계 미포함)</td></tr>
         </table>`;
       printDiv.innerHTML = html;
@@ -587,6 +632,8 @@
       }
       return dateArray;
     }
+    
+    // 💡 통계에서도 미출석 -> 결석 반영
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let isP1Target = (sDay === dayStr && p1_exc !== '제외');
       let isP2Target = (sDay === dayStr && p2_exc !== '제외');
@@ -599,12 +646,16 @@
       let p1Log = cachedLogs.find(l => l.timestamp.startsWith(dateStr) && l.id === id && l.period === '1교시');
       let p2Log = cachedLogs.find(l => l.timestamp.startsWith(dateStr) && l.id === id && l.period === '2교시');
       function calcStatus(isTarget, log) {
-        if (log) return { text: log.status, type: (log.status === '추가출석' || log.status === '수동입력') ? 'extra' : 'present', teacher: log.teacher };
-        if (isTarget) return { text: '미출석', type: 'absent', teacher: '-' };
+        if (log) {
+          if (log.status === '결석') return { text: '결석', type: 'absent', teacher: log.teacher };
+          return { text: log.status, type: (log.status === '추가출석' || log.status === '수동입력' || log.status === '수동출석') ? 'extra' : 'present', teacher: log.teacher };
+        }
+        if (isTarget) return { text: '결석', type: 'absent', teacher: '-' };
         return { text: '제외(대상아님)', type: 'excluded', teacher: '-' };
       }
       return { p1: calcStatus(isP1Target, p1Log), p2: calcStatus(isP2Target, p2Log), isTargetAny: isP1Target || isP2Target || p1Log || p2Log };
     }
+    
     function renderIndividual() {
       const id = document.getElementById("indivStudentSelect").value;
       const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
