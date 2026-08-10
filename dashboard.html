@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>서현고등학교 글마루 출결 대시보드</title>
-  <!-- Chart.js 및 데이터 라벨 플러그인 로드 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <style>
-    /* 전체 배경 및 폰트 설정 (화면용) */
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 20px; }
     .container { max-width: 1200px; margin: 0 auto; }
     .header-box { background: white; border-radius: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
@@ -25,11 +23,9 @@
     .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
     
-    /* 상단 타이틀 영역 */
     .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; flex-wrap: nowrap; gap: 10px; overflow-x: auto; }
     .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.25rem; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
     
-    /* 상단 액션 버튼 */
     .action-btns { display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; flex-shrink: 0; }
     .action-btns button { border: none; border-radius: 6px; padding: 8px 10px; color: white; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; white-space: nowrap; margin: 0; }
     .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
@@ -39,7 +35,6 @@
     .btn-reset { background-color: #e53e3e; } .btn-reset:hover { background-color: #c53030; }
     .btn-riro { background-color: #2c5282; } .btn-riro:hover { background-color: #2a4365; }
     
-    /* 통계/조회용 버튼 */
     .btn-tab-action { background-color: #5ab1ea; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
     .btn-tab-action:hover { background-color: #499dd6; }
     .btn-tab-print { background-color: #6dbb71; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
@@ -59,12 +54,10 @@
     .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
     #printArea { display: none; }
     
-    /* 일괄처리 및 비고 저장 바 */
     .batch-action-bar { display: flex; gap: 10px; align-items: center; background: #f8f9fa; padding: 12px 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 15px; }
     .btn-save-all { background-color: #d69e2e; color: white; border: none; padding: 9px 20px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: auto; } 
     .btn-save-all:hover { background-color: #b7791f; }
 
-    /* 커스텀 컨펌 모달 (저장 확인용) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
     .modal-box { background: white; padding: 35px 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); min-width: 420px; animation: popIn 0.25s ease-out; }
     .modal-box h3 { color: #dd6b20; margin-top: 0; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -74,7 +67,6 @@
     .btn-cancel:hover { background-color: #cbd5e0; }
     @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-    /* 인쇄 전용 스타일 */
     @media print {
       body > * { display: none !important; }
       #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; padding: 10px; box-sizing: border-box; }
@@ -102,7 +94,6 @@
 <body>
   <div id="loading" class="loading-overlay">데이터를 처리 중입니다... ⏳</div>
   
-  <!-- 💡 저장 확인 모달 -->
   <div id="saveConfirmModal" class="modal-overlay">
     <div class="modal-box">
       <h3>⚠️ 출석부 저장 확인</h3>
@@ -118,7 +109,6 @@
   <div class="container">
     <div class="header-box">
       <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
-      <!-- 기본 href 이탈을 막고 함수로 제어 -->
       <a href="#" class="btn-home" onclick="checkHomeMove(event)">⬅️ 메인으로 돌아가기</a>
     </div>
     <div class="info-box">
@@ -277,19 +267,14 @@
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
 
-    // 브라우저 자체 닫기/새로고침 방어
     window.addEventListener('beforeunload', function (e) {
       if (isNoteChanged) { e.preventDefault(); e.returnValue = ''; }
     });
 
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
     
-    /* ========================================================
-       💡 커스텀 모달 (저장 확인) 로직
-       ======================================================== */
     let modalResolve = null;
 
-    // 모달을 띄우고 Promise 반환
     function showSaveConfirm() {
       return new Promise((resolve) => {
         document.getElementById('saveConfirmModal').style.display = 'flex';
@@ -297,7 +282,6 @@
       });
     }
 
-    // 모달 내 버튼 클릭 시 호출
     function resolveModal(choice) {
       document.getElementById('saveConfirmModal').style.display = 'none';
       if (modalResolve) {
@@ -306,7 +290,6 @@
       }
     }
 
-    // 실제 비고 서버 전송 (silent=true 일 경우 알림을 띄우지 않음)
     async function performSave(silent = false) {
       const dateStr = document.getElementById('datePicker').value;
       const inputs = document.querySelectorAll('.note-input');
@@ -340,7 +323,6 @@
       }
     }
 
-    // 액션 래퍼: 저장이 안 된 상태에서 이동하려 할 때 검사 후 처리
     async function handleAction(actionCallback, rollbackCallback = null) {
       if (!isNoteChanged) {
         actionCallback();
@@ -350,7 +332,7 @@
       const choice = await showSaveConfirm();
       if (choice === 'save') {
         showLoading(true);
-        const success = await performSave(true); // 알림 없이 배경에서 저장
+        const success = await performSave(true); 
         showLoading(false);
         if (success) {
           actionCallback();
@@ -359,18 +341,13 @@
           if (rollbackCallback) rollbackCallback();
         }
       } else if (choice === 'discard') {
-        isNoteChanged = false; // 변경사항 무시
+        isNoteChanged = false; 
         actionCallback();
       } else if (choice === 'cancel') {
-        if (rollbackCallback) rollbackCallback(); // 원래 자리 유지
+        if (rollbackCallback) rollbackCallback(); 
       }
     }
 
-    /* ========================================================
-       이벤트 제어 연동
-       ======================================================== */
-    
-    // [출석부 저장] 버튼 직접 클릭
     function userClickSave() {
       if (!isNoteChanged) { alert("변경된 데이터가 없습니다."); return; }
       performSave(false);
@@ -403,7 +380,7 @@
         previousDate = newDate;
         loadDailyData();
       }, () => {
-        datePicker.value = previousDate; // 롤백
+        datePicker.value = previousDate; 
       });
     }
 
@@ -411,7 +388,6 @@
       handleAction(() => { loadDailyData(); });
     }
 
-    // 개별 액션들 (새로고침이 발생하므로 보호 필요)
     function processSingle(id, name, periodStr, statusParam) {
       handleAction(() => {
         executeProcessSingle(id, name, periodStr, statusParam);
@@ -458,9 +434,6 @@
       });
     }
 
-    /* ========================================================
-       데이터 로드 및 테이블 렌더링
-       ======================================================== */
     function toggleAddSection() {
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
@@ -588,11 +561,15 @@
       }
     }
 
-    // 서버에 직접 마킹하는 로직 모음
+    /* 💡 날짜 제한 완화 로직 적용됨 */
     function executeProcessSingle(id, name, periodStr, statusParam) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
+      
+      // 오늘 날짜가 아니면 한 번 물어보되, 확인하면 진행 가능
+      if (dateStr !== localToday) { 
+        if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출결 데이터를 수정하시겠습니까?`)) return; 
+      }
       
       showLoading(true);
       fetch(`${API_URL}?${new URLSearchParams({
@@ -607,7 +584,11 @@
     async function executeBatchProcess(actionType) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
+      
+      // 오늘 날짜가 아니면 한 번 물어보되, 확인하면 진행 가능
+      if (dateStr !== localToday) { 
+        if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출결 데이터를 일괄 수정하시겠습니까?`)) return; 
+      }
       
       const periodVal = document.getElementById('batchPeriod').value; 
       const periodStr = periodVal + "교시";
@@ -640,7 +621,12 @@
     function executeAddDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      if (dateStr !== localToday) { alert("학생 추가는 당일 출석부에서만 가능합니다."); return; }
+      
+      // 오늘 날짜가 아니면 한 번 물어보되, 확인하면 진행 가능
+      if (dateStr !== localToday) { 
+        if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출석부에 학생을 추가하시겠습니까?`)) return; 
+      }
+
       const id = document.getElementById('addId').value.trim(); const name = document.getElementById('addName').value.trim();
       const p1 = document.getElementById('addP1').checked; const p2 = document.getElementById('addP2').checked;
       if (!id || (!p1 && !p2)) { alert("학번을 입력하고 최소 1개의 교시를 선택해주세요."); return; }
