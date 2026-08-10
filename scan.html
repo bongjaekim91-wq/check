@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>서현고등학교 꿈꾸는 글마루 출석 스캐너</title>
-  <!-- 💡 QR 코드 스캔을 위한 jsQR 라이브러리 추가 -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
     /* 전체 배경 및 폰트 설정 */
@@ -33,19 +32,21 @@
     /* 버튼 스타일 */
     .btn-primary { width: 100%; padding: 16px; background-color: #2b4b73; color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-primary:hover { background-color: #1e3656; }
-    .btn-danger { background-color: #c0392b; }
+    
+    /* 카메라 끄기 전용 붉은 버튼 (디자인 복원) */
+    .btn-danger { background-color: #c0392b; color: white; }
     .btn-danger:hover { background-color: #a93226; }
-    .btn-logout { background-color: #7f8c8d; margin-top: 20px; }
+    
+    .btn-logout { background-color: #7f8c8d; margin-top: 10px; }
     .btn-logout:hover { background-color: #606b6b; }
-    .btn-success { background-color: #27ae60; margin-bottom: 10px; }
     
-    /* 로그 영역 */
-    .log-container { background: #f9f9f9; border: 1px solid #eee; height: 250px; overflow-y: auto; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
-    .log-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #ddd; }
-    .log-item:last-child { border-bottom: none; }
-    .log-time { font-size: 0.8rem; color: #888; white-space: nowrap; margin-left: 10px; }
+    /* 통계 및 로그 영역 (새로운 디자인) */
+    .log-container { background: #f9f9f9; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+    .stat-text { font-size: 1.15rem; font-weight: bold; color: #2b4b73; margin-bottom: 15px; }
+    .absent-title { font-size: 1rem; font-weight: bold; color: #c0392b; margin-bottom: 10px; text-align: left; }
+    .absent-list-box { font-size: 0.95rem; color: #555; line-height: 1.6; text-align: left; background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 6px; min-height: 80px; word-break: keep-all; }
     
-    /* 탭 스타일 (이미지 디자인 반영) */
+    /* 탭 스타일 */
     .tab-container { display: flex; margin-bottom: 30px; gap: 10px; justify-content: center; }
     .tab { flex: 1; padding: 15px 10px; text-align: center; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; color: #2b4b73; border: 1.5px solid #2b4b73; transition: 0.2s; }
     .tab.active { background: #2b4b73; color: white; border-color: #2b4b73; }
@@ -101,8 +102,6 @@
       <video id="preview" playsinline></video>
       <div class="scan-guide"></div>
     </div>
-    
-    <!-- QR 스캔용 숨김 캔버스 -->
     <canvas id="qr-canvas" style="display:none;"></canvas>
     
     <div class="scan-info" id="status-msg" style="color: #555; font-weight: normal;">학생의 QR코드를 비춰주세요.</div>
@@ -110,21 +109,30 @@
     
     <hr class="dotted-divider">
 
-    <div class="input-group">
-      <label>➕ 학생 수동 추가입력</label>
-      <div style="font-size:0.85rem; color:#666; margin-bottom: 12px;">QR이 없거나 명단에 없는 학생의 학번과 성명을 모두 입력하세요.</div>
-      
-      <!-- 학번과 성명을 입력받는 부분 -->
-      <input type="text" id="manual-student-id" placeholder="학번 (예: 10101)">
-      <input type="text" id="manual-student-name" placeholder="성명 (예: 홍길동)">
-      <button class="btn-primary" style="background-color: #f1f3f5; color: #495057; border: 1px solid #ced4da;" onclick="manualAttendance()">학생 수동 출석 입력</button>
+    <!-- 📊 처리 내역 및 출석 현황 -->
+    <h4 style="color:#2b4b73; margin-bottom:10px;" id="stat-title">1교시 처리 내역</h4>
+    <div class="log-container">
+      <div class="stat-text">
+        ✅ 출석: <span id="present-count">0</span>명 &nbsp;|&nbsp; ❌ 결석: <span id="absent-count">0</span>명
+      </div>
+      <div class="absent-title">결석자 명단:</div>
+      <div class="absent-list-box" id="absent-list">
+        (서버 데이터 대기 중...)
+      </div>
+      <!-- 가장 최근 처리된 학생을 보여주는 작은 텍스트 -->
+      <div style="font-size: 0.85rem; color: #888; text-align: right; margin-top: 10px;" id="recent-log">최근 처리: 없음</div>
     </div>
 
     <hr class="dotted-divider">
 
-    <h4 style="color:#2b4b73; margin-bottom:10px;">처리 내역 (로그)</h4>
-    <div class="log-container" id="log-list">
-      <div class="log-item" style="justify-content:center; color:#888;">데이터 대기 중...</div>
+    <!-- ➕ 수동 추가 입력 폼 (맨 아래로 이동) -->
+    <div class="input-group">
+      <label>➕ 학생 수동 추가입력</label>
+      <div style="font-size:0.85rem; color:#666; margin-bottom: 12px;">QR이 없거나 명단에 없는 학생의 학번과 성명을 모두 입력하세요.</div>
+      
+      <input type="text" id="manual-student-id" placeholder="학번 (예: 10101)">
+      <input type="text" id="manual-student-name" placeholder="성명 (예: 홍길동)">
+      <button class="btn-primary" style="background-color: #f1f3f5; color: #495057; border: 1px solid #ced4da;" onclick="manualAttendance()">학생 수동 출석 입력</button>
     </div>
     
     <button class="btn-primary btn-logout" onclick="logout()">로그아웃</button>
@@ -136,56 +144,20 @@
 </div>
 
 <script>
-  // 💡 구글 앱스 스크립트 API 주소 (유지)
+  // 💡 구글 앱스 스크립트 API 주소 
   const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
   
   let currentPeriod = '1교시';
   let isScanning = false;
   let videoStream = null;
-  let lastScannedId = null;
-  let scanCooldown = false;
   
+  // 중복 스캔 방지용 쿨다운 및 로컬 저장소
+  let scanCooldown = false;
+  let scannedIds = new Set(); 
+
   const video = document.getElementById('preview');
   const canvasElement = document.getElementById('qr-canvas');
   const canvas = canvasElement.getContext('2d');
-
-  // --- 기존 로그인, 로그 유지 로직 ---
-  function getNext9AM() {
-    const now = new Date();
-    const expire = new Date(now);
-    if (now.getHours() >= 9) expire.setDate(now.getDate() + 1);
-    expire.setHours(9, 0, 0, 0);
-    return expire.getTime();
-  }
-
-  function checkAndClearExpiredData() {
-    const expireTime = localStorage.getItem("expireTime");
-    if (expireTime && Date.now() > parseInt(expireTime)) {
-      localStorage.removeItem("savedLogs");
-      localStorage.removeItem("teacherName");
-      localStorage.removeItem("expireTime");
-    }
-  }
-
-  function addLog(name, id, statusText, isSuccess) {
-    const list = document.getElementById("log-list");
-    if (list.innerHTML.includes("데이터 대기 중...")) list.innerHTML = "";
-    
-    const timeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
-    const color = isSuccess ? "#2b4b73" : "#c0392b";
-    const html = `
-      <div class="log-item">
-        <div>
-          <span style="color:${color}; font-weight:bold;">${name || '이름없음'} (${id})</span>
-          <div style="font-size:0.85rem; color:#666; margin-top:3px;">[${currentPeriod}] ${statusText}</div>
-        </div>
-        <div class="log-time">${timeStr}</div>
-      </div>
-    `;
-    list.insertAdjacentHTML('afterbegin', html);
-    localStorage.setItem("savedLogs", list.innerHTML);
-    localStorage.setItem("expireTime", getNext9AM());
-  }
 
   function handleLoginSuccess() {
     const teacherName = document.getElementById("login-teacher").value.trim();
@@ -200,10 +172,6 @@
     const nowH = new Date().getHours();
     if (nowH >= 20) setPeriod("2교시");
     else setPeriod("1교시");
-    
-    checkAndClearExpiredData();
-    const savedLogs = localStorage.getItem("savedLogs");
-    if (savedLogs) document.getElementById("log-list").innerHTML = savedLogs;
   }
 
   function logout() {
@@ -212,17 +180,22 @@
     document.getElementById("login-pw").value = "";
     document.getElementById("auth-screen").style.display = "block";
     document.getElementById("main-screen").style.display = "none";
+    scannedIds.clear(); // 로그아웃 시 스캔 기록 초기화
   }
 
   function setPeriod(period) {
     currentPeriod = period;
+    document.getElementById("stat-title").innerText = `${period} 처리 내역`;
     document.getElementById("tab-1").classList.remove("active");
     document.getElementById("tab-2").classList.remove("active");
     if(period === '1교시') document.getElementById("tab-1").classList.add("active");
     if(period === '2교시') document.getElementById("tab-2").classList.add("active");
+    
+    // 교시 변경 시 중복 리스트 초기화 
+    scannedIds.clear();
   }
 
-  // --- 📷 휴대폰 카메라 스캔 로직 ---
+  // --- 📷 카메라 로직 ---
   function toggleCamera() {
     if (isScanning) {
       stopCamera();
@@ -245,8 +218,9 @@
         const btn = document.getElementById('cam-btn');
         btn.innerHTML = "🛑 카메라 끄기";
         btn.classList.remove('btn-primary');
-        btn.classList.add('btn-danger');
+        btn.classList.add('btn-danger'); // 붉은색 버튼 디자인 적용
         document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
+        document.getElementById('status-msg').style.color = "#555";
       })
       .catch(function(err) {
         alert("카메라를 실행할 수 없습니다. 권한을 확인해주세요.\n(" + err.message + ")");
@@ -265,6 +239,7 @@
     btn.classList.remove('btn-danger');
     btn.classList.add('btn-primary');
     document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
+    document.getElementById('status-msg').style.color = "#555";
   }
 
   function tick() {
@@ -280,9 +255,8 @@
       });
       
       if (code && code.data !== "") {
-        // 중복 인식 방지 (쿨다운 2.5초)
         const scannedData = code.data.trim();
-        if (lastScannedId !== scannedData && !scanCooldown && scannedData !== "") {
+        if (!scanCooldown && scannedData !== "") {
           processScannedData(scannedData);
         }
       }
@@ -290,16 +264,30 @@
     requestAnimationFrame(tick);
   }
 
-  // QR 데이터 처리 및 서버 통신
+  // QR 데이터 처리 및 클라이언트 중복 방어
   function processScannedData(scannedData) {
-    lastScannedId = scannedData;
     scanCooldown = true;
-    setTimeout(() => { scanCooldown = false; }, 2500);
-    // QR 스캔 시 성명은 빈 칸으로 보냄(서버가 학번으로 이름 조회 처리)
+    setTimeout(() => { scanCooldown = false; }, 2500); // 2.5초 쿨다운
+
+    // 로컬 중복 스캔 체크 (안내 메시지 표시)
+    if (scannedIds.has(scannedData)) {
+      document.getElementById('status-msg').innerText = `⚠️ ${scannedData} 이미 스캔된 학생입니다 (중복)`;
+      document.getElementById('status-msg').style.color = "#d35400"; // 주황색 경고
+      
+      // 2초 뒤 상태 복구
+      setTimeout(() => {
+        if(isScanning) {
+          document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
+          document.getElementById('status-msg').style.color = "#555";
+        }
+      }, 2000);
+      return;
+    }
+
     sendAttendanceToServer(scannedData, "QR스캔", "");
   }
 
-  // 수동 출석 입력 (학번 + 성명)
+  // 수동 출석 입력
   function manualAttendance() {
     const studentId = document.getElementById("manual-student-id").value.trim();
     const studentName = document.getElementById("manual-student-name").value.trim();
@@ -307,31 +295,35 @@
     if(!studentId) return alert("학번을 입력하세요.");
     if(!studentName) return alert("성명을 입력하세요.");
     
-    // 학번과 성명을 모두 서버로 전송
+    // 수동입력도 중복 안내
+    if (scannedIds.has(studentId)) {
+       alert(`⚠️ ${studentId} 은(는) 이미 출석 처리된 학번입니다 (중복).`);
+       return;
+    }
+
     sendAttendanceToServer(studentId, "수동입력", studentName);
     
-    // 입력 후 폼 초기화
     document.getElementById("manual-student-id").value = "";
     document.getElementById("manual-student-name").value = "";
   }
 
-  // 서버(구글 앱스 스크립트)로 데이터 전송 (통신 오류 방지 적용)
+  // 서버 통신 (에러 방지 redirect 옵션 추가)
   function sendAttendanceToServer(id, methodStr, nameStr) {
     const teacher = localStorage.getItem("teacherName") || "감독교사";
     const p1 = (currentPeriod === '1교시');
     const p2 = (currentPeriod === '2교시');
     
-    // 로컬 시간(한국 시간 기준)으로 날짜 구하기
     const dateStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    const timeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
     
     document.getElementById('status-msg').innerText = `${id} 처리 중...⏳`;
-    document.getElementById('status-msg').style.color = "#c0392b";
+    document.getElementById('status-msg').style.color = "#2b4b73";
     
     const url = `${API_URL}?${new URLSearchParams({
       action: 'addDailyStudent',
       date: dateStr,
       id: id,
-      name: nameStr, // 입력받은 이름이 있으면 서버로 함께 전송
+      name: nameStr,
       p1: p1,
       p2: p2,
       teacher: teacher,
@@ -339,10 +331,13 @@
       _t: new Date().getTime()
     }).toString()}`;
 
-    // 에러 발생을 막기 위해 텍스트로 먼저 변환 후 파싱하도록 구조 변경
-    fetch(url)
+    // 💡 redirect: "follow" 옵션 추가로 CORS 및 스크립트 오류 해결
+    fetch(url, {
+      method: "GET",
+      redirect: "follow" 
+    })
       .then(res => {
-        if (!res.ok) throw new Error("서버 응답 오류 (네트워크)");
+        if (!res.ok) throw new Error("서버 통신 오류");
         return res.text();
       })
       .then(text => {
@@ -350,18 +345,37 @@
         try {
           res = JSON.parse(text);
         } catch (e) {
-          throw new Error("서버 데이터 파싱 오류 (서버 스크립트를 확인하세요)");
+          throw new Error("서버 데이터 파싱 오류");
         }
 
         if(res.success) {
-          // 서버에서 넘겨준 이름이 없으면 내가 수동입력한 이름을 사용
           const finalName = res.studentName || nameStr || '이름확인됨'; 
-          addLog(finalName, id, `정상 출석 처리되었습니다. (${methodStr})`, true);
-          document.getElementById('status-msg').innerText = `✅ ${finalName} 처리 완료`;
-          document.getElementById('status-msg').style.color = "#27ae60";
+          
+          // 서버 측 중복 메시지 체크
+          if (res.message && res.message.includes("중복")) {
+             document.getElementById('status-msg').innerText = `⚠️ ${finalName} 이미 출석된 학생입니다 (중복)`;
+             document.getElementById('status-msg').style.color = "#d35400";
+          } else {
+             document.getElementById('status-msg').innerText = `✅ ${finalName} 출석 완료`;
+             document.getElementById('status-msg').style.color = "#27ae60";
+             scannedIds.add(id); // 정상 처리되었을 때만 로컬 Set에 추가
+             
+             // 최근 로그 표시 업데이트
+             document.getElementById('recent-log').innerText = `최근 처리: ${finalName}(${id}) - ${timeStr}`;
+          }
+
+          // 💡 서버에서 보내준 통계 데이터 렌더링 (서버에서 넘겨줘야 작동함)
+          if (res.presentCount !== undefined) {
+             document.getElementById('present-count').innerText = res.presentCount;
+             document.getElementById('absent-count').innerText = res.absentCount;
+             
+             let absentStr = Array.isArray(res.absentList) ? res.absentList.join(', ') : (res.absentList || "");
+             if (!absentStr) absentStr = "현재 결석자 없음 (전원 출석)";
+             document.getElementById('absent-list').innerText = absentStr;
+          }
+
         } else {
-          addLog('오류', id, res.message || '서버 처리 실패', false);
-          document.getElementById('status-msg').innerText = `❌ 오류 발생: ${res.message || '실패'}`;
+          document.getElementById('status-msg').innerText = `❌ 오류: ${res.message || '서버 처리 실패'}`;
           document.getElementById('status-msg').style.color = "#c0392b";
         }
         
@@ -372,18 +386,17 @@
           } else {
              document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
           }
-          document.getElementById('status-msg').style.color = "#333";
+          document.getElementById('status-msg').style.color = "#555";
         }, 2000);
       })
       .catch(err => {
-        addLog('통신오류', id, err.message, false);
-        document.getElementById('status-msg').innerText = `❌ 통신 오류가 발생했습니다.`;
+        document.getElementById('status-msg').innerText = `❌ 통신 오류 발생`;
         document.getElementById('status-msg').style.color = "#c0392b";
         
         setTimeout(() => {
           if(isScanning) document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
           else document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
-          document.getElementById('status-msg').style.color = "#333";
+          document.getElementById('status-msg').style.color = "#555";
         }, 2000);
       });
   }
