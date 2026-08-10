@@ -274,7 +274,17 @@
         if (code && code.data) {
           const qrText = code.data.trim();
           if (qrText.length >= 4) {
-            processAttendance(qrText);
+            
+            // 💡 추가된 로직: QR코드 텍스트에 URL(?id=)이 포함되어 있다면 학번만 추출
+            let studentId = qrText;
+            if (qrText.includes("?id=")) {
+              // "?id=" 뒷부분의 텍스트를 가져온 후, 혹시 모를 추가 파라미터(&) 제거
+              studentId = qrText.split("?id=")[1].split("&")[0];
+            }
+            
+            // 추출된 순수 학번을 서버로 전송
+            processAttendance(studentId);
+            
             await new Promise(r => setTimeout(r, 2000));
           }
         }
