@@ -14,48 +14,51 @@
     .main-header { background-color: #2b4b73; color: white; text-align: center; padding: 25px 20px; font-size: 1.3rem; font-weight: bold; line-height: 1.5; }
     
     /* 메인 컨테이너 */
-    .container { max-width: 480px; margin: 30px auto; background: white; padding: 30px 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+    .container { max-width: 480px; margin: 30px auto; background: white; padding: 40px 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
     
-    h2 { text-align: center; color: #2b4b73; font-size: 1.25rem; margin-top: 0; line-height: 1.4; }
+    h2 { text-align: center; color: #2b4b73; font-size: 1.3rem; margin-top: 0; line-height: 1.4; margin-bottom: 25px; }
     
-    /* 안내 박스 */
+    /* 안내 박스 및 텍스트 */
     .info-box { background-color: #eef2f6; padding: 15px 20px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #2b4b73; font-size: 0.95rem; color: #333; line-height: 1.6; }
-    .scan-info { text-align: center; font-size: 0.95rem; color: #555; margin-bottom: 15px; font-weight: bold; }
+    .scan-info { text-align: center; font-size: 1rem; color: #333; margin-bottom: 20px; font-weight: bold; }
     
     /* 입력 폼 그룹 */
     .input-group { margin-bottom: 20px; text-align: left; }
-    .input-group label { display: block; font-weight: bold; color: #555; margin-bottom: 8px; font-size: 0.95rem; }
-    input[type="password"], input[type="text"] { width: 100%; box-sizing: border-box; padding: 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fafafa; }
-    input:focus { outline: none; border-color: #2b4b73; background-color: #fff; }
+    .input-group label { display: block; font-weight: bold; color: #2b4b73; margin-bottom: 12px; font-size: 1.05rem; }
+    input[type="password"], input[type="text"] { 
+      width: 100%; box-sizing: border-box; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fff; margin-bottom: 15px;
+    }
+    input:focus { outline: none; border-color: #2b4b73; }
     
     /* 버튼 스타일 */
-    .btn-primary { width: 100%; padding: 15px; background-color: #2b4b73; color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-primary { width: 100%; padding: 16px; background-color: #2b4b73; color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-primary:hover { background-color: #1e3656; }
     .btn-danger { background-color: #c0392b; }
     .btn-danger:hover { background-color: #a93226; }
-    .btn-logout { background-color: #7f8c8d; margin-top: 10px; }
+    .btn-logout { background-color: #7f8c8d; margin-top: 20px; }
     .btn-logout:hover { background-color: #606b6b; }
-    .btn-success { background-color: #27ae60; margin-top: 10px; }
+    .btn-success { background-color: #27ae60; margin-bottom: 10px; }
     
     /* 로그 영역 */
-    .log-container { background: #f9f9f9; border: 1px solid #eee; height: 300px; overflow-y: auto; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+    .log-container { background: #f9f9f9; border: 1px solid #eee; height: 250px; overflow-y: auto; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
     .log-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #ddd; }
     .log-item:last-child { border-bottom: none; }
     .log-time { font-size: 0.8rem; color: #888; white-space: nowrap; margin-left: 10px; }
     
     /* 탭 스타일 (이미지 디자인 반영) */
-    .tab-container { display: flex; margin-bottom: 20px; gap: 10px; }
-    .tab { flex: 1; padding: 15px 10px; text-align: center; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; color: #2b4b73; border: 2px solid #2b4b73; transition: 0.2s; }
-    .tab.active { background: #2b4b73; color: white; }
+    .tab-container { display: flex; margin-bottom: 30px; gap: 10px; justify-content: center; }
+    .tab { flex: 1; padding: 15px 10px; text-align: center; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; color: #2b4b73; border: 1.5px solid #2b4b73; transition: 0.2s; }
+    .tab.active { background: #2b4b73; color: white; border-color: #2b4b73; }
     
     /* 카메라 영역 스타일 */
-    #camera-wrapper { position: relative; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; background: #000; }
+    #camera-wrapper { position: relative; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 20px; display: none; background: #000; }
     #preview { width: 100%; height: auto; display: block; object-fit: cover; }
     .scan-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 60%; border: 3px dashed rgba(255, 255, 255, 0.8); border-radius: 10px; box-sizing: border-box; }
     
-    /* 하단 카피라이트 */
+    /* 하단 및 구분선 */
     .footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #999; }
     hr.divider { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
+    hr.dotted-divider { border: 0; border-top: 1px dashed #ccc; margin: 35px 0; }
   </style>
 </head>
 <body>
@@ -65,92 +68,83 @@
 </header>
 
 <div class="container">
-  
   <!-- 로그인 화면 -->
   <div id="auth-screen">
     <h2>🔐 서현고등학교 꿈꾸는 글마루<br>출석 스캐너 로그인</h2>
-    
-    <hr class="divider" style="margin: 15px 0;">
-    
+    <hr class="divider" style="margin: 20px 0;">
     <div class="info-box">
       <strong>출석 인정 시간 안내</strong><br>
       1교시 18:00~19:40<br>
       2교시 20:00~21:40
     </div>
-
     <div class="input-group">
-      <label>감독교사 이름</label>
-      <input type="text" id="login-teacher" placeholder="예: 홍길동">
+      <input type="text" id="login-teacher" placeholder="감독교사 이름 (예: 홍길동)">
     </div>
-
     <div class="input-group">
-      <label>비밀번호(감독 날짜 8자리)</label>
-      <input type="password" id="login-pw" placeholder="예: 20260302">
+      <input type="password" id="login-pw" placeholder="비밀번호 (감독 날짜 8자리, 예: 20260302)">
     </div>
-
     <button class="btn-primary" onclick="handleLoginSuccess()">로그인 및 스캔 시작</button>
   </div>
 
   <!-- 메인 스캐너 화면 -->
   <div id="main-screen" style="display:none;">
+    <h2>📷 출석 스캐너</h2>
     
-    <h2 style="margin-bottom: 20px;">📷 출석 스캐너</h2>
-
     <div class="scan-info">✅ 진행할 교시를 선택하세요</div>
-    
     <div class="tab-container">
       <div id="tab-1" class="tab active" onclick="setPeriod('1교시')">1교시 출석 처리</div>
       <div id="tab-2" class="tab" onclick="setPeriod('2교시')">2교시 출석 처리</div>
     </div>
-    
+
     <!-- 📷 실제 카메라 화상 영역 -->
     <div id="camera-wrapper">
       <video id="preview" playsinline></video>
       <div class="scan-guide"></div>
     </div>
+    
     <!-- QR 스캔용 숨김 캔버스 -->
     <canvas id="qr-canvas" style="display:none;"></canvas>
-
-    <div class="scan-info" id="status-msg">학생의 QR코드를 비춰주세요.</div>
-
-    <button id="cam-btn" class="btn-primary" onclick="toggleCamera()">🚀 카메라 켜기 / 스캔 시작</button>
     
-    <hr class="divider">
+    <div class="scan-info" id="status-msg" style="color: #555; font-weight: normal;">학생의 QR코드를 비춰주세요.</div>
+    <button id="cam-btn" class="btn-primary" onclick="toggleCamera()">🚀 카메라 켜기, 스캔 시작</button>
+    
+    <hr class="dotted-divider">
 
     <div class="input-group">
       <label>➕ 학생 수동 추가입력</label>
-      <div style="font-size:0.85rem; color:#666; margin-bottom: 8px;">QR이 없는 학생이나 명단 외 학생을 입력합니다.</div>
-      <div style="display:flex; gap:10px;">
-        <input type="text" id="manual-student" placeholder="학번 입력 (예: 10101)" style="margin-bottom:0;">
-        <button class="btn-primary btn-success" style="width:100px; padding:14px;" onclick="manualAttendance()">입력</button>
-      </div>
+      <div style="font-size:0.85rem; color:#666; margin-bottom: 12px;">QR이 없거나 명단에 없는 학생의 학번과 성명을 모두 입력하세요.</div>
+      
+      <!-- 학번과 성명을 입력받는 부분 -->
+      <input type="text" id="manual-student-id" placeholder="학번 (예: 10101)">
+      <input type="text" id="manual-student-name" placeholder="성명 (예: 홍길동)">
+      <button class="btn-primary" style="background-color: #f1f3f5; color: #495057; border: 1px solid #ced4da;" onclick="manualAttendance()">학생 수동 출석 입력</button>
     </div>
+
+    <hr class="dotted-divider">
 
     <h4 style="color:#2b4b73; margin-bottom:10px;">처리 내역 (로그)</h4>
     <div class="log-container" id="log-list">
       <div class="log-item" style="justify-content:center; color:#888;">데이터 대기 중...</div>
     </div>
-
+    
     <button class="btn-primary btn-logout" onclick="logout()">로그아웃</button>
   </div>
 
   <div class="footer">
     Copyright 2026. 서현고등학교 All Rights Reserved.
   </div>
-
 </div>
 
 <script>
-  // 💡 구글 앱스 스크립트 API 주소 (동일하게 유지)
+  // 💡 구글 앱스 스크립트 API 주소 (유지)
   const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
   
   let currentPeriod = '1교시';
-  
-  // 카메라 관련 변수
   let isScanning = false;
   let videoStream = null;
   let lastScannedId = null;
   let scanCooldown = false;
+  
   const video = document.getElementById('preview');
   const canvasElement = document.getElementById('qr-canvas');
   const canvas = canvasElement.getContext('2d');
@@ -179,7 +173,6 @@
     
     const timeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
     const color = isSuccess ? "#2b4b73" : "#c0392b";
-    
     const html = `
       <div class="log-item">
         <div>
@@ -197,12 +190,10 @@
   function handleLoginSuccess() {
     const teacherName = document.getElementById("login-teacher").value.trim();
     const pw = document.getElementById("login-pw").value.trim();
-    
     if(teacherName === "") return alert("감독교사 이름을 입력해주세요.");
     if(pw === "") return alert("비밀번호를 입력해주세요.");
-
+    
     localStorage.setItem("teacherName", teacherName);
-
     document.getElementById("auth-screen").style.display = "none";
     document.getElementById("main-screen").style.display = "block";
     
@@ -247,10 +238,9 @@
         video.srcObject = stream;
         video.setAttribute("playsinline", true);
         video.play();
-        
         requestAnimationFrame(tick);
-        
         isScanning = true;
+        
         document.getElementById('camera-wrapper').style.display = "block";
         const btn = document.getElementById('cam-btn');
         btn.innerHTML = "🛑 카메라 끄기";
@@ -269,8 +259,9 @@
     }
     isScanning = false;
     document.getElementById('camera-wrapper').style.display = "none";
+    
     const btn = document.getElementById('cam-btn');
-    btn.innerHTML = "🚀 카메라 켜기 / 스캔 시작";
+    btn.innerHTML = "🚀 카메라 켜기, 스캔 시작";
     btn.classList.remove('btn-danger');
     btn.classList.add('btn-primary');
     document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
@@ -278,22 +269,21 @@
 
   function tick() {
     if (!isScanning) return;
-    
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvasElement.height = video.videoHeight;
       canvasElement.width = video.videoWidth;
       canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-      
       const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-      // jsQR 라이브러리 사용
+      
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
       });
       
       if (code && code.data !== "") {
         // 중복 인식 방지 (쿨다운 2.5초)
-        if (lastScannedId !== code.data && !scanCooldown) {
-          processScannedData(code.data);
+        const scannedData = code.data.trim();
+        if (lastScannedId !== scannedData && !scanCooldown && scannedData !== "") {
+          processScannedData(scannedData);
         }
       }
     }
@@ -302,45 +292,46 @@
 
   // QR 데이터 처리 및 서버 통신
   function processScannedData(scannedData) {
-    // 보통 QR코드에는 학번이 들어있다고 가정
-    const studentId = scannedData.trim();
-    
-    lastScannedId = studentId;
+    lastScannedId = scannedData;
     scanCooldown = true;
-    
-    // 2.5초 후 쿨다운 해제
     setTimeout(() => { scanCooldown = false; }, 2500);
-    
-    sendAttendanceToServer(studentId, "QR스캔");
+    // QR 스캔 시 성명은 빈 칸으로 보냄(서버가 학번으로 이름 조회 처리)
+    sendAttendanceToServer(scannedData, "QR스캔", "");
   }
 
-  // 수동 출석 입력
+  // 수동 출석 입력 (학번 + 성명)
   function manualAttendance() {
-    const input = document.getElementById("manual-student").value.trim();
-    if(!input) return alert("학번을 입력하세요.");
-    sendAttendanceToServer(input, "수동입력");
-    document.getElementById("manual-student").value = "";
+    const studentId = document.getElementById("manual-student-id").value.trim();
+    const studentName = document.getElementById("manual-student-name").value.trim();
+    
+    if(!studentId) return alert("학번을 입력하세요.");
+    if(!studentName) return alert("성명을 입력하세요.");
+    
+    // 학번과 성명을 모두 서버로 전송
+    sendAttendanceToServer(studentId, "수동입력", studentName);
+    
+    // 입력 후 폼 초기화
+    document.getElementById("manual-student-id").value = "";
+    document.getElementById("manual-student-name").value = "";
   }
 
-  // 서버(구글 앱스 스크립트)로 데이터 전송
-  function sendAttendanceToServer(id, methodStr) {
+  // 서버(구글 앱스 스크립트)로 데이터 전송 (통신 오류 방지 적용)
+  function sendAttendanceToServer(id, methodStr, nameStr) {
     const teacher = localStorage.getItem("teacherName") || "감독교사";
     const p1 = (currentPeriod === '1교시');
     const p2 = (currentPeriod === '2교시');
     
     // 로컬 시간(한국 시간 기준)으로 날짜 구하기
     const dateStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-
-    // 스캔 진행 중 표시
+    
     document.getElementById('status-msg').innerText = `${id} 처리 중...⏳`;
     document.getElementById('status-msg').style.color = "#c0392b";
-
-    // 💡 API 서버로 전송 (대시보드의 addDailyStudent 액션 활용)
+    
     const url = `${API_URL}?${new URLSearchParams({
       action: 'addDailyStudent',
       date: dateStr,
       id: id,
-      name: "", // 서버에서 학번으로 이름 조회하도록 구성되어 있으면 빈칸 가능
+      name: nameStr, // 입력받은 이름이 있으면 서버로 함께 전송
       p1: p1,
       p2: p2,
       teacher: teacher,
@@ -348,16 +339,29 @@
       _t: new Date().getTime()
     }).toString()}`;
 
+    // 에러 발생을 막기 위해 텍스트로 먼저 변환 후 파싱하도록 구조 변경
     fetch(url)
-      .then(res => res.json())
       .then(res => {
+        if (!res.ok) throw new Error("서버 응답 오류 (네트워크)");
+        return res.text();
+      })
+      .then(text => {
+        let res;
+        try {
+          res = JSON.parse(text);
+        } catch (e) {
+          throw new Error("서버 데이터 파싱 오류 (서버 스크립트를 확인하세요)");
+        }
+
         if(res.success) {
-          addLog(res.studentName || '이름확인됨', id, `정상 출석 처리되었습니다. (${methodStr})`, true);
-          document.getElementById('status-msg').innerText = `✅ ${res.studentName || id} 처리 완료`;
+          // 서버에서 넘겨준 이름이 없으면 내가 수동입력한 이름을 사용
+          const finalName = res.studentName || nameStr || '이름확인됨'; 
+          addLog(finalName, id, `정상 출석 처리되었습니다. (${methodStr})`, true);
+          document.getElementById('status-msg').innerText = `✅ ${finalName} 처리 완료`;
           document.getElementById('status-msg').style.color = "#27ae60";
         } else {
           addLog('오류', id, res.message || '서버 처리 실패', false);
-          document.getElementById('status-msg').innerText = `❌ 오류 발생`;
+          document.getElementById('status-msg').innerText = `❌ 오류 발생: ${res.message || '실패'}`;
           document.getElementById('status-msg').style.color = "#c0392b";
         }
         
@@ -365,15 +369,24 @@
         setTimeout(() => {
           if(isScanning) {
              document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
-             document.getElementById('status-msg').style.color = "#555";
+          } else {
+             document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
           }
+          document.getElementById('status-msg').style.color = "#333";
         }, 2000);
       })
       .catch(err => {
         addLog('통신오류', id, err.message, false);
+        document.getElementById('status-msg').innerText = `❌ 통신 오류가 발생했습니다.`;
+        document.getElementById('status-msg').style.color = "#c0392b";
+        
+        setTimeout(() => {
+          if(isScanning) document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
+          else document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
+          document.getElementById('status-msg').style.color = "#333";
+        }, 2000);
       });
   }
 </script>
-
 </body>
 </html>
