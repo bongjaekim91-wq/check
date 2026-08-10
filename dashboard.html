@@ -36,7 +36,6 @@
     .btn-print { background-color: #38a169; } .btn-print:hover { background-color: #2f855a; }
     .btn-reset { background-color: #e53e3e; } .btn-reset:hover { background-color: #c53030; }
     .btn-riro { background-color: #2c5282; } .btn-riro:hover { background-color: #2a4365; }
-    .btn-save-all { background-color: #d69e2e; } .btn-save-all:hover { background-color: #b7791f; }
     /* 통계/조회용 버튼 */
     .btn-tab-action { background-color: #5ab1ea; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
     .btn-tab-action:hover { background-color: #499dd6; }
@@ -55,8 +54,26 @@
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
     .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
     #printArea { display: none; }
+    
+    /* 일괄처리 액션바 (수정됨) */
     .batch-action-bar { display: flex; gap: 10px; align-items: center; background: #f8f9fa; padding: 12px 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 15px; }
     
+    /* 출석부 저장 버튼 스타일 (맨 우측 배치) */
+    .btn-save-all { 
+      background-color: #d69e2e; 
+      color: white; 
+      border: none; 
+      padding: 9px 20px; 
+      border-radius: 8px; 
+      font-size: 1.05rem; 
+      font-weight: bold; 
+      cursor: pointer; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+      transition: 0.2s; 
+      margin-left: auto; /* 오른쪽으로 밀어내기 */
+    } 
+    .btn-save-all:hover { background-color: #b7791f; }
+
     /* 인쇄 전용 스타일 */
     @media print {
       body > * { display: none !important; }
@@ -107,13 +124,14 @@
           <!-- 날짜 변경 시 경고를 띄우기 위해 onchange 함수 변경 -->
           <input type="date" id="datePicker" onchange="handleDateChange()">
         </div>
+        
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
+            <!-- 출석부 저장 버튼이 아래 회색바 영역으로 이동됨 -->
             <button class="btn-reset" onclick="resetDailyData()">🗑️ 출결 초기화</button>
             <button class="btn-qr" onclick="refreshDailyData()">🔄 새로고침</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
-            <button class="btn-save-all" onclick="saveAllNotes()">💾 비고 일괄 저장</button>
             <button class="btn-save" onclick="savePdf()">📥 PDF 다운로드</button>
             <button class="btn-print" onclick="window.print()">🖨️ 바로 인쇄</button>
             <button class="btn-riro" onclick="checkRiroMove()">🔗 리로스쿨</button>
@@ -141,6 +159,9 @@
           <button style="background:#3182ce; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess('attend')">출석처리</button>
           <button style="background:#e53e3e; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess('absent')">결석처리</button>
           <button style="background:#718096; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess('reset')">초기화</button>
+          
+          <!-- 💡 오른쪽 끝으로 이동된 출석부 저장 버튼 -->
+          <button class="btn-save-all" onclick="saveAllNotes()">💾 출석부 저장</button>
         </div>
         
         <table id="rosterTable">
@@ -234,7 +255,7 @@
       const localFirst = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
       
       document.getElementById('datePicker').value = localToday;
-      previousDate = localToday; // 초기 날짜 저장
+      previousDate = localToday; 
       document.getElementById('indivStartDate').value = localFirst;
       document.getElementById('indivEndDate').value = localToday;
       document.getElementById('statStartDate').value = localFirst;
@@ -284,7 +305,7 @@
       const datePicker = document.getElementById('datePicker');
       if (isNoteChanged) {
         if (!confirm("저장하지 않은 비고 데이터가 있습니다.\n저장하지 않고 날짜를 변경하시겠습니까?")) {
-          datePicker.value = previousDate; // 선택 롤백
+          datePicker.value = previousDate; 
           return;
         }
       }
@@ -327,7 +348,7 @@
         .then(res => res.json())
         .then(response => {
           showLoading(false);
-          isNoteChanged = false; // 로드 완료 시 플래그 안전하게 리셋
+          isNoteChanged = false;
           document.getElementById('checkAll').checked = false; 
           
           let rawTeacherStr = response.teacherText || "";
@@ -427,7 +448,6 @@
         let noteVal = student.note || '';
         
         const tr = document.createElement('tr');
-        // 💡 비고란 이벤트 수정: oninput, onchange
         tr.innerHTML = `
           <td><input type="checkbox" class="student-check" value="${student.id}" data-name="${student.name}" style="cursor:pointer;"> ${index + 1}</td>
           <td style="font-weight:bold;">${student.id}</td>
@@ -441,18 +461,17 @@
       });
     }
 
-    // 💡 화면 인쇄(미리보기)용 로컬 데이터만 즉시 갱신 (서버 전송은 X)
     function updateLocalNoteData(id, noteVal) {
       if (currentDailyData && currentDailyData.roster) {
         let student = currentDailyData.roster.find(s => s.id === id);
         if (student) {
           student.note = noteVal;
-          renderPrintArea(currentDailyData); // 인쇄용 화면 실시간 반영
+          renderPrintArea(currentDailyData); 
         }
       }
     }
 
-    // 💡 비고 일괄 저장 로직 최적화
+    // 💡 출석부 저장 로직 
     async function saveAllNotes() {
       if (!isNoteChanged) {
         alert("변경된 비고 데이터가 없습니다.");
@@ -470,7 +489,6 @@
         const originalVal = input.getAttribute('data-original');
         const noteVal = input.value;
         
-        // 원본과 값이 다를 때만 서버로 전송
         if (originalVal !== noteVal) {
           promises.push(
             fetch(`${API_URL}?${new URLSearchParams({
@@ -481,7 +499,6 @@
               _t: new Date().getTime()
             }).toString()}`).then(r => r.json())
           );
-          // 저장 대상은 original 값을 최신으로 덮어씀
           input.setAttribute('data-original', noteVal);
         }
       });
@@ -490,7 +507,7 @@
         if (promises.length > 0) {
           await Promise.all(promises);
         }
-        isNoteChanged = false; // 완벽히 저장 후 상태 리셋
+        isNoteChanged = false; 
         renderPrintArea(currentDailyData);
         showLoading(false);
         alert("✅ 출석부 비고 데이터가 완벽하게 저장되었습니다.");
@@ -501,7 +518,7 @@
     }
 
     function processSingle(id, name, periodStr, statusParam) {
-      if (!confirmUnsaved()) return; // 💡 경고
+      if (!confirmUnsaved()) return; 
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
@@ -526,7 +543,7 @@
     }
 
     async function batchProcess(actionType) {
-      if (!confirmUnsaved()) return; // 💡 경고
+      if (!confirmUnsaved()) return;
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
@@ -564,7 +581,7 @@
     }
 
     function addDailyStudent() {
-      if (!confirmUnsaved()) return; // 💡 경고
+      if (!confirmUnsaved()) return; 
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       if (dateStr !== localToday) { alert("학생 추가는 당일 출석부에서만 가능합니다."); return; }
@@ -587,7 +604,7 @@
     function savePdf() {
       const dateStr = document.getElementById('datePicker').value;
       if (isNoteChanged) {
-        alert("⚠️ 먼저 [비고 일괄 저장] 버튼을 눌러주세요!");
+        alert("⚠️ 먼저 [출석부 저장] 버튼을 눌러주세요!");
         return;
       }
       if(!confirm(`${dateStr} 출석부를 PDF로 저장하시겠습니까? (약 10~15초 소요)`)) return;
@@ -600,7 +617,6 @@
         }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
     }
 
-    // 💡 인쇄 영역 생성 함수
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
