@@ -24,10 +24,10 @@
     .date-picker-container { text-align: center; margin-bottom: 30px; }
     .date-picker-container span { font-weight: bold; margin-right: 10px; font-size: 1.05rem; }
     .date-picker-container input[type="date"] { border: 2px solid #81c784; border-radius: 6px; padding: 8px 12px; font-size: 1.05rem; color: #2b7a2b; font-weight: bold; outline: none; }
-    /* 상단 타이틀 영역 1줄 완벽 유지 */
+    /* 상단 타이틀 영역 */
     .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; flex-wrap: nowrap; gap: 10px; overflow-x: auto; }
     .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.25rem; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
-    /* 상단 액션 버튼 여백 및 크기 최소화 */
+    /* 상단 액션 버튼 */
     .action-btns { display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; flex-shrink: 0; }
     .action-btns button { border: none; border-radius: 6px; padding: 8px 10px; color: white; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; white-space: nowrap; margin: 0; }
     .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
@@ -35,9 +35,8 @@
     .btn-save { background-color: #805ad5; } .btn-save:hover { background-color: #6b46c1; }
     .btn-print { background-color: #38a169; } .btn-print:hover { background-color: #2f855a; }
     .btn-reset { background-color: #e53e3e; } .btn-reset:hover { background-color: #c53030; }
-    /* 🌟 리로스쿨 연결 버튼 전용 스타일 (네이비 톤) */
     .btn-riro { background-color: #2c5282; } .btn-riro:hover { background-color: #2a4365; }
-    /* 통계/조회용 전용 버튼 스타일 */
+    /* 통계/조회용 버튼 */
     .btn-tab-action { background-color: #5ab1ea; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
     .btn-tab-action:hover { background-color: #499dd6; }
     .btn-tab-print { background-color: #6dbb71; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1.05rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; margin-left: 8px; }
@@ -53,16 +52,12 @@
     .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; }
     .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
-    /* 통계 탭 그래프 컨테이너 */
     .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
-    /* 화면에서는 인쇄 영역 숨기기 */
     #printArea { display: none; }
     /* 일괄처리 액션바 */
     .batch-action-bar { display: flex; gap: 10px; align-items: center; background: #f8f9fa; padding: 12px 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 15px; }
     
-    /* ==========================================
-       🖨️ 인쇄 전용 스타일
-       ========================================== */
+    /* 인쇄 전용 스타일 */
     @media print {
       body > * { display: none !important; }
       #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; padding: 10px; box-sizing: border-box; }
@@ -78,14 +73,12 @@
       .bg-info { background-color: #D9EAF7 !important; font-weight: bold; color: #333 !important; }
       .bg-primary { background-color: #1F4E79 !important; color: white !important; font-weight: bold; }
       .bg-gray { background-color: #EEEEEE !important; font-weight: bold; color: #333 !important; }
-      .bg-light-gray { background-color: #f9f9f9 !important; }
       .bg-absent-title { background-color: #FCE4D6 !important; color: #333 !important; font-weight: bold; }
       .bg-extra-title { background-color: #D9EAD3 !important; color: #333 !important; font-weight: bold; }
       .st-present { background-color: #E2F0D9 !important; color: #38761D !important; font-weight: bold; }
       .st-extra { background-color: #D9EAF7 !important; color: #1F4E79 !important; font-weight: bold; }
       .st-absent { background-color: #FCE4D6 !important; color: #C00000 !important; font-weight: bold; }
       .st-excluded { background-color: #E7E6E6 !important; color: #666666 !important; font-weight: bold; }
-      .st-added-source { background-color: #EAF2FF !important; color: #1F4E79 !important; font-weight: bold; }
     }
   </style>
 </head>
@@ -106,6 +99,7 @@
       <button class="tab-btn" onclick="switchTab('tab-stats', this)">📈 기간별 통계 현황</button>
     </div>
     <div class="content-box">
+      
       <!-- 탭 1: 일일 출석부 -->
       <div id="tab-daily" class="tab-content active">
         <div class="date-picker-container">
@@ -115,8 +109,7 @@
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
-            <!-- 🌟 버튼 영역: 리로스쿨 연결 버튼 추가됨 -->
-            <button class="btn-reset" onclick="resetDailyData()">🗑️ 당일 초기화</button>
+            <button class="btn-reset" onclick="resetDailyData()">🗑️ 당일 전체 초기화</button>
             <button class="btn-qr" onclick="loadDailyData()">🔄 QR 반영</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
             <button class="btn-save" onclick="savePdf()">💾 PDF 저장</button>
@@ -124,6 +117,7 @@
             <button class="btn-riro" onclick="window.open('https://seohyun.riroschool.kr/', '_blank')">🔗 리로스쿨 연결</button>
           </div>
         </div>
+        
         <div id="addStudentSection" class="add-student-form">
           <h3 style="margin-top:0; color:#dd6b20;">➕ 당일 출석부 학생 추가</h3>
           <p style="font-size:0.9rem; color:#666;">다른 요일 학생이나 명단에 없는 학생이 참석한 경우 입력합니다.</p>
@@ -136,21 +130,21 @@
           </div>
         </div>
         
-        <!-- 🌟 체크 항목 일괄처리 액션 바 -->
+        <!-- 💡 체크 항목 일괄처리 액션 바 (초기화 버튼 추가 및 기능 수정) -->
         <div class="batch-action-bar">
           <span style="font-weight:bold; color:#2b7a2b;">☑️ 체크 항목 일괄처리 :</span>
           <select id="batchPeriod" style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-weight:bold;">
             <option value="1">1교시</option>
             <option value="2">2교시</option>
           </select>
-          <button style="background:#3182ce; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess(true)">출석처리</button>
-          <button style="background:#e53e3e; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess(false)">결석처리</button>
+          <button style="background:#3182ce; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess('attend')">출석처리</button>
+          <button style="background:#e53e3e; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess('absent')">결석처리</button>
+          <button style="background:#718096; color:white; border:none; padding:7px 15px; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="batchProcess('reset')">초기화</button>
         </div>
-
+        
         <table id="rosterTable">
           <thead>
             <tr>
-              <!-- 🌟 체크박스 및 구분 삭제, 비고 추가 -->
               <th style="width: 10%;"><input type="checkbox" id="checkAll" onchange="toggleAllChecks()" style="cursor:pointer;"> 연번</th>
               <th>학번</th>
               <th>이름</th>
@@ -164,7 +158,7 @@
           </tbody>
         </table>
       </div>
-      
+
       <!-- 탭 2: 개인별 출결 현황 -->
       <div id="tab-individual" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
@@ -186,7 +180,8 @@
           </tbody>
         </table>
       </div>
-      <!-- 탭 3: 기간별 통계 현황 (디자인 개선된 막대 그래프) -->
+
+      <!-- 탭 3: 기간별 통계 현황 -->
       <div id="tab-stats" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
           <span>조회 기간:</span>
@@ -194,7 +189,6 @@
           <button class="btn-tab-action" onclick="renderStats()">📊 통계 조회</button>
           <button class="btn-tab-print" onclick="printStats()">🖨️ 인쇄</button>
         </div>
-        <!-- 막대 그래프 영역 -->
         <div class="chart-container">
           <canvas id="statsChart" height="120"></canvas>
         </div>
@@ -215,8 +209,9 @@
       Copyright 2026. 서현고등학교 All Rights Reserved.
     </div>
   </div>
-  <!-- 🖨️ 인쇄 전용 영역 -->
+
   <div id="printArea"></div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let cachedStudents = [];
@@ -225,6 +220,7 @@
     let cacheLoaded = false;
     let currentDailyData = null;
     let myChart = null;
+
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
@@ -236,11 +232,12 @@
       document.getElementById('indivEndDate').value = localToday;
       document.getElementById('statStartDate').value = localFirst;
       document.getElementById('statEndDate').value = localToday;
-      
       loadDailyData();
       try { Chart.register(ChartDataLabels); } catch(e) { console.warn("Chart.js 플러그인 로드 대기중..."); }
     });
+
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+    
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -248,12 +245,12 @@
       btn.classList.add('active');
       if (tabId === 'tab-individual' || tabId === 'tab-stats') { ensureDataLoaded(); }
     }
+
     function toggleAddSection() {
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
     }
 
-    // 🌟 전체 선택/해제 토글
     function toggleAllChecks() {
       const isChecked = document.getElementById('checkAll').checked;
       const checkboxes = document.querySelectorAll('.student-check');
@@ -269,7 +266,7 @@
         .then(res => res.json())
         .then(response => {
           showLoading(false);
-          document.getElementById('checkAll').checked = false; // 새로고침 시 체크박스 초기화
+          document.getElementById('checkAll').checked = false; 
           let rawTeacherStr = response.teacherText || "";
           let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
           let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : "미입력";
@@ -284,6 +281,7 @@
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
     }
+
     function resetDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!confirm(`⚠️ 경고: ${dateStr} 날짜의 모든 '출결 기록'과 '수동으로 추가/삭제한 명단'이 완전히 초기화됩니다.\n정말 초기화하시겠습니까?`)) return;
@@ -296,14 +294,14 @@
         })
         .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
+
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
       if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
       return true;
     }
-    
-    // 🌟 렌더 테이블 수정 (체크박스, 삭제버튼 제거, 비고칸 추가 반영)
+
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       tbody.innerHTML = '';
@@ -316,8 +314,10 @@
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
         let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
         let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
+        
         if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
         if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
+        
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
@@ -331,67 +331,71 @@
           });
         }
         
-        // 개별 수동 버튼은 유지하되 삭제 버튼은 제거됨
         let p1Btn = (p1Status === '제외' || p1Status === '미출석') ? `<button style="background:#4299e1; border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer; margin-right:2px; font-size:0.85rem;" onclick="manualAttend('${student.id}', '${student.name}', 1)">1교시 출석</button>` : '';
         let p2Btn = (p2Status === '제외' || p2Status === '미출석') ? `<button style="background:#4299e1; border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer; margin-right:2px; font-size:0.85rem;" onclick="manualAttend('${student.id}', '${student.name}', 2)">2교시 출석</button>` : '';
-        
         let noteVal = student.note || '';
-
+        
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>
-            <input type="checkbox" class="student-check" value="${student.id}" data-name="${student.name}" style="cursor:pointer;"> 
-            ${index + 1}
-          </td>
+          <td><input type="checkbox" class="student-check" value="${student.id}" data-name="${student.name}" style="cursor:pointer;"> ${index + 1}</td>
           <td style="font-weight:bold;">${student.id}</td>
           <td style="font-weight:bold;">${student.name}</td>
-          <!-- 구분 삭제됨 -->
           <td class="${p1Class}">${p1Status}</td>
           <td class="${p2Class}">${p2Status}</td>
           <td>${p1Btn}${p2Btn}</td>
-          <td>
-            <input type="text" style="width:90%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="특이사항 입력" value="${noteVal}" onchange="saveNote('${student.id}', this.value)">
-          </td>
+          <td><input type="text" style="width:90%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="특이사항 입력" value="${noteVal}" onchange="saveNote('${student.id}', this.value)"></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // 🌟 일괄 출결 처리 함수
-    async function batchProcess(isPresent) {
+    // 💡 수정된 일괄 출결 처리 및 초기화 함수
+    async function batchProcess(actionType) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
-
-      const period = parseInt(document.getElementById('batchPeriod').value);
+      
+      const periodVal = document.getElementById('batchPeriod').value; // 1 또는 2
+      const periodStr = periodVal + "교시"; // 서버가 인식할 수 있도록 1교시, 2교시 형태 변환
+      
       const checkedBoxes = Array.from(document.querySelectorAll('.student-check:checked'));
-
       if (checkedBoxes.length === 0) {
         alert("선택된 학생이 없습니다.");
         return;
       }
+      
+      let actionText = "";
+      let statusParam = "";
+      
+      if (actionType === 'attend') {
+        actionText = "출석";
+        statusParam = "수동출석";
+      } else if (actionType === 'absent') {
+        actionText = "결석";
+        statusParam = "결석";
+      } else if (actionType === 'reset') {
+        actionText = "초기화(미출석)";
+        statusParam = "미출석"; // 서버에서 '미출석'을 받으면 기존 출석기록을 지워버림
+      }
 
-      const actionText = isPresent ? "출석" : "결석";
-      if (!confirm(`선택한 ${checkedBoxes.length}명의 학생을 ${period}교시 '${actionText}' 처리하시겠습니까?`)) return;
-
+      if (!confirm(`선택한 ${checkedBoxes.length}명의 학생을 ${periodStr} '${actionText}' 처리하시겠습니까?`)) return;
+      
       showLoading(true);
       try {
         const promises = checkedBoxes.map(cb => {
           const id = cb.value;
           const name = cb.getAttribute('data-name');
-          
           return fetch(`${API_URL}?${new URLSearchParams({
-            action: 'markAttendance', 
+            action: 'markAttendance',
             date: dateStr,
             id: id,
             name: name,
-            period: period,
-            status: isPresent ? '수동출석' : '결석',
+            period: periodStr, 
+            status: statusParam,
             teacher: '관리자',
             _t: new Date().getTime()
           }).toString()}`).then(res => res.json());
         });
-
         await Promise.all(promises);
         cacheLoaded = false;
         loadDailyData();
@@ -401,7 +405,6 @@
       }
     }
 
-    // 🌟 비고 텍스트 저장 함수
     function saveNote(id, noteVal) {
       const dateStr = document.getElementById('datePicker').value;
       fetch(`${API_URL}?${new URLSearchParams({
@@ -412,9 +415,7 @@
         _t: new Date().getTime()
       }).toString()}`)
       .then(res => res.json())
-      .then(res => {
-        if(!res.success) console.warn("비고 저장 실패");
-      })
+      .then(res => { if(!res.success) console.warn("비고 저장 실패"); })
       .catch(err => console.error("비고 저장 오류:", err));
     }
 
@@ -428,7 +429,7 @@
         .then(res => res.json()).then(res => { if(res.success) { cacheLoaded = false; loadDailyData(); } else { showLoading(false); alert(res.message); } })
         .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
-    
+
     function addDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -494,6 +495,7 @@
       const p1Stats = getPeriodStats("1교시"); const p2Stats = getPeriodStats("2교시");
       const rate1 = p1Stats.total > 0 ? (Math.round((p1Stats.present / p1Stats.total) * 1000) / 10) + "%" : "-";
       const rate2 = p2Stats.total > 0 ? (Math.round((p2Stats.present / p2Stats.total) * 1000) / 10) + "%" : "-";
+      
       let html = `<h1 class="print-title">꿈꾸는 글마루 출석부</h1><div class="print-subtitle">${dateStr} (${day}요일)</div>
         <table class="print-table">
           <tr><td class="bg-info" style="width:15%">날짜</td><td style="width:35%">${dateStr} (${day}요일)</td><td class="bg-info" style="width:15%">감독교사</td><td style="width:35%">${teacherText}</td></tr>
@@ -625,7 +627,6 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
-    
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
       if (myChart) myChart.destroy();
@@ -652,7 +653,6 @@
         }
       });
     }
-    
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
@@ -698,7 +698,6 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
     }
-    
     function printStats() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
