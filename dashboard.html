@@ -130,7 +130,6 @@
           </div>
         </div>
         
-        <!-- 💡 체크 항목 일괄처리 액션 바 (초기화 버튼 추가 및 기능 수정) -->
         <div class="batch-action-bar">
           <span style="font-weight:bold; color:#2b7a2b;">☑️ 체크 항목 일괄처리 :</span>
           <select id="batchPeriod" style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-weight:bold;">
@@ -220,6 +219,9 @@
     let cacheLoaded = false;
     let currentDailyData = null;
     let myChart = null;
+    
+    // 💡 로그인한 사용자 이름을 가져옵니다. (없으면 기본값 '관리자')
+    const loggedInUser = localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
 
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
@@ -267,9 +269,12 @@
         .then(response => {
           showLoading(false);
           document.getElementById('checkAll').checked = false; 
+          
+          // 💡 서버에서 받아온 교사 정보가 없으면 현재 로그인한 사람을 표시
           let rawTeacherStr = response.teacherText || "";
           let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
-          let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : "미입력";
+          let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+          
           document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
           if(response.success) {
             currentDailyData = response;
@@ -349,14 +354,13 @@
       });
     }
 
-    // 💡 수정된 일괄 출결 처리 및 초기화 함수
     async function batchProcess(actionType) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       if (dateStr !== localToday) { alert("출결 처리는 당일 출석부에서만 가능합니다."); return; }
       
-      const periodVal = document.getElementById('batchPeriod').value; // 1 또는 2
-      const periodStr = periodVal + "교시"; // 서버가 인식할 수 있도록 1교시, 2교시 형태 변환
+      const periodVal = document.getElementById('batchPeriod').value; 
+      const periodStr = periodVal + "교시";
       
       const checkedBoxes = Array.from(document.querySelectorAll('.student-check:checked'));
       if (checkedBoxes.length === 0) {
@@ -375,7 +379,7 @@
         statusParam = "결석";
       } else if (actionType === 'reset') {
         actionText = "초기화(미출석)";
-        statusParam = "미출석"; // 서버에서 '미출석'을 받으면 기존 출석기록을 지워버림
+        statusParam = "미출석"; 
       }
 
       if (!confirm(`선택한 ${checkedBoxes.length}명의 학생을 ${periodStr} '${actionText}' 처리하시겠습니까?`)) return;
@@ -392,7 +396,7 @@
             name: name,
             period: periodStr, 
             status: statusParam,
-            teacher: '관리자',
+            teacher: loggedInUser,
             _t: new Date().getTime()
           }).toString()}`).then(res => res.json());
         });
@@ -425,7 +429,7 @@
       if (dateStr !== localToday) { alert("수동 출석 처리는 당일 출석부에서만 가능합니다."); return; }
       if(!confirm(`${name}(${id}) 학생을 ${period}교시 '수동 출석'으로 처리하시겠습니까?`)) return;
       showLoading(true);
-      fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: (period===1), p2: (period===2), teacher: '수동처리', _t: new Date().getTime() }).toString()}`)
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: (period===1), p2: (period===2), teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
         .then(res => res.json()).then(res => { if(res.success) { cacheLoaded = false; loadDailyData(); } else { showLoading(false); alert(res.message); } })
         .catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
@@ -438,7 +442,7 @@
       const p1 = document.getElementById('addP1').checked; const p2 = document.getElementById('addP2').checked;
       if (!id || (!p1 && !p2)) { alert("학번을 입력하고 최소 1개의 교시를 선택해주세요."); return; }
       showLoading(true);
-      fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: p1, p2: p2, teacher: '관리자', _t: new Date().getTime() }).toString()}`)
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: p1, p2: p2, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
         .then(res => res.json()).then(res => {
           if(res.success) { document.getElementById('addId').value = ''; document.getElementById('addName').value = ''; document.getElementById('addP1').checked = false; document.getElementById('addP2').checked = false; cacheLoaded = false; loadDailyData(); }
           else { showLoading(false); alert(res.message); }
@@ -449,7 +453,7 @@
       const dateStr = document.getElementById('datePicker').value;
       if(!confirm(dateStr + " 출석부를 PDF로 저장하시겠습니까?\n(약 10~15초 정도 소요됩니다.)")) return;
       showLoading(true);
-      fetch(`${API_URL}?${new URLSearchParams({ action: 'saveDailyPdf', date: dateStr, teacher: '관리자', _t: new Date().getTime() }).toString()}`)
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'saveDailyPdf', date: dateStr, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
         .then(res => res.json()).then(res => {
           showLoading(false);
           if(res.success) { alert("저장 성공!\n파일명: " + res.fileName); if(res.fileUrl) window.open(res.fileUrl, '_blank'); }
@@ -460,9 +464,12 @@
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
+      
+      // 💡 인쇄 시에도 로그인한 사용자 이름 반영
       let rawTeacherStr = data.teacherText || "";
       let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상');
-      const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : "미입력";
+      const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+      
       let logMap = {}; let extraRows = [];
       if(data.logs) {
         data.logs.forEach(log => {
