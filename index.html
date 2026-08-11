@@ -31,20 +31,25 @@
     .pdf-loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
     .pdf-spinner-text { font-size: 1.1em; font-weight: bold; color: var(--text-main); background: white; padding: 25px 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary-color); line-height: 1.5; }
     
-    /* 🌟 신규: 명단 관리 모달 CSS (기존 디자인 테마 완벽 유지) */
+    /* 명단 관리 모달 CSS */
     .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9990; }
     .modal-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:600px; max-height:85vh; overflow-y:auto; box-shadow:0 8px 30px rgba(0,0,0,0.2); }
     .modal-header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary-color); padding-bottom:10px; margin-bottom:15px; }
     .modal-title { font-size:1.2em; font-weight:bold; color:var(--text-main); margin:0; }
     .close-btn { background:none; border:none; font-size:1.5em; cursor:pointer; color:#777; font-weight:bold; }
-    .form-group { display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap; background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #ddd; align-items:center; }
-    .form-group input, .form-group select { padding:10px; border:1px solid #ccc; border-radius:8px; flex:1; min-width:80px; font-size:0.95em; }
+    .form-group { display:flex; flex-direction:column; gap:12px; margin-bottom:15px; background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #ddd; }
     .manage-table { width:100%; border-collapse:collapse; font-size:0.9em; margin-top:10px; }
     .manage-table th, .manage-table td { border:1px solid #c8e6c9; padding:10px 5px; text-align:center; }
     .manage-table th { background-color:#e8f5e9; color:var(--text-main); }
     .action-btn { padding:6px 8px; font-size:0.85em; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold; margin:2px; }
     .btn-edit-small { background-color:#f5b041; }
     .btn-del-small { background-color:#e57373; }
+    
+    /* 🌟 추가된 체크박스 디자인 유지용 */
+    .chk-container { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; background:#fff; padding:12px; border-radius:8px; border:1px solid #c8e6c9; }
+    .chk-label { cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:bold; color:var(--primary-dark); font-size:0.95em; }
+    .chk-label-blue { color:#1976d2; }
+    .chk-label input { transform: scale(1.1); }
   </style>
 </head>
 <body>
@@ -82,7 +87,7 @@
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
 
-    <!-- 🌟 신규: 명단 개별 관리 버튼 (관리자에게만 노출) -->
+    <!-- 명단 개별 관리 버튼 (관리자에게만 노출) -->
     <div class="btn-group" id="admin-manage-group" style="display:none;">
       <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리 (추가/수정/삭제)</button>
     </div>
@@ -104,22 +109,30 @@
         <button class="close-btn" onclick="closeManageModal()">&times;</button>
       </div>
       
-      <!-- 입력 폼 -->
+      <!-- 🌟 수정된 체크박스 입력 폼 -->
       <div class="form-group">
-        <input type="text" id="m-id" placeholder="학번 (예: 10101)">
-        <input type="text" id="m-name" placeholder="이름 (예: 홍길동)">
-        <select id="m-day">
-          <option value="월">월</option><option value="화">화</option><option value="수">수</option>
-          <option value="목">목</option><option value="금">금</option>
-        </select>
-        <select id="m-p1" title="1교시 제외 여부">
-          <option value="">1교시(참여)</option><option value="제외">1교시(제외)</option>
-        </select>
-        <select id="m-p2" title="2교시 제외 여부">
-          <option value="">2교시(참여)</option><option value="제외">2교시(제외)</option>
-        </select>
-        <button class="btn btn-solid" style="min-height:40px; margin:0; width:100%;" onclick="saveStudent()">저장 (추가/수정)</button>
-        <button class="btn btn-outline" style="min-height:40px; margin:0; width:100%; border:none; background:#eee;" onclick="clearManageForm()">입력창 초기화</button>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="m-id" placeholder="학번 (예: 10101)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; text-align:center;">
+          <input type="text" id="m-name" placeholder="이름 (예: 홍길동)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; text-align:center;">
+        </div>
+        
+        <!-- 요일 선택 체크박스 -->
+        <div class="chk-container">
+          <label class="chk-label"><input type="checkbox" name="m-day" value="월"> 월</label>
+          <label class="chk-label"><input type="checkbox" name="m-day" value="화"> 화</label>
+          <label class="chk-label"><input type="checkbox" name="m-day" value="수"> 수</label>
+          <label class="chk-label"><input type="checkbox" name="m-day" value="목"> 목</label>
+          <label class="chk-label"><input type="checkbox" name="m-day" value="금"> 금</label>
+        </div>
+
+        <!-- 1교시/2교시 참여 선택 체크박스 (체크=참여, 해제=제외) -->
+        <div class="chk-container">
+          <label class="chk-label chk-label-blue"><input type="checkbox" id="m-p1-chk" checked> 1교시 (참여)</label>
+          <label class="chk-label chk-label-blue"><input type="checkbox" id="m-p2-chk" checked> 2교시 (참여)</label>
+        </div>
+
+        <button class="btn btn-solid" style="min-height:40px; margin:0;" onclick="saveStudent()">저장 (추가/수정)</button>
+        <button class="btn btn-outline" style="min-height:40px; margin:0; border:none; background:#e8e8e8;" onclick="clearManageForm()">입력창 초기화</button>
       </div>
 
       <!-- 학생 목록 테이블 -->
@@ -165,7 +178,7 @@
     function applyRoleUI(role) {
       const delBtn = document.getElementById("delete-all-btn");
       const uploadBtn = document.getElementById("upload-btn");
-      const manageGroup = document.getElementById("admin-manage-group"); // 관리자 관리 버튼
+      const manageGroup = document.getElementById("admin-manage-group");
       
       if (role === "admin") {
         delBtn.disabled = false;
@@ -267,7 +280,7 @@
       location.reload();
     }
     
-    /* 🌟 신규: 모달 관련 함수 */
+    /* 🌟 신규: 모달 및 체크박스 제어 기능 */
     function openManageModal() {
       document.getElementById("manage-modal").style.display = "flex";
       renderManageTable();
@@ -283,27 +296,46 @@
       document.getElementById("m-id").readOnly = false;
       document.getElementById("m-id").style.backgroundColor = "#fff";
       document.getElementById("m-name").value = "";
-      document.getElementById("m-day").value = "월";
-      document.getElementById("m-p1").value = "";
-      document.getElementById("m-p2").value = "";
+      
+      // 체크박스 모두 초기화
+      document.querySelectorAll('input[name="m-day"]').forEach(cb => cb.checked = false);
+      document.getElementById("m-p1-chk").checked = true; // 기본값: 참여
+      document.getElementById("m-p2-chk").checked = true; // 기본값: 참여
     }
 
+    // 학생 목록 렌더링 (동일 학생이면 여러 요일을 한 줄로 묶어줌)
     function renderManageTable() {
       const tbody = document.getElementById("manage-tbody");
       tbody.innerHTML = "";
       
-      let sortedList = [...studentsData].sort((a,b) => String(a.id).localeCompare(String(b.id)));
+      const grouped = {};
+      studentsData.forEach(st => {
+        if(!grouped[st.id]) {
+          grouped[st.id] = { ...st, day: [] };
+        }
+        if(st.day && !grouped[st.id].day.includes(st.day)) {
+          grouped[st.id].day.push(st.day);
+        }
+      });
+      
+      const dayOrder = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5 };
+      let sortedList = Object.values(grouped).sort((a,b) => String(a.id).localeCompare(String(b.id)));
       
       sortedList.forEach(st => {
+        // 요일 순서대로 정렬
+        st.day.sort((a,b) => (dayOrder[a]||99) - (dayOrder[b]||99));
+        const daysStr = st.day.join(','); // 데이터용
+        const displayDays = st.day.join(', '); // 화면 표시용
+        
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${st.id}</td>
           <td><b>${st.name}</b></td>
-          <td>${st.day}</td>
+          <td>${displayDays}</td>
           <td style="color:${st.p1_exc==='제외'?'#e57373':''}">${st.p1_exc || '-'}</td>
           <td style="color:${st.p2_exc==='제외'?'#e57373':''}">${st.p2_exc || '-'}</td>
           <td>
-            <button class="action-btn btn-edit-small" onclick="editStudent('${st.id}','${st.name}','${st.day}','${st.p1_exc||''}','${st.p2_exc||''}')">수정</button>
+            <button class="action-btn btn-edit-small" onclick="editStudent('${st.id}','${st.name}','${daysStr}','${st.p1_exc||''}','${st.p2_exc||''}')">수정</button>
             <button class="action-btn btn-del-small" onclick="deleteStudent('${st.id}','${st.name}')">삭제</button>
           </td>
         `;
@@ -311,31 +343,44 @@
       });
     }
 
-    function editStudent(id, name, day, p1, p2) {
+    // 수정 버튼 클릭 시 폼에 데이터 세팅
+    function editStudent(id, name, daysStr, p1, p2) {
       document.getElementById("m-id").value = id;
-      document.getElementById("m-id").readOnly = true; // 수정모드시 학번 변경 불가
+      document.getElementById("m-id").readOnly = true; 
       document.getElementById("m-id").style.backgroundColor = "#eee";
       document.getElementById("m-name").value = name;
-      document.getElementById("m-day").value = day;
-      document.getElementById("m-p1").value = p1;
-      document.getElementById("m-p2").value = p2;
+      
+      // 요일 체크박스 세팅
+      const daysArr = daysStr.split(',');
+      document.querySelectorAll('input[name="m-day"]').forEach(cb => {
+        cb.checked = daysArr.includes(cb.value);
+      });
+
+      // 교시 체크박스 세팅 (제외가 아니면 체크=참여)
+      document.getElementById("m-p1-chk").checked = (p1 !== '제외');
+      document.getElementById("m-p2-chk").checked = (p2 !== '제외');
     }
 
+    // 추가/수정 저장하기
     function saveStudent() {
       const id = document.getElementById("m-id").value.trim();
       const name = document.getElementById("m-name").value.trim();
-      const day = document.getElementById("m-day").value;
-      const p1 = document.getElementById("m-p1").value;
-      const p2 = document.getElementById("m-p2").value;
+      
+      const checkedDays = Array.from(document.querySelectorAll('input[name="m-day"]:checked')).map(cb => cb.value).join(',');
+      
+      // 체크되어 있으면 참여(빈칸), 체크 해제면 제외("제외")
+      const p1 = document.getElementById("m-p1-chk").checked ? "" : "제외";
+      const p2 = document.getElementById("m-p2-chk").checked ? "" : "제외";
 
       if(!id || !name) return alert("학번과 이름을 모두 입력해주세요.");
+      if(!checkedDays) return alert("최소 하루 이상의 요일을 체크해주세요.");
 
       const btn = event.target;
       btn.innerText = "처리 중...";
       btn.disabled = true;
 
       const url = `${API_URL}?${new URLSearchParams({
-        action: 'manageStudent', mode: 'save', id: id, name: name, day: day, p1_exc: p1, p2_exc: p2
+        action: 'manageStudent', mode: 'save', id: id, name: name, day: checkedDays, p1_exc: p1, p2_exc: p2
       }).toString()}`;
 
       fetch(url)
