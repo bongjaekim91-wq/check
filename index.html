@@ -28,69 +28,116 @@
     .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
     #student-list { margin-top:15px; padding:15px; border-radius:10px; background:#e8f5e9; display:none; }
     .footer { margin-top:30px; font-size:.85em; color:#7f8c8d; text-align:center; }
-    .pdf-loading-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.85);
-      display: none; justify-content: center; align-items: center;
-      z-index: 9999; text-align: center;
-    }
-    .pdf-spinner-text {
-      font-size: 1.1em; font-weight: bold; color: var(--text-main);
-      background: white; padding: 25px 40px; border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary-color);
-      line-height: 1.5;
-    }
+    .pdf-loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
+    .pdf-spinner-text { font-size: 1.1em; font-weight: bold; color: var(--text-main); background: white; padding: 25px 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary-color); line-height: 1.5; }
+    
+    /* 🌟 신규: 명단 관리 모달 CSS (기존 디자인 테마 완벽 유지) */
+    .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9990; }
+    .modal-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:600px; max-height:85vh; overflow-y:auto; box-shadow:0 8px 30px rgba(0,0,0,0.2); }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary-color); padding-bottom:10px; margin-bottom:15px; }
+    .modal-title { font-size:1.2em; font-weight:bold; color:var(--text-main); margin:0; }
+    .close-btn { background:none; border:none; font-size:1.5em; cursor:pointer; color:#777; font-weight:bold; }
+    .form-group { display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap; background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #ddd; align-items:center; }
+    .form-group input, .form-group select { padding:10px; border:1px solid #ccc; border-radius:8px; flex:1; min-width:80px; font-size:0.95em; }
+    .manage-table { width:100%; border-collapse:collapse; font-size:0.9em; margin-top:10px; }
+    .manage-table th, .manage-table td { border:1px solid #c8e6c9; padding:10px 5px; text-align:center; }
+    .manage-table th { background-color:#e8f5e9; color:var(--text-main); }
+    .action-btn { padding:6px 8px; font-size:0.85em; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold; margin:2px; }
+    .btn-edit-small { background-color:#f5b041; }
+    .btn-del-small { background-color:#e57373; }
   </style>
 </head>
 <body>
   <div id="pdf-loading" class="pdf-loading-overlay">
-    <div class="pdf-spinner-text">
-      학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳
-    </div>
+    <div class="pdf-spinner-text">학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳</div>
   </div>
+
   <div class="container" id="login-screen">
     <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
-    <div class="notice">
-      출석 인정 시간<br>
-      1교시 18:00~19:40 / 2교시 20:40~21:40
-    </div>
-    <!-- 🌟 관리자 및 감독교사 공용 로그인 폼 -->
+    <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
     <div class="login-form">
       <input type="text" id="login-id" placeholder="아이디 (admin 또는 교사 이름)" autocomplete="off">
       <input type="password" id="login-pw" placeholder="비밀번호">
       <button type="button" class="btn btn-solid" onclick="login()">로그인</button>
     </div>
   </div>
+
   <div class="container" id="main-screen" style="display:none; max-width:500px;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
       <div id="current-time" class="time-text"></div>
     </div>
-    <div class="notice">
-      출석 인정 시간<br>
-      1교시 18:00~19:40 / 2교시 20:40~21:40
-    </div>
+    <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
+    
     <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50; margin-bottom: 12px;" onclick="location.href='dashboard.html'">📊 기간별 통계 및 출석부 인쇄</button>
+    
     <div class="btn-group">
       <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
       <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
     </div>
+    
     <div class="btn-group">
       <label class="btn btn-outline" id="upload-btn" for="excel-upload">📤 명단 업로드</label>
       <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none;">
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
+
+    <!-- 🌟 신규: 명단 개별 관리 버튼 (관리자에게만 노출) -->
+    <div class="btn-group" id="admin-manage-group" style="display:none;">
+      <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리 (추가/수정/삭제)</button>
+    </div>
+
     <div class="btn-group">
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 인증 QR</button>
       <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
     </div>
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
+    
     <div id="student-list"></div>
   </div>
+
+  <!-- 🌟 신규: 학생 관리 모달창 -->
+  <div id="manage-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 학생 명단 개별 관리</h3>
+        <button class="close-btn" onclick="closeManageModal()">&times;</button>
+      </div>
+      
+      <!-- 입력 폼 -->
+      <div class="form-group">
+        <input type="text" id="m-id" placeholder="학번 (예: 10101)">
+        <input type="text" id="m-name" placeholder="이름 (예: 홍길동)">
+        <select id="m-day">
+          <option value="월">월</option><option value="화">화</option><option value="수">수</option>
+          <option value="목">목</option><option value="금">금</option>
+        </select>
+        <select id="m-p1" title="1교시 제외 여부">
+          <option value="">1교시(참여)</option><option value="제외">1교시(제외)</option>
+        </select>
+        <select id="m-p2" title="2교시 제외 여부">
+          <option value="">2교시(참여)</option><option value="제외">2교시(제외)</option>
+        </select>
+        <button class="btn btn-solid" style="min-height:40px; margin:0; width:100%;" onclick="saveStudent()">저장 (추가/수정)</button>
+        <button class="btn btn-outline" style="min-height:40px; margin:0; width:100%; border:none; background:#eee;" onclick="clearManageForm()">입력창 초기화</button>
+      </div>
+
+      <!-- 학생 목록 테이블 -->
+      <div style="overflow-x:auto;">
+        <table class="manage-table">
+          <thead><tr><th>학번</th><th>이름</th><th>요일</th><th>1교시</th><th>2교시</th><th>관리</th></tr></thead>
+          <tbody id="manage-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="footer">Copyright 2026. 서현고등학교 All Rights Reserved.</div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let studentsData = [];
+    
     window.onload = function() {
       const pwInput = document.getElementById("login-pw");
       const idInput = document.getElementById("login-id");
@@ -105,6 +152,7 @@
         loadExistingStudents();
       }
     };
+    
     function updateClock() {
       const now = new Date();
       const d = ["일","월","화","수","목","금","토"];
@@ -114,34 +162,32 @@
         now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
     }
     
-    // 🌟 역할에 따른 UI 변경 (관리자 전용 기능 제어)
     function applyRoleUI(role) {
       const delBtn = document.getElementById("delete-all-btn");
-      const uploadBtn = document.getElementById("upload-btn"); // 명단 업로드 버튼 가져오기
+      const uploadBtn = document.getElementById("upload-btn");
+      const manageGroup = document.getElementById("admin-manage-group"); // 관리자 관리 버튼
       
       if (role === "admin") {
         delBtn.disabled = false;
         delBtn.classList.remove("btn-disabled");
-        
         if (uploadBtn) {
           uploadBtn.classList.remove("btn-disabled");
           uploadBtn.style.pointerEvents = "auto";
         }
+        if (manageGroup) manageGroup.style.display = "flex";
       } else {
-        // 감독교사(supervisor)인 경우 명단 초기화 및 업로드 버튼 비활성화
         delBtn.disabled = true;
         delBtn.classList.add("btn-disabled");
         delBtn.innerText = "🚫 관리자전용";
-        
         if (uploadBtn) {
           uploadBtn.classList.add("btn-disabled");
           uploadBtn.innerText = "🚫 관리자전용";
-          uploadBtn.style.pointerEvents = "none"; // 클릭 방지
+          uploadBtn.style.pointerEvents = "none";
         }
+        if (manageGroup) manageGroup.style.display = "none";
       }
     }
     
-    // 🌟 통합 로그인 로직 (관리자 + 감독교사)
     function login() {
       const id = document.getElementById("login-id").value.trim();
       const pw = document.getElementById("login-pw").value.trim();
@@ -149,14 +195,12 @@
         alert("아이디와 비밀번호를 모두 입력해주세요.");
         return;
       }
-      // 1. 관리자(admin) 계정 확인
       if (id === "admin" && pw === "7895301") {
         sessionStorage.setItem("userRole", "admin");
         sessionStorage.setItem("teacherName", "관리자(admin)");
         location.reload();
         return;
       }
-      // 2. 당일 감독교사 계정 확인 (비밀번호 = 당일 날짜 8자리)
       const now = new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -164,10 +208,9 @@
       const todayString = `${yyyy}${mm}${dd}`;
       if (pw === todayString) {
         sessionStorage.setItem("userRole", "supervisor");
-        sessionStorage.setItem("teacherName", id); 
+        sessionStorage.setItem("teacherName", id);
         location.reload();
       } else {
-        // 안내 문구 삭제
         alert("아이디 또는 비밀번호가 올바르지 않습니다.");
       }
     }
@@ -178,7 +221,7 @@
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-    /* --- 이하 기존 엑셀/PDF 관련 로직 유지 --- */
+    
     async function loadExistingStudents() {
       try {
         const res = await fetch(`${API_URL}?action=getStudents`);
@@ -204,7 +247,7 @@
               ✅ ${studentsData.length}건 로드 완료
              </div>
              <div style="font-size:0.9em; color:#555; margin-bottom:10px;">
-              최근 업로드: ${data.lastUploadTime || "기록 없음"}
+              최근 업데이트: ${data.lastUploadTime || "기록 없음"}
              </div>
              <div style="background:#fff; padding:10px; border-radius:8px; font-size:0.95em; color:var(--primary-dark); border:1px solid #c8e6c9;">
                ${daySummaryText}
@@ -216,17 +259,122 @@
         alert("학생명단을 불러오지 못했습니다.");
       }
     }
+    
     async function deleteExistingRoster() {
-      if (sessionStorage.getItem("userRole") !== "admin") {
-        return alert("관리자 권한이 없습니다.");
-      }
+      if (sessionStorage.getItem("userRole") !== "admin") return alert("관리자 권한이 없습니다.");
       if (!confirm("학생명단만 초기화됩니다. 기존 출결기록은 유지됩니다. 계속하시겠습니까?")) return;
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "resetRosterOnly" })
-      });
+      await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "resetRosterOnly" }) });
       location.reload();
     }
+    
+    /* 🌟 신규: 모달 관련 함수 */
+    function openManageModal() {
+      document.getElementById("manage-modal").style.display = "flex";
+      renderManageTable();
+    }
+    
+    function closeManageModal() {
+      document.getElementById("manage-modal").style.display = "none";
+      clearManageForm();
+    }
+
+    function clearManageForm() {
+      document.getElementById("m-id").value = "";
+      document.getElementById("m-id").readOnly = false;
+      document.getElementById("m-id").style.backgroundColor = "#fff";
+      document.getElementById("m-name").value = "";
+      document.getElementById("m-day").value = "월";
+      document.getElementById("m-p1").value = "";
+      document.getElementById("m-p2").value = "";
+    }
+
+    function renderManageTable() {
+      const tbody = document.getElementById("manage-tbody");
+      tbody.innerHTML = "";
+      
+      let sortedList = [...studentsData].sort((a,b) => String(a.id).localeCompare(String(b.id)));
+      
+      sortedList.forEach(st => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${st.id}</td>
+          <td><b>${st.name}</b></td>
+          <td>${st.day}</td>
+          <td style="color:${st.p1_exc==='제외'?'#e57373':''}">${st.p1_exc || '-'}</td>
+          <td style="color:${st.p2_exc==='제외'?'#e57373':''}">${st.p2_exc || '-'}</td>
+          <td>
+            <button class="action-btn btn-edit-small" onclick="editStudent('${st.id}','${st.name}','${st.day}','${st.p1_exc||''}','${st.p2_exc||''}')">수정</button>
+            <button class="action-btn btn-del-small" onclick="deleteStudent('${st.id}','${st.name}')">삭제</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editStudent(id, name, day, p1, p2) {
+      document.getElementById("m-id").value = id;
+      document.getElementById("m-id").readOnly = true; // 수정모드시 학번 변경 불가
+      document.getElementById("m-id").style.backgroundColor = "#eee";
+      document.getElementById("m-name").value = name;
+      document.getElementById("m-day").value = day;
+      document.getElementById("m-p1").value = p1;
+      document.getElementById("m-p2").value = p2;
+    }
+
+    function saveStudent() {
+      const id = document.getElementById("m-id").value.trim();
+      const name = document.getElementById("m-name").value.trim();
+      const day = document.getElementById("m-day").value;
+      const p1 = document.getElementById("m-p1").value;
+      const p2 = document.getElementById("m-p2").value;
+
+      if(!id || !name) return alert("학번과 이름을 모두 입력해주세요.");
+
+      const btn = event.target;
+      btn.innerText = "처리 중...";
+      btn.disabled = true;
+
+      const url = `${API_URL}?${new URLSearchParams({
+        action: 'manageStudent', mode: 'save', id: id, name: name, day: day, p1_exc: p1, p2_exc: p2
+      }).toString()}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            alert(res.message);
+            clearManageForm();
+            loadExistingStudents().then(() => renderManageTable());
+          } else {
+            alert("오류: " + res.message);
+          }
+        })
+        .finally(() => {
+          btn.innerText = "저장 (추가/수정)";
+          btn.disabled = false;
+        });
+    }
+
+    function deleteStudent(id, name) {
+      if(!confirm(`[${id} ${name}] 학생을 명단에서 완전히 삭제하시겠습니까?`)) return;
+
+      const url = `${API_URL}?${new URLSearchParams({
+        action: 'manageStudent', mode: 'delete', id: id
+      }).toString()}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            alert(res.message);
+            loadExistingStudents().then(() => renderManageTable());
+          } else {
+            alert("삭제 실패: " + res.message);
+          }
+        });
+    }
+
+    /* --- 이하 기존 엑셀/PDF 로직 --- */
     function downloadTemplate() {
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
@@ -243,6 +391,7 @@
       });
       XLSX.writeFile(wb, "글마루_업로드_양식.xlsx");
     }
+    
     function downloadExistingRoster() {
       if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
       const wb = XLSX.utils.book_new();
@@ -265,6 +414,7 @@
       });
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
+    
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -385,9 +535,11 @@
       reader.readAsArrayBuffer(file);
       e.target.value = '';
     });
+    
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
+    
     function downloadTeacherQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
@@ -418,6 +570,7 @@
         pdf.save("감독교사_전용QR.pdf");
       }, 100);
     }
+    
     async function generatePDF() {
       if (studentsData.length === 0) return alert("학생명단이 없습니다.");
       document.getElementById("pdf-loading").style.display = "flex";
