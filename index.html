@@ -652,26 +652,39 @@
             correctLevel: QRCode.CorrectLevel.H
           });
           await new Promise(r => setTimeout(r, 40));
+          // 🌟 도화지(Canvas) 높이를 늘려서 상단에 글씨 쓸 공간 확보
           const canvas = document.createElement("canvas");
           canvas.width = 256;
-          canvas.height = 340;
+          canvas.height = 380; 
           const ctx = canvas.getContext("2d");
+          
           ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, 256, 340);
-          ctx.drawImage(qrDiv.querySelector("canvas"), 0, 0);
+          ctx.fillRect(0, 0, 256, 380);
+
           ctx.fillStyle = "#33691e";
           ctx.textAlign = "center";
-          ctx.font = "bold 25px Noto Sans KR";
-          ctx.fillText(`${s.id} ${s.name}`, 128, 285);
+
+          // 🌟 1. 상단에 안내 문구 추가
           ctx.font = "bold 18px Noto Sans KR";
-          ctx.fillText(`(${s.day})`, 128, 315);
+          ctx.fillText("꿈꾸는글마루 출석 QR코드", 128, 35);
+
+          // 🌟 2. QR코드를 상단 글씨 아래(Y:45)로 살짝 내려서 그리기
+          ctx.drawImage(qrDiv.querySelector("canvas"), 0, 45);
+          
+          // 🌟 3. 학생 정보도 QR코드 아래로 맞춰서 이동
+          ctx.font = "bold 25px Noto Sans KR";
+          ctx.fillText(`${s.id} ${s.name}`, 128, 335); 
+          ctx.font = "bold 18px Noto Sans KR";
+          ctx.fillText(`(${s.day})`, 128, 365); 
+          
+          // 🌟 4. PDF에 이미지 넣을 때 변경된 비율에 맞춰 높이 조정(60 -> 67)
           pdf.addImage(
             canvas.toDataURL("image/png"),
             "PNG",
             20 + (i % 3) * 60,
             20 + Math.floor((i % 9) / 3) * 82,
             45,
-            60
+            67 
           );
           if ((i + 1) % 9 === 0 && i < finalList.length - 1) {
             pdf.addPage();
