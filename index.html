@@ -30,7 +30,6 @@
     .footer { margin-top:30px; font-size:.85em; color:#7f8c8d; text-align:center; }
     .pdf-loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
     .pdf-spinner-text { font-size: 1.1em; font-weight: bold; color: var(--text-main); background: white; padding: 25px 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary-color); line-height: 1.5; }
-    
     /* 명단 관리 모달 CSS */
     .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9990; }
     .modal-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:600px; max-height:85vh; overflow-y:auto; box-shadow:0 8px 30px rgba(0,0,0,0.2); }
@@ -44,7 +43,6 @@
     .action-btn { padding:6px 8px; font-size:0.85em; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold; margin:2px; }
     .btn-edit-small { background-color:#f5b041; }
     .btn-del-small { background-color:#e57373; }
-    
     /* 🌟 추가된 체크박스 디자인 유지용 */
     .chk-container { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; background:#fff; padding:12px; border-radius:8px; border:1px solid #c8e6c9; }
     .chk-label { cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:bold; color:var(--primary-dark); font-size:0.95em; }
@@ -56,7 +54,6 @@
   <div id="pdf-loading" class="pdf-loading-overlay">
     <div class="pdf-spinner-text">학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳</div>
   </div>
-
   <div class="container" id="login-screen">
     <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
     <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
@@ -66,41 +63,33 @@
       <button type="button" class="btn btn-solid" onclick="login()">로그인</button>
     </div>
   </div>
-
   <div class="container" id="main-screen" style="display:none; max-width:500px;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
       <div id="current-time" class="time-text"></div>
     </div>
     <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
-    
     <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50; margin-bottom: 12px;" onclick="location.href='dashboard.html'">📊 기간별 통계 및 출석부 인쇄</button>
-    
     <div class="btn-group">
       <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
       <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
     </div>
-    
     <div class="btn-group">
       <label class="btn btn-outline" id="upload-btn" for="excel-upload">📤 명단 업로드</label>
       <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none;">
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
-
     <!-- 명단 개별 관리 버튼 (관리자에게만 노출) -->
     <div class="btn-group" id="admin-manage-group" style="display:none;">
       <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리 (추가/수정/삭제)</button>
     </div>
-
     <div class="btn-group">
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 인증 QR</button>
       <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 다운로드</button>
     </div>
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px;">로그아웃</button>
-    
     <div id="student-list"></div>
   </div>
-
   <!-- 🌟 신규: 학생 관리 모달창 -->
   <div id="manage-modal" class="modal-overlay">
     <div class="modal-content">
@@ -108,14 +97,12 @@
         <h3 class="modal-title">📋 학생 명단 개별 관리</h3>
         <button class="close-btn" onclick="closeManageModal()">&times;</button>
       </div>
-      
       <!-- 🌟 수정된 체크박스 입력 폼 -->
       <div class="form-group">
         <div style="display:flex; gap:8px;">
           <input type="text" id="m-id" placeholder="학번 (예: 10101)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; text-align:center;">
           <input type="text" id="m-name" placeholder="이름 (예: 홍길동)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; text-align:center;">
         </div>
-        
         <!-- 요일 선택 체크박스 -->
         <div class="chk-container">
           <label class="chk-label"><input type="checkbox" name="m-day" value="월"> 월</label>
@@ -124,17 +111,14 @@
           <label class="chk-label"><input type="checkbox" name="m-day" value="목"> 목</label>
           <label class="chk-label"><input type="checkbox" name="m-day" value="금"> 금</label>
         </div>
-
         <!-- 1교시/2교시 참여 선택 체크박스 (체크=참여, 해제=제외) -->
         <div class="chk-container">
           <label class="chk-label chk-label-blue"><input type="checkbox" id="m-p1-chk" checked> 1교시 (참여)</label>
           <label class="chk-label chk-label-blue"><input type="checkbox" id="m-p2-chk" checked> 2교시 (참여)</label>
         </div>
-
         <button class="btn btn-solid" style="min-height:40px; margin:0;" onclick="saveStudent()">저장 (추가/수정)</button>
         <button class="btn btn-outline" style="min-height:40px; margin:0; border:none; background:#e8e8e8;" onclick="clearManageForm()">입력창 초기화</button>
       </div>
-
       <!-- 학생 목록 테이블 -->
       <div style="overflow-x:auto;">
         <table class="manage-table">
@@ -144,13 +128,12 @@
       </div>
     </div>
   </div>
-
   <div class="footer">Copyright 2026. 서현고등학교 All Rights Reserved.</div>
-
   <script>
+    // 💡 아래의 API_URL 부분은 최신으로 배포된 URL이 맞는지 한 번 더 확인해주세요.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    let studentsData = [];
     
+    let studentsData = [];
     window.onload = function() {
       const pwInput = document.getElementById("login-pw");
       const idInput = document.getElementById("login-id");
@@ -165,7 +148,6 @@
         loadExistingStudents();
       }
     };
-    
     function updateClock() {
       const now = new Date();
       const d = ["일","월","화","수","목","금","토"];
@@ -174,12 +156,10 @@
       document.getElementById("current-time").innerText =
         now.toLocaleTimeString("ko-KR", { hour12:true, hour:"2-digit", minute:"2-digit", second:"2-digit" });
     }
-    
     function applyRoleUI(role) {
       const delBtn = document.getElementById("delete-all-btn");
       const uploadBtn = document.getElementById("upload-btn");
       const manageGroup = document.getElementById("admin-manage-group");
-      
       if (role === "admin") {
         delBtn.disabled = false;
         delBtn.classList.remove("btn-disabled");
@@ -200,7 +180,6 @@
         if (manageGroup) manageGroup.style.display = "none";
       }
     }
-    
     function login() {
       const id = document.getElementById("login-id").value.trim();
       const pw = document.getElementById("login-pw").value.trim();
@@ -227,14 +206,12 @@
         alert("아이디 또는 비밀번호가 올바르지 않습니다.");
       }
     }
-    
     function logout() {
       if (!confirm("로그아웃하시겠습니까?")) return;
       sessionStorage.removeItem("userRole");
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
-    
     async function loadExistingStudents() {
       try {
         const res = await fetch(`${API_URL}?action=getStudents`);
@@ -272,42 +249,35 @@
         alert("학생명단을 불러오지 못했습니다.");
       }
     }
-    
     async function deleteExistingRoster() {
       if (sessionStorage.getItem("userRole") !== "admin") return alert("관리자 권한이 없습니다.");
       if (!confirm("학생명단만 초기화됩니다. 기존 출결기록은 유지됩니다. 계속하시겠습니까?")) return;
       await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "resetRosterOnly" }) });
       location.reload();
     }
-    
     /* 🌟 신규: 모달 및 체크박스 제어 기능 */
     function openManageModal() {
       document.getElementById("manage-modal").style.display = "flex";
       renderManageTable();
     }
-    
     function closeManageModal() {
       document.getElementById("manage-modal").style.display = "none";
       clearManageForm();
     }
-
     function clearManageForm() {
       document.getElementById("m-id").value = "";
       document.getElementById("m-id").readOnly = false;
       document.getElementById("m-id").style.backgroundColor = "#fff";
       document.getElementById("m-name").value = "";
-      
       // 체크박스 모두 초기화
       document.querySelectorAll('input[name="m-day"]').forEach(cb => cb.checked = false);
       document.getElementById("m-p1-chk").checked = true; // 기본값: 참여
       document.getElementById("m-p2-chk").checked = true; // 기본값: 참여
     }
-
     // 학생 목록 렌더링 (동일 학생이면 여러 요일을 한 줄로 묶어줌)
     function renderManageTable() {
       const tbody = document.getElementById("manage-tbody");
       tbody.innerHTML = "";
-      
       const grouped = {};
       studentsData.forEach(st => {
         if(!grouped[st.id]) {
@@ -317,16 +287,13 @@
           grouped[st.id].day.push(st.day);
         }
       });
-      
       const dayOrder = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5 };
       let sortedList = Object.values(grouped).sort((a,b) => String(a.id).localeCompare(String(b.id)));
-      
       sortedList.forEach(st => {
         // 요일 순서대로 정렬
         st.day.sort((a,b) => (dayOrder[a]||99) - (dayOrder[b]||99));
         const daysStr = st.day.join(','); // 데이터용
         const displayDays = st.day.join(', '); // 화면 표시용
-        
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${st.id}</td>
@@ -342,47 +309,37 @@
         tbody.appendChild(tr);
       });
     }
-
     // 수정 버튼 클릭 시 폼에 데이터 세팅
     function editStudent(id, name, daysStr, p1, p2) {
       document.getElementById("m-id").value = id;
-      document.getElementById("m-id").readOnly = true; 
+      document.getElementById("m-id").readOnly = true;
       document.getElementById("m-id").style.backgroundColor = "#eee";
       document.getElementById("m-name").value = name;
-      
       // 요일 체크박스 세팅
       const daysArr = daysStr.split(',');
       document.querySelectorAll('input[name="m-day"]').forEach(cb => {
         cb.checked = daysArr.includes(cb.value);
       });
-
       // 교시 체크박스 세팅 (제외가 아니면 체크=참여)
       document.getElementById("m-p1-chk").checked = (p1 !== '제외');
       document.getElementById("m-p2-chk").checked = (p2 !== '제외');
     }
-
     // 추가/수정 저장하기
     function saveStudent() {
       const id = document.getElementById("m-id").value.trim();
       const name = document.getElementById("m-name").value.trim();
-      
       const checkedDays = Array.from(document.querySelectorAll('input[name="m-day"]:checked')).map(cb => cb.value).join(',');
-      
       // 체크되어 있으면 참여(빈칸), 체크 해제면 제외("제외")
       const p1 = document.getElementById("m-p1-chk").checked ? "" : "제외";
       const p2 = document.getElementById("m-p2-chk").checked ? "" : "제외";
-
       if(!id || !name) return alert("학번과 이름을 모두 입력해주세요.");
       if(!checkedDays) return alert("최소 하루 이상의 요일을 체크해주세요.");
-
       const btn = event.target;
       btn.innerText = "처리 중...";
       btn.disabled = true;
-
       const url = `${API_URL}?${new URLSearchParams({
         action: 'manageStudent', mode: 'save', id: id, name: name, day: checkedDays, p1_exc: p1, p2_exc: p2
       }).toString()}`;
-
       fetch(url)
         .then(res => res.json())
         .then(res => {
@@ -399,14 +356,11 @@
           btn.disabled = false;
         });
     }
-
     function deleteStudent(id, name) {
       if(!confirm(`[${id} ${name}] 학생을 명단에서 완전히 삭제하시겠습니까?`)) return;
-
       const url = `${API_URL}?${new URLSearchParams({
         action: 'manageStudent', mode: 'delete', id: id
       }).toString()}`;
-
       fetch(url)
         .then(res => res.json())
         .then(res => {
@@ -418,7 +372,6 @@
           }
         });
     }
-
     /* --- 이하 기존 엑셀/PDF 로직 --- */
     function downloadTemplate() {
       const wb = XLSX.utils.book_new();
@@ -436,7 +389,6 @@
       });
       XLSX.writeFile(wb, "글마루_업로드_양식.xlsx");
     }
-    
     function downloadExistingRoster() {
       if (studentsData.length === 0) return alert("다운로드할 명단이 없습니다.");
       const wb = XLSX.utils.book_new();
@@ -459,7 +411,6 @@
       });
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
-    
     document.getElementById("excel-upload").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -580,11 +531,9 @@
       reader.readAsArrayBuffer(file);
       e.target.value = '';
     });
-    
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
-    
     function downloadTeacherQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
@@ -615,7 +564,6 @@
         pdf.save("감독교사_전용QR.pdf");
       }, 100);
     }
-    
     async function generatePDF() {
       if (studentsData.length === 0) return alert("학생명단이 없습니다.");
       document.getElementById("pdf-loading").style.display = "flex";
@@ -652,6 +600,7 @@
             correctLevel: QRCode.CorrectLevel.H
           });
           await new Promise(r => setTimeout(r, 40));
+          
           // 🌟 도화지(Canvas) 높이를 늘려서 상단에 글씨 쓸 공간 확보
           const canvas = document.createElement("canvas");
           canvas.width = 256;
@@ -686,6 +635,7 @@
             45,
             67 
           );
+          
           if ((i + 1) % 9 === 0 && i < finalList.length - 1) {
             pdf.addPage();
           }
