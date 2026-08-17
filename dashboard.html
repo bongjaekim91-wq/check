@@ -219,15 +219,36 @@
   <div id="printArea"></div>
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    
+    // 🌟🌟🌟 [추가됨] 출석부를 생성하지 않을 '제외 날짜' 목록 (학교 학사일정에 맞게 수정하세요) 🌟🌟🌟
+    const skipDates = [
+        "2024-05-06", // 대체공휴일
+        "2024-06-06", // 현충일
+        "2024-08-15", // 광복절
+        "2024-09-16", // 추석
+        "2024-09-17", // 추석
+        "2024-09-18", // 추석
+        "2024-10-03", // 개천절
+        "2024-10-09", // 한글날
+        "2024-10-15", // 중간고사
+        "2024-10-16", // 중간고사
+        "2024-10-17", // 중간고사
+        "2024-11-14", // 수능
+        "2024-11-20", // 모의고사
+        "2024-11-27", // 문항컨설팅
+        "2024-10-04", // 재량휴업일
+        "2024-12-24", // 재량휴업일
+        "2024-12-27", // 동아리발표회
+        "2024-12-30"  // 방학식
+    ];
+    // 🌟🌟🌟 ------------------------------------------------------------------------- 🌟🌟🌟
+
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
     let cacheLoaded = false;
     let currentDailyData = null;
     let myChart = null;
-    // 상태 추적
     let isNoteChanged = false;
     let previousDate = "";
-    
-    // 💡 로그인 유저 정보에 sessionStorage도 포함되도록 수정 (index.html 연동)
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
     
     document.addEventListener("DOMContentLoaded", function() {
@@ -398,9 +419,21 @@
       const isChecked = document.getElementById('checkAll').checked;
       document.querySelectorAll('.student-check').forEach(cb => cb.checked = isChecked);
     }
+    
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
+
+      // 🌟🌟🌟 [추가됨] 주말 및 설정된 공휴일(제외 날짜)인지 먼저 확인 🌟🌟🌟
+      const tempDate = new Date(dateStr);
+      const dayOfWeek = tempDate.getDay(); // 0:일, 6:토
+      if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
+         document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#e53e3e; margin-left:10px; font-weight:bold;">(휴업일 / 출석부 없음)</span>`;
+         document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 지정된 공휴일 또는 휴업일(주말 포함)이므로 출석부를 생성하지 않습니다.</td></tr>';
+         return; // 여기서 함수를 종료하여 불필요한 데이터를 불러오지 않음
+      }
+      // 🌟🌟🌟 ------------------------------------------------------------- 🌟🌟🌟
+
       showLoading(true);
       fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
         .then(res => res.json())
@@ -408,14 +441,9 @@
           showLoading(false);
           isNoteChanged = false;
           document.getElementById('checkAll').checked = false;
-          
           let rawTeacherStr = response.teacherText || "";
-          // 💡 필터 조건에 '미입력'을 추가하여, 서버에서 미입력으로 넘어올 경우 배열이 비워지게 처리
           let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
-          
-          // 배열이 비워졌다면 로그인한 유저(loggedInUser)의 이름이 표시됨
           let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
-          
           document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
           if(response.success) {
             currentDailyData = response;
@@ -427,6 +455,7 @@
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
     }
+    
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
@@ -437,7 +466,7 @@
       const tbody = document.getElementById('rosterBody');
       tbody.innerHTML = '';
       if(!data.roster || data.roster.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">해당 날짜에 등록된 학생이 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;">해당 날짜에 등록된 학생이 없습니다.</td></tr>';
         return;
       }
       data.roster.forEach(function(student, index) {
@@ -575,12 +604,8 @@
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
       let rawTeacherStr = data.teacherText || "";
-      
-      // 💡 인쇄용 PDF 화면에도 동일한 필터 적용
       let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
-      
       const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
-      
       let logMap = {}; let extraRows = [];
       if(data.logs) {
         data.logs.forEach(log => {
@@ -656,7 +681,6 @@
         </table>`;
       printDiv.innerHTML = html;
     }
-    // --- 통계용 공통 로직 ---
     async function ensureDataLoaded() {
       if (cacheLoaded) return;
       showLoading(true);
@@ -685,6 +709,8 @@
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
+
+    // 🌟🌟🌟 [수정됨] 통계 및 내역 산출 시 휴업일과 주말을 건너뛰도록 함수 수정 🌟🌟🌟
     function getDatesInRange(start, end) {
       const dateArray = [];
       let currentDate = new Date(start); const stopDate = new Date(end);
@@ -692,11 +718,18 @@
       while (currentDate <= stopDate) {
         const offset = currentDate.getTimezoneOffset() * 60000;
         const localD = new Date(currentDate.getTime() - offset).toISOString().split('T')[0];
-        dateArray.push({ date: localD, day: days[currentDate.getDay()] });
+        const dayOfWeek = currentDate.getDay();
+        
+        // 주말(0:일, 6:토)이 아니고, skipDates 배열에 없는 날짜만 통계 대상에 포함시킴
+        if (dayOfWeek !== 0 && dayOfWeek !== 6 && !skipDates.includes(localD)) {
+            dateArray.push({ date: localD, day: days[dayOfWeek] });
+        }
         currentDate.setDate(currentDate.getDate() + 1);
       }
       return dateArray;
     }
+    // 🌟🌟🌟 ------------------------------------------------------------- 🌟🌟🌟
+
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let isP1Target = (sDay === dayStr && p1_exc !== '제외');
       let isP2Target = (sDay === dayStr && p2_exc !== '제외');
