@@ -220,27 +220,33 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     
-    // 🌟🌟🌟 [추가됨] 출석부를 생성하지 않을 '제외 날짜' 목록 (학교 학사일정에 맞게 수정하세요) 🌟🌟🌟
+    // 🌟🌟🌟 [핵심] 출석부를 생성하지 않을 '제외 날짜' 목록 🌟🌟🌟
+    // 주의: 주말(토,일)은 자동으로 막힙니다. 평일 중에 쉬는 날짜만 학교 학사일정에 맞춰 아래에 추가하세요!
+    // 형식은 반드시 "YYYY-MM-DD" 이어야 하며, 날짜 끝에 콤마(,)를 붙여주세요.
+    
     const skipDates = [
-        "2024-05-06", // 대체공휴일
-        "2024-06-06", // 현충일
-        "2024-08-15", // 광복절
-        "2024-09-16", // 추석
-        "2024-09-17", // 추석
-        "2024-09-18", // 추석
-        "2024-10-03", // 개천절
-        "2024-10-09", // 한글날
-        "2024-10-15", // 중간고사
-        "2024-10-16", // 중간고사
-        "2024-10-17", // 중간고사
-        "2024-11-14", // 수능
-        "2024-11-20", // 모의고사
-        "2024-11-27", // 문항컨설팅
-        "2024-10-04", // 재량휴업일
-        "2024-12-24", // 재량휴업일
-        "2024-12-27", // 동아리발표회
-        "2024-12-30"  // 방학식
-    ];
+        // [2] 학교 자체 일정 (정기시험, 모의고사, 수능, 컨설팅 등)
+        "2026-09-24", // 추석연휴
+        "2026-09-25", // 추석연휴
+        "2026-09-29", // 2학기 정기시험
+        "2026-09-30", // 2학기 정기시험
+        "2026-10-01", // 2학기 정기시험
+        "2026-10-02", // 2학기 정기시험
+        "2026-10-05", // 대체휴일
+        "2026-10-20", // 모의고사
+        "2026-11-10", // 문항컨설팅
+        "2026-11-18", // 대학수학능력시험
+        "2026-11-19", // 대학수학능력시험
+        "2026-11-20", // 재량휴업일
+        "2026-12-03", // 2학기 정기시험
+        "2026-12-07", // 2학기 정기시험
+        "2026-12-08", // 2학기 기말고사
+        "2026-12-09", // 2학기 기말고사
+        "2026-12-18", // 동아리발표회
+
+       // 선생님 학교 스케줄에 없는 날짜는 여기에 계속해서 추가해 주시면 됩니다!
+         "2026-12-24"  // 방학식
+          ];
     // 🌟🌟🌟 ------------------------------------------------------------------------- 🌟🌟🌟
 
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
@@ -424,13 +430,14 @@
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
 
-      // 🌟🌟🌟 [추가됨] 주말 및 설정된 공휴일(제외 날짜)인지 먼저 확인 🌟🌟🌟
+      // 🌟🌟🌟 주말(0:일, 6:토)이거나 설정된 공휴일/휴업일(skipDates)인지 확인 🌟🌟🌟
       const tempDate = new Date(dateStr);
-      const dayOfWeek = tempDate.getDay(); // 0:일, 6:토
+      const dayOfWeek = tempDate.getDay(); 
+      
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#e53e3e; margin-left:10px; font-weight:bold;">(휴업일 / 출석부 없음)</span>`;
-         document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 지정된 공휴일 또는 휴업일(주말 포함)이므로 출석부를 생성하지 않습니다.</td></tr>';
-         return; // 여기서 함수를 종료하여 불필요한 데이터를 불러오지 않음
+         document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 토·일요일, 공휴일, 시험, 수능, 재량휴업일 등 지정된 휴업일이므로 출석부를 생성하지 않습니다.</td></tr>';
+         return; // 데이터 통신을 멈추고 함수 종료 (출석부 안 그림)
       }
       // 🌟🌟🌟 ------------------------------------------------------------- 🌟🌟🌟
 
@@ -710,7 +717,7 @@
       });
     }
 
-    // 🌟🌟🌟 [수정됨] 통계 및 내역 산출 시 휴업일과 주말을 건너뛰도록 함수 수정 🌟🌟🌟
+    // 🌟🌟🌟 통계 및 개인별 내역 산출 시 휴업일과 주말을 건너뛰도록 함수 수정 🌟🌟🌟
     function getDatesInRange(start, end) {
       const dateArray = [];
       let currentDate = new Date(start); const stopDate = new Date(end);
