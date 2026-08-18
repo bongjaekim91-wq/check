@@ -31,7 +31,6 @@
     .btn-danger:hover { background-color: #9c3f37 !important; }
     .btn-logout { background-color: #7f8c8d; margin-top: 10px; }
     .btn-logout:hover { background-color: #606b6b; }
-    
     /* 탭 스타일 */
     .tab-container { display: flex; margin-bottom: 30px; gap: 10px; justify-content: center; }
     .tab { flex: 1; padding: 15px 10px; text-align: center; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; color: #2b4b73; border: 1.5px solid #2b4b73; transition: 0.2s; }
@@ -44,8 +43,7 @@
     .footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #999; }
     hr.divider { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
     hr.dotted-divider { border: 0; border-top: 1px dashed #ccc; margin: 35px 0; }
-
-    /* 💡 요청하신 통계 UI 디자인 (사진과 동일하게 적용) */
+    /* 통계 UI 디자인 */
     .stats-success-title { color: #2e7d32; font-size: 1.8rem; font-weight: bold; text-align: center; margin-bottom: 15px; display: none; }
     .stats-box { background-color: #eef7f0; border-radius: 12px; padding: 25px 20px; border: 1px solid #c8e6c9; text-align: left; margin-bottom: 20px; }
     .stats-header { font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; color: #333; display: flex; align-items: center; gap: 5px; }
@@ -80,29 +78,24 @@
     </div>
     <button class="btn-primary" onclick="handleLoginSuccess()">로그인 및 스캔 시작</button>
   </div>
-
   <!-- 메인 스캐너 화면 -->
   <div id="main-screen" style="display:none;">
     <h2>📷 출석 스캐너</h2>
     <div class="scan-info">✅ 진행할 교시를 선택하세요</div>
     <div class="tab-container">
-      <!-- 💡 클릭 시 시간 체크 후 선택되도록 변경 -->
       <div id="tab-1" class="tab active" onclick="setPeriodWithCheck('1교시')">1교시 출석 처리</div>
       <div id="tab-2" class="tab" onclick="setPeriodWithCheck('2교시')">2교시 출석 처리</div>
     </div>
-    
-    <!-- 📷 실제 카메라 화상 영역 -->
+    <!-- 카메라 영역 -->
     <div id="camera-wrapper">
       <video id="preview" playsinline></video>
       <div class="scan-guide"></div>
     </div>
     <canvas id="qr-canvas" style="display:none;"></canvas>
-    
     <div class="scan-info" id="status-msg" style="color: #555; font-weight: normal;">학생의 QR코드를 비춰주세요.</div>
     <button id="cam-btn" class="btn-primary" onclick="toggleCamera()">🚀 카메라 켜기, 스캔 시작</button>
     <hr class="dotted-divider">
-
-    <!-- 📊 처리 내역 및 출석 현황 (요청하신 디자인 반영) -->
+    <!-- 통계 영역 -->
     <div class="stats-success-title" id="scan-success-title">✅ 홍길동 1교시 출석 완료</div>
     <div class="stats-box">
       <div class="stats-header" id="stat-header-text">📅 오늘 1교시 통계</div>
@@ -114,9 +107,8 @@
       <div class="absent-header">[결석자 명단]</div>
       <div class="absent-names" id="stat-absent-names">서버 데이터 대기 중...</div>
     </div>
-
     <hr class="dotted-divider">
-    <!-- ➕ 수동 추가 입력 폼 -->
+    <!-- 수동 추가 입력 폼 -->
     <div class="input-group">
       <label>➕ 학생 수동 추가입력</label>
       <div style="font-size:0.85rem; color:#666; margin-bottom: 12px;">QR이 없거나 명단에 없는 학생의 학번과 성명을 모두 입력하세요.</div>
@@ -130,9 +122,7 @@
     Copyright 2026. 서현고등학교 All Rights Reserved.
   </div>
 </div>
-
 <script>
-  // 💡 구글 앱스 스크립트 API 주소 (유지)
   const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
   let currentPeriod = '1교시';
   let isScanning = false;
@@ -143,26 +133,22 @@
   const canvasElement = document.getElementById('qr-canvas');
   const canvas = canvasElement.getContext('2d');
 
-  // 💡 현재 시각을 확인하여 예상되는 교시를 반환하는 함수
   function getExpectedPeriod() {
     const now = new Date();
     const totalMins = (now.getHours() * 60) + now.getMinutes();
-    // 19시 40분(1180분) 이전은 1교시, 이후는 2교시로 판단
     if (totalMins < 1180) return '1교시';
     else return '2교시';
   }
 
-  // 💡 클릭 시 시간을 체크하고 경고를 띄우는 교시 설정 함수
   function setPeriodWithCheck(period) {
     const expected = getExpectedPeriod();
     if (period !== expected) {
       const confirmMsg = `⚠️ 주의: 현재 시간은 [${expected}] 출석처리에 적합한 시간입니다.\n정말 [${period}] 출석처리를 진행하시겠습니까?`;
-      if (!confirm(confirmMsg)) return; // 취소 누르면 변경 안함
+      if (!confirm(confirmMsg)) return; 
     }
     updatePeriodUI(period);
   }
 
-  // 💡 UI만 변경하는 함수 (로그인 직후 등 조용히 바꿀 때 사용)
   function updatePeriodUI(period) {
     currentPeriod = period;
     document.getElementById("stat-header-text").innerText = `📅 오늘 ${period} 통계`;
@@ -172,7 +158,7 @@
     if(period === '2교시') document.getElementById("tab-2").classList.add("active");
     document.getElementById("scan-success-title").style.display = "none";
     scannedIds.clear();
-    fetchRosterAndRenderStats(); // 교시가 바뀌면 통계 다시 불러오기
+    fetchRosterAndRenderStats(); 
   }
 
   function handleLoginSuccess() {
@@ -180,12 +166,9 @@
     const pw = document.getElementById("login-pw").value.trim();
     if(teacherName === "") return alert("감독교사 이름을 입력해주세요.");
     if(pw === "") return alert("비밀번호를 입력해주세요.");
-    
     localStorage.setItem("teacherName", teacherName);
     document.getElementById("auth-screen").style.display = "none";
     document.getElementById("main-screen").style.display = "block";
-    
-    // 로그인 시 현재 시간에 맞는 교시 자동 세팅 (경고창 없이)
     updatePeriodUI(getExpectedPeriod());
   }
 
@@ -258,15 +241,19 @@
   function processScannedData(scannedData) {
     scanCooldown = true;
     setTimeout(() => { scanCooldown = false; }, 2500);
-    let studentId = scannedData;
     
+    let studentId = scannedData;
+    let studentName = ""; // 🌟 명단에 없는 학생 이름 추출용
+
     if (studentId.startsWith('http')) {
       try {
         let url = new URL(studentId);
         studentId = url.searchParams.get('id') || url.searchParams.get('stuno') || studentId;
+        // 🌟 QR 코드 URL에서 name 쿼리파라미터 추출
+        studentName = url.searchParams.get('name') || ""; 
       } catch(e) {}
     }
-    
+
     if (scannedIds.has(studentId)) {
       document.getElementById('status-msg').innerText = `⚠️ 이미 스캔된 학생입니다 (중복)`;
       document.getElementById('status-msg').style.color = "#d35400";
@@ -276,7 +263,9 @@
       }, 2000);
       return;
     }
-    sendAttendanceToServer(studentId, "QR스캔", "");
+    
+    // 🌟 서버로 ID와 Name을 함께 전송
+    sendAttendanceToServer(studentId, "QR스캔", studentName);
   }
 
   function manualAttendance() {
@@ -323,16 +312,23 @@
              document.getElementById('status-msg').innerText = `⚠️ ${finalName} 이미 출석된 학생입니다`;
              document.getElementById('status-msg').style.color = "#d35400";
           } else {
-             document.getElementById('status-msg').innerText = `✅ 스캔 성공`;
-             document.getElementById('status-msg').style.color = "#27ae60";
              scannedIds.add(id);
+             let successTitleMsg = `✅ ${finalName} ${currentPeriod} 출석 완료`;
              
-             // 💡 상단에 녹색 체크 메시지 띄우기
+             // 🌟 서버에서 이 학생이 명단에 없어서 '새로 추가(isNew)'되었다는 플래그나 메시지가 오면 문구 변경
+             if (res.isNew || (res.message && res.message.includes("추가"))) {
+                document.getElementById('status-msg').innerText = `✨ ${finalName} 당일 추가 완료`;
+                document.getElementById('status-msg').style.color = "#8e44ad"; // 눈에 띄는 보라색
+                successTitleMsg = `✨ ${finalName} <span style="font-size:0.8em; color:#8e44ad;">(당일 추가된 학생입니다)</span><br>${currentPeriod} 출석 완료`;
+             } else {
+                document.getElementById('status-msg').innerText = `✅ 스캔 성공`;
+                document.getElementById('status-msg').style.color = "#27ae60";
+             }
+             
              const successTitle = document.getElementById("scan-success-title");
-             successTitle.innerHTML = `✅ ${finalName} ${currentPeriod} 출석 완료`;
+             successTitle.innerHTML = successTitleMsg;
              successTitle.style.display = "block";
              
-             // 💡 대시보드와 동일하게 최신 데이터를 다시 불러와서 통계 그리기
              fetchRosterAndRenderStats();
           }
         } else {
@@ -344,7 +340,7 @@
           if(isScanning) document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
           else document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
           document.getElementById('status-msg').style.color = "#555";
-        }, 2000);
+        }, 2500);
       })
       .catch(err => {
         document.getElementById('status-msg').innerText = `❌ 통신 오류 발생`;
@@ -352,10 +348,8 @@
       });
   }
 
-  // 💡 서버에서 당일 전체 데이터를 다시 불러와서 정확한 통계를 계산하는 함수 (대시보드와 동일한 계산 로직)
   function fetchRosterAndRenderStats() {
     const dateStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-    
     fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
       .then(res => res.json())
       .then(data => {
@@ -365,27 +359,20 @@
       });
   }
 
-  // 💡 통계 계산 및 화면 업데이트
   function calculateStatsUI(data, period) {
     let total = 0, present = 0, extra = 0;
     let absentNames = [];
     let logMap = {};
-
     if(data.logs) {
       data.logs.forEach(log => {
         if (log.period === period) logMap[log.id] = log.status;
       });
     }
-
     data.roster.forEach(student => {
       let isExcluded = period === "1교시" ? (student.p1_exc === "제외") : (student.p2_exc === "제외");
-      
-      // 제외(출석대상아님)인 학생은 모수에서 뺌
       if (isExcluded) return;
-
       total++;
       let status = logMap[student.id];
-
       if (status === '출석') {
         present++;
       } else if (status === '추가출석' || status === '수동입력' || status === '수동출석' || status === 'QR스캔') {
@@ -395,10 +382,8 @@
         absentNames.push(student.name);
       }
     });
-
     let absentCount = total - present;
-
-    // 통계 박스에 값 반영
+    
     document.getElementById('stat-present').innerText = `${present}명`;
     document.getElementById('stat-total').innerText = `${total}명`;
     document.getElementById('stat-absent').innerText = `${absentCount}명`;
