@@ -249,6 +249,29 @@
         osc.stop(ctx.currentTime + 0.5);
       }
     }
+      // =========================================================
+  // ★ 키오스크 자동 초기화 (새로고침) 로직 ★
+  // 10분(600,000 밀리초) 동안 아무 조작이 없으면 페이지 새로고침
+  // =========================================================
+  let idleTimer;
+  const IDLE_TIMEOUT = 10 * 60 * 1000; // 10분 (원하시면 숫자 10을 변경하세요)
+
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      // 10분간 반응이 없으면 페이지를 완전히 새로고침(초기 상태로 셋팅)
+      window.location.reload();
+    }, IDLE_TIMEOUT);
+  }
+
+  // 화면 터치, 마우스 움직임, 바코드 리더기 입력(키보드 타이핑)이 감지되면 타이머를 연장함
+  window.addEventListener('mousemove', resetIdleTimer);
+  window.addEventListener('keypress', resetIdleTimer);
+  window.addEventListener('touchstart', resetIdleTimer);
+  window.addEventListener('click', resetIdleTimer);
+
+  // 페이지가 처음 열렸을 때 타이머 시작
+  resetIdleTimer();
   </script>
 </body>
 </html>
