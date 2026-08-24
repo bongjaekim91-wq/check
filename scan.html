@@ -6,74 +6,47 @@
   <title>꿈꾸는 글마루 출석 스캐너</title>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <style>
-    /* 전체 배경 및 폰트 설정 */
     body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: #f2f2f5; margin: 0; padding: 0; }
-    /* 상단 네이비 헤더 */
     .main-header { background-color: #2b4b73; color: white; text-align: center; padding: 25px 20px; font-size: 1.3rem; font-weight: bold; line-height: 1.5; }
-    /* 메인 컨테이너 */
     .container { max-width: 480px; margin: 30px auto; background: white; padding: 40px 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
     h2 { text-align: center; color: #2b4b73; font-size: 1.3rem; margin-top: 0; line-height: 1.4; margin-bottom: 25px; }
-    /* 안내 박스 및 텍스트 */
     .info-box { background-color: #eef2f6; padding: 15px 20px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #2b4b73; font-size: 0.95rem; color: #333; line-height: 1.6; }
     .scan-info { text-align: center; font-size: 1rem; color: #333; margin-bottom: 20px; font-weight: bold; }
-    /* 입력 폼 그룹 */
     .input-group { margin-bottom: 20px; text-align: left; }
     .input-group label { display: block; font-weight: bold; color: #2b4b73; margin-bottom: 12px; font-size: 1.05rem; }
-    input[type="password"], input[type="text"] {
-      width: 100%; box-sizing: border-box; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fff; margin-bottom: 15px;
-    }
+    input[type="password"], input[type="text"] { width: 100%; box-sizing: border-box; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fff; margin-bottom: 15px; }
     input:focus { outline: none; border-color: #2b4b73; }
-    /* 버튼 스타일 */
     .btn-primary { width: 100%; padding: 16px; background-color: #2b4b73; color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; display: inline-block; text-align: center; }
     .btn-primary:hover { background-color: #1e3656; }
-    /* 카메라 끄기 버튼 강제 디자인 */
     .btn-danger { background-color: #b74c43 !important; color: white !important; }
     .btn-danger:hover { background-color: #9c3f37 !important; }
     .btn-logout { background-color: #7f8c8d; margin-top: 10px; }
     .btn-logout:hover { background-color: #606b6b; }
-    /* 탭 스타일 */
     .tab-container { display: flex; margin-bottom: 30px; gap: 10px; justify-content: center; }
     .tab { flex: 1; padding: 15px 10px; text-align: center; background: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; color: #2b4b73; border: 1.5px solid #2b4b73; transition: 0.2s; }
     .tab.active { background: #2b4b73; color: white; border-color: #2b4b73; }
-    /* 카메라 영역 스타일 */
     #camera-wrapper { position: relative; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 20px; display: none; background: #000; }
     #preview { width: 100%; height: auto; display: block; object-fit: cover; }
     .scan-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 60%; border: 3px dashed rgba(255, 255, 255, 0.8); border-radius: 10px; box-sizing: border-box; }
-    
-    /* 하단 및 구분선 */
     .footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #999; }
     hr.divider { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
     hr.dotted-divider { border: 0; border-top: 1px dashed #ccc; margin: 35px 0; }
     
-    /* ★★★ 출석 완료 대형 팝업 UI (수정됨) ★★★ */
+    /* 팝업 UI */
     .stats-success-title { 
-      color: #1b5e20; 
-      background-color: #e8f5e9;
-      font-size: 2.2rem; /* 엄청 큼 */
-      font-weight: 900; 
-      text-align: center; 
-      margin-bottom: 25px; 
-      padding: 25px 10px;
-      border: 4px solid #4caf50;
-      border-radius: 15px;
-      display: none; 
-      line-height: 1.3;
+      color: #1b5e20; background-color: #e8f5e9; font-size: 2.2rem; font-weight: 900; 
+      text-align: center; margin-bottom: 25px; padding: 25px 10px;
+      border: 4px solid #4caf50; border-radius: 15px; display: none; line-height: 1.3;
       box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
       animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    /* 타요일/수동 추가 학생용 보라색 UI */
-    .stats-success-title.extra {
-      color: #4a148c;
-      background-color: #f3e5f5;
-      border-color: #9c27b0;
-      box-shadow: 0 5px 15px rgba(156, 39, 176, 0.3);
+    /* ★★★ 타요일 학생 경고용 UI 디자인 추가 (빨간색) ★★★ */
+    .stats-success-title.warning {
+      color: #c62828; background-color: #ffebee; border-color: #f44336;
+      box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
     }
-    @keyframes popIn { 
-      0% { transform: scale(0.5); opacity: 0; } 
-      100% { transform: scale(1); opacity: 1; } 
-    }
+    @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-    /* 통계 UI 디자인 */
     .stats-box { background-color: #eef7f0; border-radius: 12px; padding: 25px 20px; border: 1px solid #c8e6c9; text-align: left; margin-bottom: 20px; }
     .stats-header { font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; color: #333; display: flex; align-items: center; gap: 5px; }
     .stats-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 1.15rem; line-height: 1.8; color: #333; }
@@ -90,7 +63,6 @@
   꿈꾸는 글마루 출석 스캐너
 </header>
 <div class="container">
-  <!-- 로그인 화면 -->
   <div id="auth-screen">
     <h2>🔐 꿈꾸는 글마루 출석 스캐너 로그인</h2>
     <hr class="divider" style="margin: 20px 0;">
@@ -108,7 +80,6 @@
     <button class="btn-primary" onclick="handleLoginSuccess()">로그인 및 스캔 시작</button>
   </div>
 
-  <!-- 메인 스캐너 화면 -->
   <div id="main-screen" style="display:none;">
     <h2>📷 출석 스캐너</h2>
     <div class="scan-info">✅ 진행할 교시를 선택하세요</div>
@@ -117,7 +88,6 @@
       <div id="tab-2" class="tab" onclick="setPeriodWithCheck('2교시')">2교시 출석 처리</div>
     </div>
     
-    <!-- 카메라 영역 -->
     <div id="camera-wrapper">
       <video id="preview" playsinline></video>
       <div class="scan-guide"></div>
@@ -127,7 +97,7 @@
     <button id="cam-btn" class="btn-primary" onclick="toggleCamera()">🚀 카메라 켜기, 스캔 시작</button>
     <hr class="dotted-divider">
     
-    <!-- ★ 통계 및 성공 메시지 영역 ★ -->
+    <!-- 통계 및 팝업 영역 -->
     <div class="stats-success-title" id="scan-success-title">✅ 홍길동 1교시 출석 완료</div>
     <div class="stats-box">
       <div class="stats-header" id="stat-header-text">📅 오늘 1교시 통계</div>
@@ -141,7 +111,6 @@
     </div>
     <hr class="dotted-divider">
     
-    <!-- 수동 추가 입력 폼 -->
     <div class="input-group">
       <label>➕ 학생 수동 추가입력</label>
       <div style="font-size:0.85rem; color:#666; margin-bottom: 12px;">QR이 없거나 명단에 없는 학생의 학번과 성명을 모두 입력하세요.</div>
@@ -157,7 +126,7 @@
 </div>
 
 <script>
-  // 🌟 (주의) API_URL은 기존과 동일하게 유지해두었습니다. (수정 불필요)
+  // ★ 방금 [새 배포]를 통해 생성된 새 URL로 반드시 교체해주세요! ★
   const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
   
   let currentPeriod = '1교시';
@@ -165,8 +134,6 @@
   let videoStream = null;
   let scanCooldown = false;
   let scannedIds = new Set();
-  
-  // ★ 스캐너가 오늘 명단을 기억해둘 변수 추가 ★
   let todayRoster = [];
 
   const video = document.getElementById('preview');
@@ -183,8 +150,7 @@
   function setPeriodWithCheck(period) {
     const expected = getExpectedPeriod();
     if (period !== expected) {
-      const confirmMsg = `⚠️ 주의: 현재 시간은 [${expected}] 출석처리에 적합한 시간입니다.\n정말 [${period}] 출석처리를 진행하시겠습니까?`;
-      if (!confirm(confirmMsg)) return;
+      if (!confirm(`⚠️ 주의: 현재 시간은 [${expected}] 출석처리에 적합한 시간입니다.\n정말 [${period}] 출석처리를 진행하시겠습니까?`)) return;
     }
     updatePeriodUI(period);
   }
@@ -204,9 +170,8 @@
 
   function handleLoginSuccess() {
     const teacherName = document.getElementById("login-teacher").value.trim();
-    const pw = document.getElementById("login-pw").value.trim();
     if(teacherName === "") return alert("감독교사 이름을 입력해주세요.");
-    if(pw === "") return alert("비밀번호를 입력해주세요.");
+    if(document.getElementById("login-pw").value.trim() === "") return alert("비밀번호를 입력해주세요.");
     
     localStorage.setItem("teacherName", teacherName);
     document.getElementById("auth-screen").style.display = "none";
@@ -231,65 +196,43 @@
   function startCamera() {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(function(stream) {
-        videoStream = stream;
-        video.srcObject = stream;
-        video.setAttribute("playsinline", true);
-        video.play();
-        requestAnimationFrame(tick);
-        isScanning = true;
-        
+        videoStream = stream; video.srcObject = stream; video.setAttribute("playsinline", true); video.play();
+        requestAnimationFrame(tick); isScanning = true;
         document.getElementById('camera-wrapper').style.display = "block";
-        const btn = document.getElementById('cam-btn');
-        btn.innerHTML = "🛑 카메라 끄기";
-        btn.classList.add('btn-danger');
+        const btn = document.getElementById('cam-btn'); btn.innerHTML = "🛑 카메라 끄기"; btn.classList.add('btn-danger');
         document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
       })
-      .catch(function(err) {
-        alert("카메라를 실행할 수 없습니다. 스마트폰 브라우저의 카메라 권한을 허용해주세요.");
-      });
+      .catch(function(err) { alert("카메라 권한을 허용해주세요."); });
   }
 
   function stopCamera() {
-    if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop());
-    }
+    if (videoStream) videoStream.getTracks().forEach(track => track.stop());
     isScanning = false;
     document.getElementById('camera-wrapper').style.display = "none";
-    
-    const btn = document.getElementById('cam-btn');
-    btn.innerHTML = "🚀 카메라 켜기, 스캔 시작";
-    btn.classList.remove('btn-danger');
+    const btn = document.getElementById('cam-btn'); btn.innerHTML = "🚀 카메라 켜기, 스캔 시작"; btn.classList.remove('btn-danger');
     document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
   }
 
   function tick() {
     if (!isScanning) return;
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvasElement.height = video.videoHeight;
-      canvasElement.width = video.videoWidth;
+      canvasElement.height = video.videoHeight; canvasElement.width = video.videoWidth;
       canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
       const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-      
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
-      });
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
       
       if (code && code.data !== "") {
         const scannedData = code.data.trim();
-        if (!scanCooldown && scannedData !== "") {
-          processScannedData(scannedData);
-        }
+        if (!scanCooldown && scannedData !== "") processScannedData(scannedData);
       }
     }
     requestAnimationFrame(tick);
   }
 
   function processScannedData(scannedData) {
-    scanCooldown = true;
-    setTimeout(() => { scanCooldown = false; }, 2500);
+    scanCooldown = true; setTimeout(() => { scanCooldown = false; }, 2500);
     
-    let studentId = scannedData;
-    let studentName = ""; 
+    let studentId = scannedData, studentName = ""; 
     if (studentId.startsWith('http')) {
       try {
         let url = new URL(studentId);
@@ -297,35 +240,25 @@
         studentName = url.searchParams.get('name') || "";
       } catch(e) {}
     }
-    
     if (scannedIds.has(studentId)) {
       document.getElementById('status-msg').innerText = `⚠️ 이미 방금 스캔된 학생입니다`;
       document.getElementById('status-msg').style.color = "#d35400";
-      setTimeout(() => {
-        if(isScanning) document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
-        document.getElementById('status-msg').style.color = "#555";
-      }, 2000);
+      setTimeout(() => { if(isScanning) document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요."; document.getElementById('status-msg').style.color = "#555"; }, 2000);
       return;
     }
-    
     sendAttendanceToServer(studentId, "QR스캔", studentName);
   }
 
   function manualAttendance() {
     const studentId = document.getElementById("manual-student-id").value.trim();
     const studentName = document.getElementById("manual-student-name").value.trim();
-    if(!studentId) return alert("학번을 입력하세요.");
-    if(!studentName) return alert("성명을 입력하세요.");
-    if (scannedIds.has(studentId)) {
-       alert(`⚠️ 이미 처리된 학번입니다.`);
-       return;
-    }
+    if(!studentId || !studentName) return alert("학번과 성명을 모두 입력하세요.");
+    if (scannedIds.has(studentId)) return alert(`⚠️ 이미 처리된 학번입니다.`);
     sendAttendanceToServer(studentId, "수동입력", studentName);
     document.getElementById("manual-student-id").value = "";
     document.getElementById("manual-student-name").value = "";
   }
 
-  // ★★★ 여기가 정규 학생과 타요일 학생을 구분하는 핵심 로직입니다 ★★★
   function sendAttendanceToServer(id, methodStr, nameStr) {
     const teacher = localStorage.getItem("teacherName") || "감독교사";
     const dateStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -333,44 +266,35 @@
     document.getElementById('status-msg').innerText = `⏳ 출석 처리 중...`;
     document.getElementById('status-msg').style.color = "#2b4b73";
 
-    // 1. 해당 학생이 당일 정규 명단(todayRoster)에 있는지 확인
     let isRegular = false;
     let finalStudentName = nameStr || id; 
     let existingStudent = todayRoster.find(s => s.id === id);
 
     if (existingStudent) {
-      // 명단에는 있는데 해당 교시 '제외' 대상인지 체크
       let isExcluded = (currentPeriod === '1교시') ? (existingStudent.p1_exc === "제외") : (existingStudent.p2_exc === "제외");
       if (!isExcluded) {
         isRegular = true; 
-        if (existingStudent.name) finalStudentName = existingStudent.name; // 시트에 저장된 이름 우선 사용
+        if (existingStudent.name) finalStudentName = existingStudent.name; 
       }
     }
 
-    // 2. 정규 vs 타요일(명단외) 분기해서 서버 호출 파라미터 셋팅
     let urlParams;
     if (isRegular) {
-      // [정규 학생] -> 그냥 '출석' 처리
+      // 1. [정상 출석] 
       urlParams = new URLSearchParams({
         action: 'markAttendance',
-        date: dateStr,
-        id: id,
-        name: finalStudentName,
-        period: currentPeriod,
-        status: '출석',
-        teacher: teacher,
-        _t: new Date().getTime()
+        date: dateStr, id: id, name: finalStudentName, period: currentPeriod, 
+        status: '출석', teacher: teacher, _t: new Date().getTime()
       });
     } else {
-      // [타요일/명단에 없는 학생] -> 명단에 강제 추가 후 '추가출석' 처리
+      // 2. [타요일 / 명단외 학생 출석] -> 선생님 요청대로 '수동출석' 및 비고 추가
       urlParams = new URLSearchParams({
         action: 'addDailyStudent',
-        date: dateStr,
-        id: id,
-        name: finalStudentName,
-        p1: (currentPeriod === '1교시'),
-        p2: (currentPeriod === '2교시'),
+        date: dateStr, id: id, name: finalStudentName,
+        p1: (currentPeriod === '1교시'), p2: (currentPeriod === '2교시'),
         teacher: teacher,
+        statusStr: '수동출석',                 // ★ 수정됨 (출석상태)
+        remark: '다른요일학생출석',            // ★ 수정됨 (비고내역 자동입력)
         _t: new Date().getTime()
       });
     }
@@ -380,37 +304,31 @@
       .then(res => {
         if(res.success) {
           scannedIds.add(id);
-          
           const successTitle = document.getElementById("scan-success-title");
-          successTitle.classList.remove("extra"); 
+          successTitle.classList.remove("warning"); 
 
-          // UI 표시 분기
           if (isRegular) {
-            // 정규 출석: 초록색 팝업
             successTitle.innerHTML = `✅ ${finalStudentName}<br><span style="font-size:0.6em; color:#388e3c;">${currentPeriod} 출석 완료</span>`;
             document.getElementById('status-msg').innerText = `✅ 스캔 성공`;
             document.getElementById('status-msg').style.color = "#27ae60";
           } else {
-            // 타요일 추가 출석: 보라색 팝업
-            successTitle.classList.add("extra");
-            successTitle.innerHTML = `✨ ${finalStudentName}<br><span style="font-size:0.5em; color:#7b1fa2;">(명단 외 / 타요일 추가)</span><br><span style="font-size:0.6em; color:#7b1fa2;">${currentPeriod} 출석 완료</span>`;
-            document.getElementById('status-msg').innerText = `✨ 당일 추가 처리됨`;
-            document.getElementById('status-msg').style.color = "#8e44ad";
+            // ★ 수정됨: 타요일 학생 스캔 시 감독선생님 문의 경고 팝업 ★
+            successTitle.classList.add("warning");
+            successTitle.innerHTML = `⚠️ ${finalStudentName}<br><span style="font-size:0.65em; color:#c62828;">감독선생님께 문의하세요</span><br><span style="font-size:0.5em; color:#666;">(명단 외 / 타요일 등록)</span>`;
+            document.getElementById('status-msg').innerText = `⚠️ 타요일 학생 처리됨`;
+            document.getElementById('status-msg').style.color = "#c62828";
           }
-          
           successTitle.style.display = "block";
-          fetchRosterAndRenderStats(); // UI 갱신 (todayRoster 도 여기서 업데이트 됨)
+          fetchRosterAndRenderStats(); 
         } else {
-          // 중복 스캔 등의 서버 에러
           document.getElementById('status-msg').innerText = `❌ 에러: ${res.message || '서버 처리 실패'}`;
           document.getElementById('status-msg').style.color = "#c0392b";
         }
-        
         setTimeout(() => {
           if(isScanning) document.getElementById('status-msg').innerText = "화면 중앙에 QR코드를 맞춰주세요.";
           else document.getElementById('status-msg').innerText = "학생의 QR코드를 비춰주세요.";
           document.getElementById('status-msg').style.color = "#555";
-        }, 2500);
+        }, 3000);
       })
       .catch(err => {
         document.getElementById('status-msg').innerText = `❌ 인터넷/서버 연결 오류`;
@@ -424,7 +342,6 @@
       .then(res => res.json())
       .then(data => {
         if(data.success) {
-          // ★ 여기서 당일 명단을 저장해둡니다 ★
           todayRoster = data.roster; 
           calculateStatsUI(data, currentPeriod);
         }
@@ -450,9 +367,8 @@
       
       if (status === '출석') {
         present++;
-      } else if (status === '추가출석' || status === '수동입력' || status === '수동출석' || status === 'QR스캔') {
-        present++;
-        extra++;
+      } else if (status === '수동출석' || status === '추가출석' || status === '수동입력' || status === 'QR스캔') {
+        present++; extra++;
       } else {
         absentNames.push(student.name);
       }
