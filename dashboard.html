@@ -219,11 +219,9 @@
   <div id="printArea"></div>
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    
     // 🌟🌟🌟 [핵심] 출석부를 생성하지 않을 '제외 날짜' 목록 🌟🌟🌟
     // 주의: 주말(토,일)은 자동으로 막힙니다. 평일 중에 쉬는 날짜만 학교 학사일정에 맞춰 아래에 추가하세요!
     // 형식은 반드시 "YYYY-MM-DD" 이어야 하며, 날짜 끝에 콤마(,)를 붙여주세요.
-    
     const skipDates = [
         // [2] 학교 자체 일정 (정기시험, 모의고사, 수능, 컨설팅 등)
         "2026-08-17", // 대체휴일
@@ -244,12 +242,10 @@
         "2026-12-08", // 2학기 기말고사
         "2026-12-09", // 2학기 기말고사
         "2026-12-18", // 동아리발표회
-
        // 선생님 학교 스케줄에 없는 날짜는 여기에 계속해서 추가해 주시면 됩니다!
          "2026-12-24"  // 방학식
           ];
     // 🌟🌟🌟 ------------------------------------------------------------------------- 🌟🌟🌟
-
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
     let cacheLoaded = false;
     let currentDailyData = null;
@@ -257,7 +253,6 @@
     let isNoteChanged = false;
     let previousDate = "";
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
-    
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
@@ -426,22 +421,18 @@
       const isChecked = document.getElementById('checkAll').checked;
       document.querySelectorAll('.student-check').forEach(cb => cb.checked = isChecked);
     }
-    
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
-
       // 🌟🌟🌟 주말(0:일, 6:토)이거나 설정된 공휴일/휴업일(skipDates)인지 확인 🌟🌟🌟
       const tempDate = new Date(dateStr);
-      const dayOfWeek = tempDate.getDay(); 
-      
+      const dayOfWeek = tempDate.getDay();
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#e53e3e; margin-left:10px; font-weight:bold;">(휴업일 / 출석부 없음)</span>`;
          document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 토·일요일, 공휴일, 시험, 수능, 재량휴업일 등 지정된 휴업일이므로 출석부를 생성하지 않습니다.</td></tr>';
          return; // 데이터 통신을 멈추고 함수 종료 (출석부 안 그림)
       }
       // 🌟🌟🌟 ------------------------------------------------------------- 🌟🌟🌟
-
       showLoading(true);
       fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
         .then(res => res.json())
@@ -463,7 +454,6 @@
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
     }
-    
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
@@ -484,6 +474,11 @@
         let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
         if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
         if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
+        
+        // ★ 스캔 시간을 담을 변수 추가
+        let p1Time = '';
+        let p2Time = '';
+
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
@@ -491,20 +486,34 @@
                 if(!isExcludedMark(log.status) && log.status !== '제외') {
                   p1Status = (log.status === '미출석') ? '결석' : log.status;
                   p1Class = (p1Status === '추가출석' || p1Status === '수동입력' || p1Status === '수동출석') ? 'status-extra' : (p1Status === '결석' ? 'status-absent' : 'status-present');
+                  
+                  // ★ 결석이 아닌 경우 시간 표시 (1교시)
+                  if (p1Status !== '결석' && log.timestamp) {
+                    let timeStr = log.timestamp.split(" ")[1].substring(0, 5); // "18:05" 추출
+                    p1Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${timeStr})</span>`;
+                  }
                 }
               }
               if(log.period === '2교시') {
                 if(!isExcludedMark(log.status) && log.status !== '제외') {
                   p2Status = (log.status === '미출석') ? '결석' : log.status;
                   p2Class = (p2Status === '추가출석' || p2Status === '수동입력' || p2Status === '수동출석') ? 'status-extra' : (p2Status === '결석' ? 'status-absent' : 'status-present');
+                  
+                  // ★ 결석이 아닌 경우 시간 표시 (2교시)
+                  if (p2Status !== '결석' && log.timestamp) {
+                    let timeStr = log.timestamp.split(" ")[1].substring(0, 5); // "20:45" 추출
+                    p2Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${timeStr})</span>`;
+                  }
                 }
               }
             }
           });
         }
+        
         const btnStyle1 = "background:#3182ce; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
         const btnStyle2 = "background:#e53e3e; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
         const btnStyle3 = "background:#718096; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
+        
         let p1Btn = '';
         if (p1Status !== '제외') {
            p1Btn = `<div style="display:flex; gap:3px; justify-content:center; margin-bottom:4px;">
@@ -521,14 +530,17 @@
                       <button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '미출석')" title="초기화">취소</button>
                     </div>`;
         }
+        
         let noteVal = student.note || '';
         const tr = document.createElement('tr');
+        
+        // ★ HTML 테이블에 상태와 시간(p1Time, p2Time)을 함께 출력하도록 수정
         tr.innerHTML = `
           <td><input type="checkbox" class="student-check" value="${student.id}" data-name="${student.name}" style="cursor:pointer;"> ${index + 1}</td>
           <td style="font-weight:bold;">${student.id}</td>
           <td style="font-weight:bold;">${student.name}</td>
-          <td class="${p1Class}">${p1Status}</td>
-          <td class="${p2Class}">${p2Status}</td>
+          <td class="${p1Class}">${p1Status}${p1Time}</td>
+          <td class="${p2Class}">${p2Status}${p2Time}</td>
           <td>${p1Btn}${p2Btn}</td>
           <td><input type="text" class="note-input" data-id="${student.id}" data-original="${noteVal}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="특이사항 입력" value="${noteVal}" oninput="isNoteChanged = true;" onchange="updateLocalNoteData('${student.id}', this.value)"></td>
         `;
@@ -717,7 +729,6 @@
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
-
     // 🌟🌟🌟 통계 및 개인별 내역 산출 시 휴업일과 주말을 건너뛰도록 함수 수정 🌟🌟🌟
     function getDatesInRange(start, end) {
       const dateArray = [];
@@ -727,7 +738,6 @@
         const offset = currentDate.getTimezoneOffset() * 60000;
         const localD = new Date(currentDate.getTime() - offset).toISOString().split('T')[0];
         const dayOfWeek = currentDate.getDay();
-        
         // 주말(0:일, 6:토)이 아니고, skipDates 배열에 없는 날짜만 통계 대상에 포함시킴
         if (dayOfWeek !== 0 && dayOfWeek !== 6 && !skipDates.includes(localD)) {
             dateArray.push({ date: localD, day: days[dayOfWeek] });
@@ -737,7 +747,6 @@
       return dateArray;
     }
     // 🌟🌟🌟 ------------------------------------------------------------- 🌟🌟🌟
-
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let isP1Target = (sDay === dayStr && p1_exc !== '제외');
       let isP2Target = (sDay === dayStr && p2_exc !== '제외');
