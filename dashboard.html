@@ -221,10 +221,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     
     // 🌟🌟🌟 [핵심] 출석부를 생성하지 않을 '제외 날짜' 목록 🌟🌟🌟
-    // 주의: 주말(토,일)은 자동으로 막힙니다. 평일 중에 쉬는 날짜만 학교 학사일정에 맞춰 아래에 추가하세요!
-    // 형식은 반드시 "YYYY-MM-DD" 이어야 하며, 날짜 끝에 콤마(,)를 붙여주세요.
     const skipDates = [
-        // [2] 학교 자체 일정 (정기시험, 모의고사, 수능, 컨설팅 등)
         "2026-08-17", // 대체휴일
         "2026-09-24", // 추석연휴
         "2026-09-25", // 추석연휴
@@ -243,8 +240,7 @@
         "2026-12-08", // 2학기 기말고사
         "2026-12-09", // 2학기 기말고사
         "2026-12-18", // 동아리발표회
-       // 선생님 학교 스케줄에 없는 날짜는 여기에 계속해서 추가해 주시면 됩니다!
-         "2026-12-24"  // 방학식
+        "2026-12-24"  // 방학식
     ];
     // 🌟🌟🌟 ------------------------------------------------------------------------- 🌟🌟🌟
     
@@ -447,15 +443,15 @@
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
-      // 🌟🌟🌟 주말(0:일, 6:토)이거나 설정된 공휴일/휴업일(skipDates)인지 확인 🌟🌟🌟
+      
       const tempDate = new Date(dateStr);
       const dayOfWeek = tempDate.getDay();
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#e53e3e; margin-left:10px; font-weight:bold;">(휴업일 / 출석부 없음)</span>`;
          document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 토·일요일, 공휴일, 시험, 수능, 재량휴업일 등 지정된 휴업일이므로 출석부를 생성하지 않습니다.</td></tr>';
-         return; // 데이터 통신을 멈추고 함수 종료 (출석부 안 그림)
+         return; 
       }
-      // 🌟🌟🌟 ------------------------------------------------------------- 🌟🌟🌟
+      
       showLoading(true);
       fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
         .then(res => res.json())
@@ -511,7 +507,8 @@
                   p1Status = (log.status === '미출석') ? '결석' : log.status;
                   p1Class = (p1Status === '추가출석' || p1Status === '수동입력' || p1Status === '수동출석') ? 'status-extra' : (p1Status === '결석' ? 'status-absent' : 'status-present');
                   if (p1Status !== '결석' && log.timestamp) {
-                    let timeStr = log.timestamp.split(" ")[1].substring(0, 5); 
+                    // ★ 초 단위(HH:mm:ss)까지 추출하도록 수정 (8자리)
+                    let timeStr = log.timestamp.split(" ")[1].substring(0, 8); 
                     p1Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${timeStr})</span>`;
                   }
                 }
@@ -521,7 +518,8 @@
                   p2Status = (log.status === '미출석') ? '결석' : log.status;
                   p2Class = (p2Status === '추가출석' || p2Status === '수동입력' || p2Status === '수동출석') ? 'status-extra' : (p2Status === '결석' ? 'status-absent' : 'status-present');
                   if (p2Status !== '결석' && log.timestamp) {
-                    let timeStr = log.timestamp.split(" ")[1].substring(0, 5);
+                    // ★ 초 단위(HH:mm:ss)까지 추출하도록 수정 (8자리)
+                    let timeStr = log.timestamp.split(" ")[1].substring(0, 8);
                     p2Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${timeStr})</span>`;
                   }
                 }
@@ -654,7 +652,8 @@
       
       if(data.logs) {
         data.logs.forEach(log => {
-          let time = log.timestamp.split(" ")[1].substring(0, 5);
+          // ★ 초 단위(HH:mm:ss)까지 추출하도록 수정 (8자리)
+          let time = log.timestamp.split(" ")[1].substring(0, 8);
           logMap[log.id + "_" + log.period] = { time: time, status: log.status, teacher: log.teacher || "미상" };
           if(log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") { extraRows.push({ id: log.id, name: log.name, period: log.period, time: time, teacher: log.teacher || "미상" }); }
         });
