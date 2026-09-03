@@ -860,6 +860,13 @@
       let html = `<h1 class="print-title">기간별 통계 현황</h1><div class="print-subtitle">조회기간: ${start} ~ ${end}</div><table class="print-table">` + document.getElementById('statsTable').innerHTML + `</table>`;
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
+
+      // 10초(10000 밀리초)마다 대시보드의 출석 데이터를 서버에서 다시 불러오는 마법의 타이머
+setInterval(function() {
+    // 대시보드에서 오늘 날짜 데이터를 불러오는 함수 이름 (예: loadDailyRoster 등)
+    // 선생님의 dashboard.html에 있는 '데이터 불러오기' 함수를 여기에 넣어주세요.
+    loadDailyRoster(); 
+}, 10000); 
     }
   </script>
 </body>
