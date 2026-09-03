@@ -117,6 +117,8 @@
         <div class="date-picker-container">
           <span>조회 날짜:</span>
           <input type="date" id="datePicker" onchange="handleDateChange()">
+          <!-- ★ 통계 표시 영역 -->
+          <span id="topStats"></span>
         </div>
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
@@ -219,7 +221,6 @@
   <div id="printArea"></div>
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-    
     // 🌟🌟🌟 [핵심] 출석부를 생성하지 않을 '제외 날짜' 목록 🌟🌟🌟
     const skipDates = [
         "2026-08-17", // 대체휴일
@@ -243,7 +244,6 @@
         "2026-12-24"  // 방학식
     ];
     // 🌟🌟🌟 ------------------------------------------------------------------------- 🌟🌟🌟
-    
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
     let cacheLoaded = false;
     let currentDailyData = null;
@@ -251,7 +251,6 @@
     let isNoteChanged = false;
     let previousDate = "";
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
-    
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
@@ -267,13 +266,10 @@
       loadDailyData();
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
-    
     window.addEventListener('beforeunload', function (e) {
       if (isNoteChanged) { e.preventDefault(); e.returnValue = ''; }
     });
-    
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
-    
     let modalResolve = null;
     function showSaveConfirm() {
       return new Promise((resolve) => {
@@ -281,7 +277,6 @@
         modalResolve = resolve;
       });
     }
-    
     function resolveModal(choice) {
       document.getElementById('saveConfirmModal').style.display = 'none';
       if (modalResolve) {
@@ -289,7 +284,6 @@
         modalResolve = null;
       }
     }
-    
     async function performSave(silent = false) {
       const dateStr = document.getElementById('datePicker').value;
       const inputs = document.querySelectorAll('.note-input');
@@ -319,7 +313,6 @@
         return false;
       }
     }
-    
     async function handleAction(actionCallback, rollbackCallback = null) {
       if (!isNoteChanged) {
         actionCallback();
@@ -343,21 +336,17 @@
         if (rollbackCallback) rollbackCallback();
       }
     }
-    
     function userClickSave() {
       if (!isNoteChanged) { alert("변경된 데이터가 없습니다."); return; }
       performSave(false);
     }
-    
     function checkHomeMove(e) {
       e.preventDefault();
       handleAction(() => { window.location.href = 'index.html'; });
     }
-    
     function checkRiroMove() {
       handleAction(() => { window.open('https://seohyun.riroschool.kr/', '_blank'); });
     }
-    
     function switchTab(tabId, btn) {
       if (btn.classList.contains('active')) return;
       handleAction(() => {
@@ -368,7 +357,6 @@
         if (tabId === 'tab-individual' || tabId === 'tab-stats') { ensureDataLoaded(); }
       });
     }
-    
     function handleDateChange() {
       const datePicker = document.getElementById('datePicker');
       const newDate = datePicker.value;
@@ -379,29 +367,24 @@
         datePicker.value = previousDate;
       });
     }
-    
     function refreshDailyData() {
       handleAction(() => { loadDailyData(); });
     }
-    
     function processSingle(id, name, periodStr, statusParam) {
       handleAction(() => {
         executeProcessSingle(id, name, periodStr, statusParam);
       });
     }
-    
     function batchProcess(actionType) {
       handleAction(() => {
         executeBatchProcess(actionType);
       });
     }
-    
     function addDailyStudent() {
       handleAction(() => {
         executeAddDailyStudent();
       });
     }
-    
     function resetDailyData() {
       handleAction(() => {
         const dateStr = document.getElementById('datePicker').value;
@@ -415,7 +398,6 @@
           }).catch(err => { showLoading(false); alert("오류: " + err.message); });
       });
     }
-    
     function savePdf() {
       handleAction(() => {
         const dateStr = document.getElementById('datePicker').value;
@@ -429,29 +411,25 @@
           }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
       });
     }
-    
     function toggleAddSection() {
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
     }
-    
     function toggleAllChecks() {
       const isChecked = document.getElementById('checkAll').checked;
       document.querySelectorAll('.student-check').forEach(cb => cb.checked = isChecked);
     }
-    
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
-      
       const tempDate = new Date(dateStr);
       const dayOfWeek = tempDate.getDay();
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#e53e3e; margin-left:10px; font-weight:bold;">(휴업일 / 출석부 없음)</span>`;
          document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 토·일요일, 공휴일, 시험, 수능, 재량휴업일 등 지정된 휴업일이므로 출석부를 생성하지 않습니다.</td></tr>';
-         return; 
+         document.getElementById('topStats').innerHTML = '';
+         return;
       }
-      
       showLoading(true);
       fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
         .then(res => res.json())
@@ -473,7 +451,6 @@
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
     }
-    
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
@@ -481,24 +458,60 @@
       return true;
     }
     
+    // ★ 렌더링 함수 (추가출석자 명단 최하단 배치 정렬 + 상단 통계 텍스트 업데이트 포함)
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
+      const topStats = document.getElementById('topStats');
       tbody.innerHTML = '';
+      
       if(!data.roster || data.roster.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;">해당 날짜에 등록된 학생이 없습니다.</td></tr>';
+        topStats.innerHTML = '';
         return;
       }
+
+      // ★ [핵심 정렬 로직]: 정규학생 먼저, 추가출석자는 맨 밑으로 정렬
+      data.roster.sort(function(a, b) {
+        let aIsAdded = (a.day === "추가등록");
+        let bIsAdded = (b.day === "추가등록");
+        if (aIsAdded && !bIsAdded) return 1;  // a가 추가출석자면 뒤로 보냄
+        if (!aIsAdded && bIsAdded) return -1; // b가 추가출석자면 a를 앞으로 보냄
+        
+        // 같은 부류끼리는 학번 순 정렬
+        let numA = parseInt(a.id, 10);
+        let numB = parseInt(b.id, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return String(a.id).localeCompare(String(b.id));
+      });
+      
+      let regCount = 0;
+      let addCount = 0;
+      let p1AbsCount = 0;
+      let p2AbsCount = 0;
+      let presentSet = new Set();
+      
+      // 로그 분석으로 실제 고유 출석 인원 구하기
+      if(data.logs) {
+        data.logs.forEach(log => {
+           if (log.status !== '결석' && log.status !== '미출석' && log.status !== '제외' && !isExcludedMark(log.status)) {
+               presentSet.add(log.id);
+           }
+        });
+      }
+
       data.roster.forEach(function(student, index) {
+        // 통계용 대상자 구별
+        if (student.day === "추가등록") addCount++;
+        else regCount++;
+
         let p1Status = '결석'; let p2Status = '결석';
         let p1Class = 'status-absent'; let p2Class = 'status-absent';
         let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
         let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
         if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
         if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
-        
         let p1Time = '';
         let p2Time = '';
-
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
@@ -507,8 +520,7 @@
                   p1Status = (log.status === '미출석') ? '결석' : log.status;
                   p1Class = (p1Status === '추가출석' || p1Status === '수동입력' || p1Status === '수동출석') ? 'status-extra' : (p1Status === '결석' ? 'status-absent' : 'status-present');
                   if (p1Status !== '결석' && log.timestamp) {
-                    // ★ 초 단위(HH:mm:ss)까지 추출하도록 수정 (8자리)
-                    let timeStr = log.timestamp.split(" ")[1].substring(0, 8); 
+                    let timeStr = log.timestamp.split(" ")[1].substring(0, 8);
                     p1Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${timeStr})</span>`;
                   }
                 }
@@ -518,7 +530,6 @@
                   p2Status = (log.status === '미출석') ? '결석' : log.status;
                   p2Class = (p2Status === '추가출석' || p2Status === '수동입력' || p2Status === '수동출석') ? 'status-extra' : (p2Status === '결석' ? 'status-absent' : 'status-present');
                   if (p2Status !== '결석' && log.timestamp) {
-                    // ★ 초 단위(HH:mm:ss)까지 추출하도록 수정 (8자리)
                     let timeStr = log.timestamp.split(" ")[1].substring(0, 8);
                     p2Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${timeStr})</span>`;
                   }
@@ -528,10 +539,15 @@
           });
         }
         
+        // 통계용 결석자 카운트 (추가출석자는 원래 명단에 없으므로 결석 통계에 포함 안함)
+        if (student.day !== "추가등록") {
+           if (p1Status === '결석') p1AbsCount++;
+           if (p2Status === '결석') p2AbsCount++;
+        }
+
         const btnStyle1 = "background:#3182ce; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
         const btnStyle2 = "background:#e53e3e; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
         const btnStyle3 = "background:#718096; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
-        
         let p1Btn = '';
         if (p1Status !== '제외') {
            p1Btn = `<div style="display:flex; gap:3px; justify-content:center; margin-bottom:4px;">
@@ -548,9 +564,13 @@
                       <button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '미출석')" title="초기화">취소</button>
                     </div>`;
         }
-        
         let noteVal = student.note || '';
+        
+        // 추가 출석자 행에는 약간의 배경색을 주어 시각적으로 분리할 수도 있지만, 동일하게 유지
         const tr = document.createElement('tr');
+        if (student.day === "추가등록") {
+           tr.style.backgroundColor = "#fafcff"; // 추가 출석자는 연한 파란빛 배경으로 살짝 구분 (원치 않으시면 지워도 됩니다)
+        }
         
         tr.innerHTML = `
           <td><input type="checkbox" class="student-check" value="${student.id}" data-name="${student.name}" style="cursor:pointer;"> ${index + 1}</td>
@@ -563,6 +583,11 @@
         `;
         tbody.appendChild(tr);
       });
+      
+      // ★ 화면 상단에 통계 데이터 한 줄로 표시
+      if (topStats) {
+        topStats.innerHTML = `<span style="margin-left:15px; color:#1f3a93; font-size:1.05rem; font-weight:bold; background:#eef2ff; padding:5px 12px; border-radius:6px; border:1px solid #d0d7ee;">출석인원: ${presentSet.size}명 (오늘출석대상: ${regCount}명, 추가출석: ${addCount}명, 1교시결석: ${p1AbsCount}명, 2교시결석: ${p2AbsCount}명)</span>`;
+      }
     }
     
     function updateLocalNoteData(id, noteVal) {
@@ -574,7 +599,6 @@
         }
       }
     }
-    
     function executeProcessSingle(id, name, periodStr, statusParam) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -590,7 +614,6 @@
          else { showLoading(false); alert("처리 실패: " + res.message); }
       }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
     }
-    
     async function executeBatchProcess(actionType) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -620,7 +643,6 @@
         showLoading(false); alert("일괄 처리 중 오류 발생: " + err.message);
       }
     }
-    
     function executeAddDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -641,7 +663,6 @@
           else { showLoading(false); alert(res.message); }
         }).catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
-    
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
@@ -649,7 +670,6 @@
       let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
       const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
       let logMap = {}; let extraRows = [];
-      
       if(data.logs) {
         data.logs.forEach(log => {
           // ★ 초 단위(HH:mm:ss)까지 추출하도록 수정 (8자리)
@@ -658,7 +678,6 @@
           if(log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") { extraRows.push({ id: log.id, name: log.name, period: log.period, time: time, teacher: log.teacher || "미상" }); }
         });
       }
-      
       function getPrintStatusInfo(student, period) {
         let log = logMap[student.id + "_" + period];
         if (log) {
@@ -671,7 +690,6 @@
         if (isExcludedMark(exc) || exc === "제외") return { text: "제외", type: "st-excluded" };
         return { text: "결석", type: "st-absent" };
       }
-      
       function getPeriodStats(period) {
         let total = 0, present = 0, extra = 0; let absentNames = [];
         data.roster.forEach(student => {
@@ -683,11 +701,9 @@
         });
         return { total, present, absent: total - present, extra, absentNames };
       }
-      
       const p1Stats = getPeriodStats("1교시"); const p2Stats = getPeriodStats("2교시");
       const rate1 = p1Stats.total > 0 ? (Math.round((p1Stats.present / p1Stats.total) * 1000) / 10) + "%" : "-";
       const rate2 = p2Stats.total > 0 ? (Math.round((p2Stats.present / p2Stats.total) * 1000) / 10) + "%" : "-";
-      
       let html = `<h1 class="print-title">꿈꾸는 글마루 출석부</h1><div class="print-subtitle">${dateStr} (${day}요일)</div>
         <table class="print-table">
           <tr><td class="bg-info" style="width:15%">날짜</td><td style="width:35%">${dateStr} (${day}요일)</td><td class="bg-info" style="width:15%">감독교사</td><td style="width:35%">${teacherText}</td></tr>
@@ -702,7 +718,6 @@
         <table class="print-table">
           <tr><th class="bg-primary" style="width:6%">번호</th><th class="bg-primary" style="width:14%">학번</th><th class="bg-primary" style="width:15%">이름</th><th class="bg-primary" style="width:20%">1교시</th><th class="bg-primary" style="width:20%">2교시</th><th class="bg-primary" style="width:25%">비고</th></tr>
       `;
-      
       if(data.roster.length === 0) { html += `<tr><td colspan="6">해당 요일 출석 대상 학생 없음</td></tr>`; }
       else {
         data.roster.forEach((student, idx) => {
@@ -711,20 +726,17 @@
           html += `<tr><td>${idx + 1}</td><td>${student.id}</td><td>${student.name}</td><td class="${s1.type}">${s1.text}</td><td class="${s2.type}">${s2.text}</td><td>${noteVal}</td></tr>`;
         });
       }
-      
       html += `</table>`;
       html += `<div class="print-section-title red">결석자 명단</div>
         <table class="print-table">
           <tr><td class="bg-absent-title" style="width:15%">1교시</td><td style="text-align:left;">${p1Stats.absentNames.length ? p1Stats.absentNames.join(", ") : "결석자 없음"}</td></tr>
           <tr><td class="bg-absent-title">2교시</td><td style="text-align:left;">${p2Stats.absentNames.length ? p2Stats.absentNames.join(", ") : "결석자 없음"}</td></tr>
         </table>`;
-        
       if(extraRows.length > 0) {
         html += `<div class="print-section-title">추가/수동 출석자 목록</div><table class="print-table"><tr><th class="bg-extra-title">번호</th><th class="bg-extra-title">학번</th><th class="bg-extra-title">이름</th><th class="bg-extra-title">교시</th><th class="bg-extra-title">출석시각</th><th class="bg-extra-title">처리교사</th></tr>`;
         extraRows.forEach((row, idx) => { html += `<tr><td>${idx+1}</td><td>${row.id}</td><td>${row.name}</td><td>${row.period}</td><td>${row.time}</td><td>${row.teacher}</td></tr>`; });
         html += `</table>`;
       }
-      
       html += `<div class="print-section-title gray">표기 안내</div>
         <table class="print-table" style="font-size:8pt; margin-bottom:0;">
           <tr><th class="bg-gray" style="width:20%">출석</th><td style="text-align:left;">정상 출석 처리된 학생</td></tr>
@@ -732,10 +744,8 @@
           <tr><th class="bg-gray">결석</th><td style="text-align:left;">출석 대상이나 기록이 없는 학생</td></tr>
           <tr><th class="bg-gray">제외</th><td style="text-align:left;">해당 교시 출석 대상이 아닌 학생 (결석 통계 미포함)</td></tr>
         </table>`;
-        
       printDiv.innerHTML = html;
     }
-    
     async function ensureDataLoaded() {
       if (cacheLoaded) return;
       showLoading(true);
@@ -754,7 +764,6 @@
       } catch(e) { alert("통계 데이터를 서버에서 불러오는 중 오류가 발생했습니다."); }
       showLoading(false);
     }
-    
     function populateStudentSelect() {
       const sel = document.getElementById("indivStudentSelect");
       sel.innerHTML = '<option value="">▼ 학생을 선택하세요</option>';
@@ -765,7 +774,6 @@
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
-    
     function getDatesInRange(start, end) {
       const dateArray = [];
       let currentDate = new Date(start); const stopDate = new Date(end);
@@ -781,7 +789,6 @@
       }
       return dateArray;
     }
-    
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let isP1Target = (sDay === dayStr && p1_exc !== '제외');
       let isP2Target = (sDay === dayStr && p2_exc !== '제외');
@@ -803,7 +810,6 @@
       }
       return { p1: calcStatus(isP1Target, p1Log), p2: calcStatus(isP2Target, p2Log), isTargetAny: isP1Target || isP2Target || p1Log || p2Log };
     }
-    
     function renderIndividual() {
       const id = document.getElementById("indivStudentSelect").value;
       const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
@@ -825,7 +831,6 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='5'>해당 기간에 출결 데이터 또는 대상일이 없습니다.</td></tr>";
     }
-    
     function printIndividual() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("indivStartDate").value; const end = document.getElementById("indivEndDate").value;
@@ -834,7 +839,6 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
-    
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
       if (myChart) myChart.destroy();
@@ -861,7 +865,6 @@
         }
       });
     }
-    
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
@@ -907,7 +910,6 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
     }
-    
     function printStats() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
