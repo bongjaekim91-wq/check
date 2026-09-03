@@ -104,19 +104,23 @@
       }
     });
 
-    // 서버 전송 로직
+       // 서버 전송 로직
     function processScan(data) {
       if (isProcessing) return;
       
       let studentId = "";
+      let studentName = ""; // QR에서 이름을 뽑아올 변수 추가
+      
       if (data.includes("id=")) {
         try {
           const params = new URLSearchParams(data.substring(data.indexOf("?")));
           studentId = params.get("id");
+          studentName = params.get("name") || ""; // 이름 추출!
         } catch (e) { }
       } else {
-        studentId = data;
+        studentId = data; // 순수 학번 바코드인 경우
       }
+      
       if (!studentId || studentId.length < 4) {
         showResult("error", "❌ 유효하지 않은 QR코드입니다.");
         playSound('error');
@@ -125,19 +129,19 @@
       
       isProcessing = true;
       showResult("loading", `⏳ [${studentId}] 서버 확인 중...`);
-      const fetchUrl = `${API_URL}?action=scan&id=${encodeURIComponent(studentId)}`;
+      
+      // 학번과 함께 이름(있는 경우)도 서버로 전송
+      const fetchUrl = `${API_URL}?action=scan&id=${encodeURIComponent(studentId)}&name=${encodeURIComponent(studentName)}`;
       
       fetch(fetchUrl)
         .then(res => res.json())
         .then(result => {
           if (result.success || result.result === "success") {
-             // 정상 출석 또는 추가 출석 처리 성공
              showResult("success", `✅ ${result.message}`);
              playSound('success');
              let sName = result.studentName || result.name || "";
              addRecentStudent(studentId, sName);
           } else {
-             // 중복 스캔, 출석 시간 아님 등의 에러
              showResult("error", `⚠️ ${result.message}`);
              playSound('error'); 
           }
