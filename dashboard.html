@@ -60,6 +60,29 @@
     .btn-cancel { background-color: #e2e8f0; color: #4a5568; border: none; padding: 10px 18px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-cancel:hover { background-color: #cbd5e0; }
     @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    
+    /* 🌟 추가된 스타일: 조회날짜와 출결현황 분리 및 가독성 개선 */
+    .dashboard-header-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stats-box-upgraded {
+      background-color: #f0f7ff;
+      border: 2px solid #8c9eff;
+      border-radius: 12px;
+      padding: 20px 40px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1a237e;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      text-align: center;
+      width: fit-content;
+      line-height: 1.5;
+    }
+
     @media print {
       body > * { display: none !important; }
       #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; padding: 10px; box-sizing: border-box; }
@@ -81,40 +104,6 @@
       .st-extra { background-color: #D9EAF7 !important; color: #1F4E79 !important; font-weight: bold; }
       .st-absent { background-color: #FCE4D6 !important; color: #C00000 !important; font-weight: bold; }
       .st-excluded { background-color: #E7E6E6 !important; color: #666666 !important; font-weight: bold; }
-      <style>
-  /* 날짜와 통계를 세로로 예쁘게 정렬하는 컨테이너 */
-  .dashboard-header-container {
-    display: flex;
-    flex-direction: column; /* 세로(위아래)로 배치하여 한 줄 내림 */
-    align-items: center;    /* 가운데 정렬 */
-    gap: 20px;              /* 날짜칸과 현황판 사이의 간격 */
-    margin-bottom: 30px;    /* 표(테이블)와의 간격 */
-  }
-
-  /* 조회 날짜 부분 스타일 (필요시 적용) */
-  .date-section {
-    font-size: 1.1rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  /* 🌟 확 바뀐 출결 현황판 디자인 */
-  .stats-box-upgraded {
-    background-color: #f0f7ff;       /* 부드럽고 산뜻한 연파랑 배경 */
-    border: 2px solid #8c9eff;       /* 뚜렷한 파란색 테두리 */
-    border-radius: 12px;             /* 둥근 모서리 */
-    padding: 20px 40px;              /* 넉넉한 여백으로 숨통 트임 */
-    font-size: 1.4rem;               /* ⭐️ 글자 크기를 큼직하게 키움! */
-    font-weight: 800;                /* ⭐️ 글씨를 아주 굵게 설정 */
-    color: #1a237e;                  /* 진하고 또렷한 남색 글씨 */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 은은한 입체감(그림자) */
-    text-align: center;
-    width: fit-content;              /* 내용 길이에 맞게 박스 크기 조절 */
-    line-height: 1.5;                /* 줄 간격 확보 */
-  }
-</style>
     }
   </style>
 </head>
@@ -147,12 +136,17 @@
     </div>
     <div class="content-box">
       <div id="tab-daily" class="tab-content active">
-        <div class="date-picker-container">
-          <span>조회 날짜:</span>
-          <input type="date" id="datePicker" onchange="handleDateChange()">
+        
+        <!-- 🌟 조회날짜와 출결현황 분리 적용 -->
+        <div class="dashboard-header-container">
+          <div class="date-picker-container" style="margin-bottom: 0;">
+            <span>조회 날짜:</span>
+            <input type="date" id="datePicker" onchange="handleDateChange()">
+          </div>
           <!-- ★ 통계 표시 영역 -->
-          <span id="topStats"></span>
+          <div id="topStats"></div>
         </div>
+
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
@@ -253,9 +247,9 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     const skipDates = [
-        "2026-08-17", "2026-09-24", "2026-09-25", "2026-09-29", "2026-09-30", 
-        "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-20", "2026-11-10", 
-        "2026-11-18", "2026-11-19", "2026-11-20", "2026-12-03", "2026-12-07", 
+        "2026-08-17", "2026-09-24", "2026-09-25", "2026-09-29", "2026-09-30",
+        "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-20", "2026-11-10",
+        "2026-11-18", "2026-11-19", "2026-11-20", "2026-12-03", "2026-12-07",
         "2026-12-08", "2026-12-09", "2026-12-18", "2026-12-24"
     ];
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
@@ -265,7 +259,6 @@
     let isNoteChanged = false;
     let previousDate = "";
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
-    
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
@@ -281,11 +274,9 @@
       loadDailyData();
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
-
     window.addEventListener('beforeunload', function (e) {
       if (isNoteChanged) { e.preventDefault(); e.returnValue = ''; }
     });
-    
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
     let modalResolve = null;
     function showSaveConfirm() {
@@ -298,7 +289,6 @@
       document.getElementById('saveConfirmModal').style.display = 'none';
       if (modalResolve) { modalResolve(choice); modalResolve = null; }
     }
-
     async function performSave(silent = false) {
       const dateStr = document.getElementById('datePicker').value;
       const inputs = document.querySelectorAll('.note-input');
@@ -328,7 +318,6 @@
         return false;
       }
     }
-
     async function handleAction(actionCallback, rollbackCallback = null) {
       if (!isNoteChanged) { actionCallback(); return; }
       const choice = await showSaveConfirm();
@@ -346,7 +335,6 @@
         if (rollbackCallback) rollbackCallback();
       }
     }
-
     function userClickSave() {
       if (!isNoteChanged) { alert("변경된 데이터가 없습니다."); return; }
       performSave(false);
@@ -372,7 +360,6 @@
     function processSingle(id, name, periodStr, statusParam) { handleAction(() => { executeProcessSingle(id, name, periodStr, statusParam); }); }
     function batchProcess(actionType) { handleAction(() => { executeBatchProcess(actionType); }); }
     function addDailyStudent() { handleAction(() => { executeAddDailyStudent(); }); }
-    
     function resetDailyData() {
       handleAction(() => {
         const dateStr = document.getElementById('datePicker').value;
@@ -385,7 +372,6 @@
           }).catch(err => { showLoading(false); alert("오류: " + err.message); });
       });
     }
-
     function savePdf() {
       handleAction(() => {
         const dateStr = document.getElementById('datePicker').value;
@@ -399,7 +385,6 @@
           }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
       });
     }
-
     function toggleAddSection() {
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
@@ -408,7 +393,6 @@
       const isChecked = document.getElementById('checkAll').checked;
       document.querySelectorAll('.student-check').forEach(cb => cb.checked = isChecked);
     }
-
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
@@ -439,15 +423,14 @@
         })
         .catch(err => { showLoading(false); alert("서버 통신 오류: " + err.message); });
     }
-
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
       if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '결석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
       return true;
     }
-
-    // ★ 수정된 핵심 테이블 렌더링 함수
+    
+    // ★ 상단 통계 디자인 가독성 향상 적용! (내부 기능은 동일)
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       const topStats = document.getElementById('topStats');
@@ -457,35 +440,29 @@
         topStats.innerHTML = '';
         return;
       }
-
       data.roster.sort(function(a, b) {
         let aIsAdded = (a.day === "추가등록");
         let bIsAdded = (b.day === "추가등록");
         if (aIsAdded && !bIsAdded) return 1;  
-        if (!aIsAdded && bIsAdded) return -1; 
+        if (!aIsAdded && bIsAdded) return -1;
         let numA = parseInt(a.id, 10);
         let numB = parseInt(b.id, 10);
         if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
         return String(a.id).localeCompare(String(b.id));
       });
-
       let regCount = 0, addCount = 0, p1AbsCount = 0, p2AbsCount = 0;
       let realPresentCount = 0; // 실제 1회 이상 출석한 고유 학생 수 (정확한 통계용)
-
       data.roster.forEach(function(student, index) {
         let isAdded = (student.day === "추가등록");
         if (isAdded) addCount++;
         else regCount++;
-
         let p1Status = '결석', p2Status = '결석';
         let p1Class = 'status-absent', p2Class = 'status-absent';
         let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
         let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
-
         if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
         if (isP2Excluded) { p2Status = '제외'; p2Class = 'status-excluded'; }
         let p1Time = '', p2Time = '';
-
         if(data.logs) {
           data.logs.forEach(function(log) {
             if(log.id === student.id) {
@@ -506,18 +483,15 @@
             }
           });
         }
-
         // 통계 반영 (추가 출석자는 결석 통계에 안잡힘)
         if (!isAdded) {
            if (p1Status === '결석') p1AbsCount++;
            if (p2Status === '결석') p2AbsCount++;
         }
-
         // 정확한 출석 인원 계산: 1교시나 2교시 중 하나라도 '결석'과 '제외'가 아닌 상태면 1명으로 카운트
         if ((p1Status !== '결석' && p1Status !== '제외') || (p2Status !== '결석' && p2Status !== '제외')) {
            realPresentCount++;
         }
-
         const btnStyle1 = "background:#3182ce; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
         const btnStyle2 = "background:#e53e3e; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
         const btnStyle3 = "background:#718096; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:bold;";
@@ -537,13 +511,11 @@
                       <button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '미출석')" title="초기화">취소</button>
                     </div>`;
         }
-
         // 추가 출석 학생이 비고가 없을 경우 기본적으로 '추가출석' 텍스트 표출
         let noteVal = student.note || '';
         if (isAdded && noteVal === '') {
             noteVal = '추가출석';
         }
-
         const tr = document.createElement('tr');
         if (isAdded) tr.style.backgroundColor = "#fafcff"; // 추가 출석자 강조
         tr.innerHTML = `
@@ -558,19 +530,25 @@
         tbody.appendChild(tr);
       });
 
-      // ★ 정확해진 상단 통계 업데이트
+      // 🌟 가독성 향상 적용된 통계 렌더링
       if (topStats) {
-        topStats.innerHTML = `<span style="margin-left:15px; color:#1f3a93; font-size:1.05rem; font-weight:bold; background:#eef2ff; padding:5px 12px; border-radius:6px; border:1px solid #d0d7ee;">출석인원: ${realPresentCount}명 (오늘출석대상: ${regCount}명, 추가출석: ${addCount}명, 1교시결석: ${p1AbsCount}명, 2교시결석: ${p2AbsCount}명)</span>`;
+        topStats.className = "stats-box-upgraded";
+        topStats.innerHTML = `
+          출석인원: <span style="color: #e91e63; font-size: 1.8rem; text-decoration: underline;">${realPresentCount}명</span> 
+          <br>
+          <span style="font-size: 1.15rem; font-weight: 600; color: #555;">
+            (오늘출석대상: ${regCount}명, 추가출석: ${addCount}명, 1교시결석: <span style="color:#d32f2f;">${p1AbsCount}명</span>, 2교시결석: <span style="color:#d32f2f;">${p2AbsCount}명</span>)
+          </span>
+        `;
       }
     }
-
+    
     function updateLocalNoteData(id, noteVal) {
       if (currentDailyData && currentDailyData.roster) {
         let student = currentDailyData.roster.find(s => s.id === id);
         if (student) { student.note = noteVal; renderPrintArea(currentDailyData); }
       }
     }
-
     function executeProcessSingle(id, name, periodStr, statusParam) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -585,7 +563,6 @@
          else { showLoading(false); alert("처리 실패: " + res.message); }
       }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
     }
-
     async function executeBatchProcess(actionType) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -615,7 +592,6 @@
         showLoading(false); alert("일괄 처리 중 오류 발생: " + err.message);
       }
     }
-
     function executeAddDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -636,7 +612,6 @@
           else { showLoading(false); alert(res.message); }
         }).catch(err => { showLoading(false); alert("오류: " + err.message); });
     }
-
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
@@ -720,7 +695,6 @@
         </table>`;
       printDiv.innerHTML = html;
     }
-
     async function ensureDataLoaded() {
       if (cacheLoaded) return;
       showLoading(true);
@@ -738,7 +712,6 @@
       } catch(e) { alert("통계 데이터를 서버에서 불러오는 중 오류가 발생했습니다."); }
       showLoading(false);
     }
-    
     function populateStudentSelect() {
       const sel = document.getElementById("indivStudentSelect");
       sel.innerHTML = '<option value="">▼ 학생을 선택하세요</option>';
@@ -749,7 +722,6 @@
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
-
     function getDatesInRange(start, end) {
       const dateArray = [];
       let currentDate = new Date(start); const stopDate = new Date(end);
@@ -765,7 +737,6 @@
       }
       return dateArray;
     }
-
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let isP1Target = (sDay === dayStr && p1_exc !== '제외');
       let isP2Target = (sDay === dayStr && p2_exc !== '제외');
@@ -787,7 +758,6 @@
       }
       return { p1: calcStatus(isP1Target, p1Log), p2: calcStatus(isP2Target, p2Log), isTargetAny: isP1Target || isP2Target || p1Log || p2Log };
     }
-
     function renderIndividual() {
       const id = document.getElementById("indivStudentSelect").value;
       const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
@@ -809,7 +779,6 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='5'>해당 기간에 출결 데이터 또는 대상일이 없습니다.</td></tr>";
     }
-
     function printIndividual() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("indivStartDate").value; const end = document.getElementById("indivEndDate").value;
@@ -818,7 +787,6 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
-
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
       if (myChart) myChart.destroy();
@@ -845,7 +813,6 @@
         }
       });
     }
-
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
@@ -887,21 +854,23 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
     }
-
     function printStats() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
       let html = `<h1 class="print-title">기간별 통계 현황</h1><div class="print-subtitle">조회기간: ${start} ~ ${end}</div><table class="print-table">` + document.getElementById('statsTable').innerHTML + `</table>`;
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
-
-      // 10초(10000 밀리초)마다 대시보드의 출석 데이터를 서버에서 다시 불러오는 마법의 타이머
-setInterval(function() {
-    // 대시보드에서 오늘 날짜 데이터를 불러오는 함수 이름 (예: loadDailyRoster 등)
-    // 선생님의 dashboard.html에 있는 '데이터 불러오기' 함수를 여기에 넣어주세요.
-    loadDailyRoster(); 
-}, 10000); 
     }
+
+    // ★ 10초마다 실시간으로 데이터를 갱신하는 안전한 타이머
+    // 사용자가 붙여넣으신 코드를 오류가 나지 않도록 알맞은 위치와 함수명으로 교정했습니다.
+    setInterval(function() {
+      // 비고란을 작성 중이거나, 다른 탭을 보고 있을 때는 새로고침 하지 않습니다. (데이터 증발 방지)
+      if (!isNoteChanged && document.getElementById('tab-daily').classList.contains('active')) {
+        loadDailyData(); // 기존에 데이터를 불러오는 함수
+      }
+    }, 10000); // 10000 밀리초 = 10초
+    
   </script>
 </body>
 </html>
