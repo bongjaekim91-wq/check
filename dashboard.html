@@ -81,6 +81,40 @@
       .st-extra { background-color: #D9EAF7 !important; color: #1F4E79 !important; font-weight: bold; }
       .st-absent { background-color: #FCE4D6 !important; color: #C00000 !important; font-weight: bold; }
       .st-excluded { background-color: #E7E6E6 !important; color: #666666 !important; font-weight: bold; }
+      <style>
+  /* 날짜와 통계를 세로로 예쁘게 정렬하는 컨테이너 */
+  .dashboard-header-container {
+    display: flex;
+    flex-direction: column; /* 세로(위아래)로 배치하여 한 줄 내림 */
+    align-items: center;    /* 가운데 정렬 */
+    gap: 20px;              /* 날짜칸과 현황판 사이의 간격 */
+    margin-bottom: 30px;    /* 표(테이블)와의 간격 */
+  }
+
+  /* 조회 날짜 부분 스타일 (필요시 적용) */
+  .date-section {
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* 🌟 확 바뀐 출결 현황판 디자인 */
+  .stats-box-upgraded {
+    background-color: #f0f7ff;       /* 부드럽고 산뜻한 연파랑 배경 */
+    border: 2px solid #8c9eff;       /* 뚜렷한 파란색 테두리 */
+    border-radius: 12px;             /* 둥근 모서리 */
+    padding: 20px 40px;              /* 넉넉한 여백으로 숨통 트임 */
+    font-size: 1.4rem;               /* ⭐️ 글자 크기를 큼직하게 키움! */
+    font-weight: 800;                /* ⭐️ 글씨를 아주 굵게 설정 */
+    color: #1a237e;                  /* 진하고 또렷한 남색 글씨 */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 은은한 입체감(그림자) */
+    text-align: center;
+    width: fit-content;              /* 내용 길이에 맞게 박스 크기 조절 */
+    line-height: 1.5;                /* 줄 간격 확보 */
+  }
+</style>
     }
   </style>
 </head>
