@@ -862,14 +862,13 @@
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
 
-    // ★ 10초마다 실시간으로 데이터를 갱신하는 안전한 타이머
-    // 사용자가 붙여넣으신 코드를 오류가 나지 않도록 알맞은 위치와 함수명으로 교정했습니다.
+    // ★ 5분마다 실시간으로 데이터를 갱신하는 안전한 타이머 
     setInterval(function() {
       // 비고란을 작성 중이거나, 다른 탭을 보고 있을 때는 새로고침 하지 않습니다. (데이터 증발 방지)
       if (!isNoteChanged && document.getElementById('tab-daily').classList.contains('active')) {
         loadDailyData(); // 기존에 데이터를 불러오는 함수
       }
-    }, 10000); // 10000 밀리초 = 10초
+    }, 300000); // 300000 밀리초 = 5분
     
   </script>
 </body>
