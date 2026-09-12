@@ -372,19 +372,40 @@
           }).catch(err => { showLoading(false); alert("오류: " + err.message); });
       });
     }
+
+    // 🌟 [수정된 부분] 휴업일 차단 및 에러 메시지 강화 (다른 로직은 동일)
     function savePdf() {
       handleAction(() => {
         const dateStr = document.getElementById('datePicker').value;
+        
+        const tempDate = new Date(dateStr);
+        const dayOfWeek = tempDate.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
+          alert("❌ 휴업일(주말/공휴일)은 출석부 데이터가 없으므로 PDF를 생성할 수 없습니다.");
+          return;
+        }
+
         if(!confirm(`${dateStr} 출석부를 PDF로 저장하시겠습니까? (약 10~15초 소요)`)) return;
+        
         showLoading(true);
         fetch(`${API_URL}?${new URLSearchParams({ action: 'saveDailyPdf', date: dateStr, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
-          .then(res => res.json()).then(res => {
+          .then(res => res.json())
+          .then(res => {
             showLoading(false);     
-            if(res.success) { alert("저장 성공!\n파일명: " + res.fileName); if(res.fileUrl) window.open(res.fileUrl, '_blank'); }
-            else alert("저장 실패: " + res.message);
-          }).catch(err => { showLoading(false); alert("서버 오류: " + err.message); });
+            if(res.success) { 
+              alert("저장 성공!\n파일명: " + res.fileName); 
+              if(res.fileUrl) window.open(res.fileUrl, '_blank'); 
+            }
+            else {
+              alert("저장 실패: " + res.message);
+            }
+          }).catch(err => { 
+            showLoading(false); 
+            alert("서버 연결 오류(Failed to fetch)가 발생했습니다.\n평일에도 이 오류가 난다면 구글 앱스 스크립트(Code.gs) 내부 오류(폴더 권한, 폴더 ID 누락 등)일 확률이 매우 높습니다.\n상세내용: " + err.message); 
+          });
       });
     }
+
     function toggleAddSection() {
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
@@ -430,7 +451,6 @@
       return true;
     }
     
-    // ★ 상단 통계 디자인 가독성 향상 적용! (내부 기능은 동일)
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       const topStats = document.getElementById('topStats');
@@ -530,7 +550,6 @@
         tbody.appendChild(tr);
       });
 
-      // 🌟 가독성 향상 적용된 통계 렌더링
       if (topStats) {
         topStats.className = "stats-box-upgraded";
         topStats.innerHTML = `
@@ -864,11 +883,10 @@
 
     // ★ 5분마다 실시간으로 데이터를 갱신하는 안전한 타이머 
     setInterval(function() {
-      // 비고란을 작성 중이거나, 다른 탭을 보고 있을 때는 새로고침 하지 않습니다. (데이터 증발 방지)
       if (!isNoteChanged && document.getElementById('tab-daily').classList.contains('active')) {
-        loadDailyData(); // 기존에 데이터를 불러오는 함수
+        loadDailyData(); 
       }
-    }, 300000); // 300000 밀리초 = 5분
+    }, 300000); 
     
   </script>
 </body>
