@@ -27,7 +27,6 @@
     .table-header-row h2 { margin: 0; color: #2b7a2b; font-size: 1.25rem; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
     .action-btns { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; flex-shrink: 0; }
     .action-btns button { border: none; border-radius: 6px; padding: 9px 12px; color: white; font-weight: bold; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; white-space: nowrap; margin: 0; }
-    /* 상단 버튼 색상 정의 */
     .btn-absence { background-color: #d53f8c; } .btn-absence:hover { background-color: #b83280; }
     .btn-save-doc { background-color: #805ad5; } .btn-save-doc:hover { background-color: #6b46c1; }
     .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
@@ -52,7 +51,6 @@
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
     .chart-container { width: 100%; max-width: 900px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
     #printArea { display: none; }
-    /* 모달 UI 공통 CSS */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
     .modal-box { background: white; padding: 35px 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); min-width: 420px; animation: popIn 0.25s ease-out; }
     .modal-box h3 { color: #dd6b20; margin-top: 0; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -89,6 +87,7 @@
 </head>
 <body>
   <div id="loading" class="loading-overlay">데이터를 처리 중입니다... ⏳</div>
+  
   <div id="saveConfirmModal" class="modal-overlay">
     <div class="modal-box">
       <h3>⚠️ 출석부 저장 확인</h3>
@@ -100,7 +99,7 @@
       </div>
     </div>
   </div>
-  <!-- 결석 승인 대기열 모달 -->
+
   <div id="absenceModal" class="modal-overlay">
     <div class="modal-box" style="min-width: 600px; max-height: 80vh; overflow-y: auto;">
       <h3 style="color:#2b7a2b; border-bottom:2px solid #e8f5e9; padding-bottom:10px;">📩 결석 신청 승인 대기열</h3>
@@ -110,7 +109,7 @@
       </div>
     </div>
   </div>
-  <!-- 커스텀 알림(Alert) 모달 -->
+
   <div id="customAlertModal" class="modal-overlay" style="z-index: 3000;">
     <div class="modal-box" style="min-width: 350px;">
       <h3 id="customAlertTitle" style="color:#2b7a2b; margin-top:0; border-bottom: 2px solid #f0f0f0; padding-bottom:10px;">알림</h3>
@@ -118,6 +117,7 @@
       <button style="background:#5ab1ea; color:white; border:none; padding:10px 25px; border-radius:8px; font-size:1.05rem; font-weight:bold; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="closeCustomAlert()">확인</button>
     </div>
   </div>
+
   <div class="container">
     <div class="header-box">
       <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
@@ -182,6 +182,7 @@
           </tbody>
         </table>
       </div>
+      
       <!-- [2] 개인별 출결 현황 탭 -->
       <div id="tab-individual" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
@@ -203,6 +204,7 @@
           </tbody>
         </table>
       </div>
+      
       <!-- [3] 기간별 통계 현황 탭 -->
       <div id="tab-stats" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
@@ -242,6 +244,7 @@
     </div>
   </div>
   <div id="printArea"></div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     const skipDates = [
@@ -257,6 +260,16 @@
     let isNoteChanged = false;
     let previousDate = "";
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
+    
+    // 유틸: 날짜 문자열에서 숫자 8자리(YYYYMMDD)만 추출 (비교의 강건성 확보)
+    function extractDateNum(dateStr) {
+      if(!dateStr) return "";
+      let str = String(dateStr);
+      let match = str.match(/(\d{4})[-./\s]*(\d{1,2})[-./\s]*(\d{1,2})/);
+      if(match) return match[1] + match[2].padStart(2, '0') + match[3].padStart(2, '0');
+      return "";
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
@@ -272,19 +285,24 @@
       loadDailyData();
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
+
     window.addEventListener('beforeunload', function (e) {
       if (isNoteChanged) { e.preventDefault(); e.returnValue = ''; }
     });
+    
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+    
     function showCustomAlert(msg, isError = false) {
       document.getElementById('customAlertTitle').innerText = isError ? "⚠️ 알림" : "✅ 안내";
       document.getElementById('customAlertTitle').style.color = isError ? "#e53e3e" : "#2b7a2b";
       document.getElementById('customAlertMessage').innerText = msg;
       document.getElementById('customAlertModal').style.display = 'flex';
     }
+    
     function closeCustomAlert() {
       document.getElementById('customAlertModal').style.display = 'none';
     }
+    
     let modalResolve = null;
     function showSaveConfirm() {
       return new Promise((resolve) => {
@@ -292,10 +310,12 @@
         modalResolve = resolve;
       });
     }
+    
     function resolveModal(choice) {
       document.getElementById('saveConfirmModal').style.display = 'none';
       if (modalResolve) { modalResolve(choice); modalResolve = null; }
     }
+    
     async function performSave(silent = false) {
       const dateStr = document.getElementById('datePicker').value;
       const inputs = document.querySelectorAll('.note-input');
@@ -318,13 +338,14 @@
         if (promises.length > 0) await Promise.all(promises);
         isNoteChanged = false;
         renderPrintArea(currentDailyData);
-        if(!silent) { showLoading(false); }
+        if(!silent) showLoading(false);
         return true;
       } catch(e) {
         if(!silent) { showLoading(false); showCustomAlert("저장 중 서버 오류가 발생했습니다.", true); }
         return false;
       }
     }
+    
     async function handleAction(actionCallback, rollbackCallback = null) {
       if (!isNoteChanged) { actionCallback(); return; }
       const choice = await showSaveConfirm();
@@ -342,6 +363,7 @@
         if (rollbackCallback) rollbackCallback();
       }
     }
+    
     async function saveAndPdf() {
       const dateStr = document.getElementById('datePicker').value;
       const dayOfWeek = new Date(dateStr).getDay();
@@ -381,8 +403,10 @@
         showCustomAlert("❌ [서버 연결 오류] 통신 실패.\n상세: " + err.message, true);
       }
     }
+    
     function checkHomeMove(e) { e.preventDefault(); handleAction(() => { window.location.href = 'index.html'; }); }
     function checkRiroMove() { handleAction(() => { window.open('https://seohyun.riroschool.kr/', '_blank'); }); }
+    
     function switchTab(tabId, btn) {
       if (btn.classList.contains('active')) return;
       handleAction(() => {
@@ -395,6 +419,7 @@
         }
       });
     }
+    
     function handleDateChange() {
       const datePicker = document.getElementById('datePicker');
       const newDate = datePicker.value;
@@ -403,6 +428,7 @@
     function refreshDailyData() { handleAction(() => { loadDailyData(); }); }
     function processSingle(id, name, periodStr, statusParam) { handleAction(() => { executeProcessSingle(id, name, periodStr, statusParam); }); }
     function addDailyStudent() { handleAction(() => { executeAddDailyStudent(); }); }
+    
     function resetDailyData() {
       handleAction(() => {
         const dateStr = document.getElementById('datePicker').value;
@@ -422,6 +448,7 @@
       const sec = document.getElementById('addStudentSection');
       sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
     }
+    
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
@@ -453,12 +480,14 @@
         })
         .catch(err => { showLoading(false); showCustomAlert("서버 통신 오류: " + err.message, true); });
     }
+    
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
       if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '결석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
       return true;
     }
+    
     function renderTable(data) {
       const tbody = document.getElementById('rosterBody');
       const topStats = document.getElementById('topStats');
@@ -538,12 +567,14 @@
         `;
       }
     }
+    
     function updateLocalNoteData(id, noteVal) {
       if (currentDailyData && currentDailyData.roster) {
         let student = currentDailyData.roster.find(s => s.id === id);
         if (student) { student.note = noteVal; renderPrintArea(currentDailyData); }
       }
     }
+    
     function executeProcessSingle(id, name, periodStr, statusParam) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -557,6 +588,7 @@
          else { showLoading(false); showCustomAlert("처리 실패: " + res.message, true); }
       }).catch(err => { showLoading(false); showCustomAlert("서버 오류: " + err.message, true); });
     }
+    
     function executeAddDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -580,6 +612,7 @@
           } else { showLoading(false); showCustomAlert(res.message, true); }
         }).catch(err => { showLoading(false); showCustomAlert("오류: " + err.message, true); });
     }
+    
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
@@ -666,8 +699,9 @@
         </table>`;
       printDiv.innerHTML = html;
     }
+
     // =========================================================================
-    // ★ [데이터 조회 및 통계 로직 (완전 복원)]
+    // ★ [데이터 조회 및 통계 로직 강건화]
     // =========================================================================
     async function ensureDataLoaded(tabId) {
       if (cacheLoaded) {
@@ -695,22 +729,24 @@
       }
       showLoading(false);
     }
+    
     function populateStudentSelect() {
       const sel = document.getElementById("indivStudentSelect");
       sel.innerHTML = '<option value="">▼ 학생을 선택하세요</option>';
       let map = {};
-      cachedStudents.forEach(s => map[s.id] = s);
-      cachedChanges.forEach(c => { if(!map[c.id]) map[c.id] = { id: c.id, name: c.name, day: '추가등록' }; });
+      cachedStudents.forEach(s => map[String(s.id).trim()] = s);
+      cachedChanges.forEach(c => { if(!map[String(c.id).trim()]) map[String(c.id).trim()] = { id: c.id, name: c.name, day: '추가등록' }; });
+      cachedLogs.forEach(l => { if(!map[String(l.id).trim()]) map[String(l.id).trim()] = { id: l.id, name: l.name || "알수없음", day: '추가등록' }; });
       Object.values(map).sort((a,b) => String(a.id).localeCompare(String(b.id))).forEach(s => {
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
+    
     function getDatesInRange(start, end) {
       const dateArray = [];
       let currentDate = new Date(start); const stopDate = new Date(end);
       const days = ["일", "월", "화", "수", "목", "금", "토"];
       while (currentDate <= stopDate) {
-        // Timezone 오류 없이 로컬 날짜를 YYYY-MM-DD 형식으로 안전하게 추출
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
         const day = String(currentDate.getDate()).padStart(2, '0');
@@ -721,14 +757,16 @@
       }
       return dateArray;
     }
-    // 특정 날짜/학생의 상태를 최신 로그 기준으로 정확하게 추출
+
+    // 🌟 특정 날짜/학생의 상태를 최신 로그 기준으로 정확하게 추출 (날짜 강건성 적용)
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
-      let safeDay = String(sDay || "").trim(); // 빈 값 방지 및 공백 제거
-      // 정확히 일치(===)가 아닌 요일 포함(.includes) 여부로 확인
+      let safeDay = String(sDay || "").trim();
       let isP1Target = (safeDay.includes(dayStr) && !isExcludedMark(p1_exc) && p1_exc !== '제외');
       let isP2Target = (safeDay.includes(dayStr) && !isExcludedMark(p2_exc) && p2_exc !== '제외');
       
-      let changes = cachedChanges.filter(c => String(c.date).includes(dateStr) && String(c.id).trim() === String(id).trim());
+      let targetNum = extractDateNum(dateStr); // "20260901"
+      
+      let changes = cachedChanges.filter(c => extractDateNum(c.date) === targetNum && String(c.id).trim() === String(id).trim());
       let lastChange = changes.length > 0 ? changes[changes.length - 1] : null;
       if (lastChange) {
         if (lastChange.status === 'REMOVE') { isP1Target = false; isP2Target = false; }
@@ -737,39 +775,49 @@
           isP2Target = (String(lastChange.p2) === 'true' || lastChange.p2 === true);
         }
       }
-      // 날짜 포맷팅 방어 로직 적용하여 정확한 당일 로그만 필터링
+      
       let dayLogs = cachedLogs.filter(l => {
-          let tStr = String(l.timestamp || l.date || "").split('T')[0];
-          return tStr.includes(dateStr) && String(l.id).trim() === String(id).trim();
+          let logNum = extractDateNum(l.timestamp || l.date);
+          return logNum === targetNum && String(l.id).trim() === String(id).trim();
       });
-      // 동일 교시에 여러 로그가 있으면 가장 마지막(최신) 상태 반영
+      
       let p1Log = dayLogs.filter(l => String(l.period).includes('1')).pop();
       let p2Log = dayLogs.filter(l => String(l.period).includes('2')).pop();
+      
       function calcStatus(isTarget, log) {
         if (log) {
           let statusStr = String(log.status).trim();
           if (statusStr === '결석' || statusStr === '미출석') return { text: '결석', type: 'absent' };
           return { text: statusStr, type: (statusStr === '추가출석' || statusStr === '수동입력' || statusStr === '수동출석') ? 'extra' : 'present' };
         }
-        // 로그 기록이 없으면 대상자는 결석 처리 (QR 미인증 등)
         if (isTarget) return { text: '결석', type: 'absent' };
         return { text: '제외(대상아님)', type: 'excluded' };
       }
       return { p1: calcStatus(isP1Target, p1Log), p2: calcStatus(isP2Target, p2Log) };
     }
+    
     function renderIndividual() {
       const id = document.getElementById("indivStudentSelect").value;
       const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
       tbody.innerHTML = "";
       if(!id) { title.innerText = "학생을 선택해주세요"; return; }
-      let sMap = {}; cachedStudents.forEach(s => sMap[String(s.id).trim()] = s);
-      cachedChanges.forEach(c => { if(!sMap[String(c.id).trim()]) sMap[String(c.id).trim()] = { id: c.id, name: c.name, day: '', p1_exc: '제외', p2_exc: '제외' }; });
+      
+      let sMap = {}; 
+      cachedStudents.forEach(s => {
+          let sid = String(s.id).trim();
+          let dStr = String(s.day || "").trim();
+          if(!sMap[sid]) { sMap[sid] = { id: s.id, name: s.name, day: dStr, p1_exc: s.p1_exc, p2_exc: s.p2_exc }; }
+          else { if(!sMap[sid].day.includes(dStr)) sMap[sid].day += ", " + dStr; }
+      });
+      cachedChanges.forEach(c => { if(!sMap[String(c.id).trim()]) sMap[String(c.id).trim()] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외' }; });
+      cachedLogs.forEach(l => { if(!sMap[String(l.id).trim()]) sMap[String(l.id).trim()] = { id: l.id, name: l.name || '알수없음', day: '명단외(로그)', p1_exc: '제외', p2_exc: '제외' }; });
+      
       const st = sMap[String(id).trim()];
       title.innerText = `🧑‍🎓 ${st.name} (${st.id}) 학생 출결 현황`;
       const dateArr = getDatesInRange(document.getElementById("indivStartDate").value, document.getElementById("indivEndDate").value);
       dateArr.forEach(d => {
         let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
-        if(stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded' || stat.p1.type === 'present' || stat.p2.type === 'present') {
+        if(stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded' || stat.p1.type === 'present' || stat.p2.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'extra') {
           let tr = document.createElement("tr");
           tr.innerHTML = `<td>${d.date}</td><td>${d.day}</td><td class="status-${stat.p1.type}">${stat.p1.text}</td><td class="status-${stat.p2.type}">${stat.p2.text}</td><td>-</td>`;
           tbody.appendChild(tr);
@@ -777,6 +825,7 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='5'>해당 기간에 출결 데이터 또는 대상일이 없습니다.</td></tr>";
     }
+    
     function printIndividual() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("indivStartDate").value; const end = document.getElementById("indivEndDate").value;
@@ -785,7 +834,7 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
-    // 차트 그리기 시각적 개선 (색상 및 두께 조절)
+    
     function drawStatsChart(labels, presentData, absentData) {
       const ctx = document.getElementById('statsChart').getContext('2d');
       if (myChart) myChart.destroy();
@@ -817,20 +866,40 @@
         }
       });
     }
-    // 통계 로직 (교시별 합산 및 예쁜 진행률 바 표시)
+    
+    // 🌟 통계 로직 (요일 병합 및 예외 허용 로직 적용)
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
       const dateArr = getDatesInRange(start, end);
+      
       let sMap = {};
-      cachedStudents.forEach(s => { sMap[String(s.id).trim()] = { id: s.id, name: s.name, day: s.day, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; });
-      cachedChanges.forEach(c => { if(!sMap[String(c.id).trim()]) sMap[String(c.id).trim()] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; });
+      cachedStudents.forEach(s => { 
+        let sid = String(s.id).trim();
+        let sDayStr = String(s.day || "").trim();
+        if(!sMap[sid]) {
+            sMap[sid] = { id: s.id, name: s.name, day: sDayStr, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; 
+        } else {
+            if(!sMap[sid].day.includes(sDayStr)) sMap[sid].day += ", " + sDayStr;
+            if(sMap[sid].p1_exc === '제외' && s.p1_exc !== '제외') sMap[sid].p1_exc = s.p1_exc;
+            if(sMap[sid].p2_exc === '제외' && s.p2_exc !== '제외') sMap[sid].p2_exc = s.p2_exc;
+        }
+      });
+      cachedChanges.forEach(c => { 
+        let sid = String(c.id).trim();
+        if(!sMap[sid]) sMap[sid] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; 
+      });
+      cachedLogs.forEach(l => { 
+        let sid = String(l.id).trim();
+        if(!sMap[sid]) sMap[sid] = { id: l.id, name: l.name || "알수없음", day: '명단외(로그)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; 
+      });
+
       let chartLabels = []; let chartPresentData = []; let chartAbsentData = [];
       dateArr.forEach(d => {
         let dailyPresentCount = 0; let dailyAbsentCount = 0;
         Object.values(sMap).forEach(st => {
           let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
-          // [1] 학생별 누적 계산 (교시 기준 연인원 - 정확한 출석률 산출용)
+          
           if(stat.p1.type !== 'excluded') {
             st.target++;
             if(stat.p1.type === 'present' || stat.p1.type === 'extra') { st.present++; if(stat.p1.type === 'extra') st.extra++; }
@@ -841,33 +910,32 @@
             if(stat.p2.type === 'present' || stat.p2.type === 'extra') { st.present++; if(stat.p2.type === 'extra') st.extra++; }
             else if(stat.p2.type === 'absent') { st.absent++; }
           }
-          // [2] 일별 차트 계산 (실인원 기준: 1, 2교시 중 한 번이라도 오면 출석 1명)
+          
           let isTargetToday = (stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded');
           let attendedToday = (stat.p1.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'present' || stat.p2.type === 'extra');
           if (isTargetToday) {
             if (attendedToday) dailyPresentCount++;
             else dailyAbsentCount++;
           } else if (attendedToday) {
-            dailyPresentCount++; // 대상 아님에도 추가 출석한 학생 포함
+            dailyPresentCount++; 
           }
         });
         
-        // 출결 인원이 0명이더라도 x축에 날짜가 보이도록 조건 해제
         const shortDate = d.date.substring(5).replace('-', '/');
         chartLabels.push(`${shortDate}(${d.day})`);
         chartPresentData.push(dailyPresentCount);
         chartAbsentData.push(dailyAbsentCount);
       });
+      
       drawStatsChart(chartLabels, chartPresentData, chartAbsentData);
+      
       const tbody = document.getElementById("statsBody");
       tbody.innerHTML = "";
       Object.values(sMap).sort((a,b) => String(a.id).localeCompare(String(b.id))).forEach(st => {
-        if(st.target === 0 && st.present === 0) return; // 조회 기간 내 대상/출석 기록이 없으면 제외
+        if(st.target === 0 && st.present === 0) return; 
         let rateNum = st.target > 0 ? Math.round((st.present / st.target) * 100) : 0;
-        // 출석률에 따른 색상 지정 (80%이상:녹색, 50%이상:주황, 미만:빨강)
         let rateColor = rateNum >= 80 ? '#38a169' : rateNum >= 50 ? '#d69e2e' : '#e53e3e';
         let barBgColor = rateNum >= 80 ? '#c6f6d5' : rateNum >= 50 ? '#feebc8' : '#fed7d7';
-        // 예쁜 Progress Bar HTML 조립
         let barHtml = `
           <div style="display:flex; align-items:center; justify-content:center; gap:10px; width: 100%;">
             <div style="flex-grow: 1; max-width: 120px; background-color:${barBgColor}; border-radius:10px; height:12px; overflow:hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);">
@@ -891,6 +959,7 @@
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8' style='padding: 20px;'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
     }
+    
     function printStats() {
       const printDiv = document.getElementById('printArea');
       const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
@@ -898,6 +967,7 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
+    
     function copyIndividualSms(btnElement, name, p1Stat, p2Stat) {
       let isAbsent = (p1Stat.includes("결석") || p2Stat.includes("결석"));
       if (!isAbsent) { showCustomAlert(`${name} 학생은 결석 상태가 아닙니다.`, true); return; }
@@ -911,6 +981,7 @@
       document.body.appendChild(tempArea); tempArea.select(); document.execCommand("copy"); document.body.removeChild(tempArea);
       showCustomAlert(`[${name}] 학생의 결석 안내 문자가 복사되었습니다!\n\n${smsText}`);
     }
+    
     function openAbsenceModal() {
       document.getElementById('absenceModal').style.display = 'flex';
       const container = document.getElementById('absenceListContainer');
@@ -943,6 +1014,7 @@
           container.innerHTML = `<div style="text-align:center; padding: 20px; color:red;">데이터를 불러오는 중 오류가 발생했습니다.<br>${err.message}</div>`;
         });
     }
+    
     function processAbsence(row, status, date, id, name, reason) {
       if(!confirm(`해당 학생의 결석 사유를 [${status}] 처리하시겠습니까?`)) return;
       showLoading(true);
@@ -967,6 +1039,7 @@
         showCustomAlert("서버 오류가 발생했습니다.", true);
       });
     }
+    
     function closeAbsenceModal() {
       document.getElementById('absenceModal').style.display = 'none';
     }
