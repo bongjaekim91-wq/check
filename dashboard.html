@@ -942,7 +942,7 @@
       const dObj = new Date(document.getElementById('datePicker').value);
       const formattedDate = `${dObj.getMonth()+1}월 ${dObj.getDate()}일`;
       let smsText = `안녕하세요. 서현고등학교입니다. ${formattedDate} 야간자기주도학습에 ${name} 학생이` ;
-      smsText += (note !== "" && note !== "추가출석") ? `[${note}](과)와 같은 이유로 결석했습니다.` : `무단결석했습니다.`;
+      smsText += (note !== "" && note !== "추가출석") ? `[${note}](과)와 같은 이유로 결석했습니다.` : `무단 결석했습니다.`;
       const tempArea = document.createElement("textarea"); tempArea.value = smsText;
       document.body.appendChild(tempArea); tempArea.select(); document.execCommand("copy"); document.body.removeChild(tempArea);
       showCustomAlert(`[${name}] 학생의 결석 안내 문자가 복사되었습니다!\n\n${smsText}`);
