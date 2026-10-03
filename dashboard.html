@@ -6,7 +6,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <style>
-    /* 전체 화면을 넓게 쓰기 위해 max-width를 95%로 확장 */
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f1f8ed; color: #333; margin: 0; padding: 20px; }
     .container { max-width: 95%; margin: 0 auto; }
     .header-box { background: white; border-radius: 12px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
@@ -253,6 +252,8 @@
         "2026-11-18", "2026-11-19", "2026-11-20", "2026-12-03", "2026-12-07",
         "2026-12-08", "2026-12-09", "2026-12-18", "2026-12-24"
     ];
+    
+    // 캐싱 변수
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
     let cacheLoaded = false;
     let currentDailyData = null;
@@ -261,12 +262,35 @@
     let previousDate = "";
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
     
-    // 유틸: 날짜 문자열에서 숫자 8자리(YYYYMMDD)만 추출 (비교의 강건성 확보)
+    // 🌟 1. 응답 데이터에서 배열을 완벽하게 추출하는 함수 (API 에러 원천 차단)
+    function extractArray(res) {
+      if (!res) return [];
+      if (Array.isArray(res)) return res;
+      if (res.data && Array.isArray(res.data)) return res.data;
+      if (res.list && Array.isArray(res.list)) return res.list;
+      if (res.roster && Array.isArray(res.roster)) return res.roster;
+      if (res.logs && Array.isArray(res.logs)) return res.logs;
+      if (res.changes && Array.isArray(res.changes)) return res.changes;
+      return [];
+    }
+
+    // 🌟 2. 날짜 문자열 강건 변환기 (YYYYMMDD 포맷으로 통일)
     function extractDateNum(dateStr) {
-      if(!dateStr) return "";
-      let str = String(dateStr);
-      let match = str.match(/(\d{4})[-./\s]*(\d{1,2})[-./\s]*(\d{1,2})/);
-      if(match) return match[1] + match[2].padStart(2, '0') + match[3].padStart(2, '0');
+      if (!dateStr) return "";
+      let str = String(dateStr).trim();
+      // 1순위: 숫자 패턴 추출 (예: 2026-09-01, 2026. 9. 1. 모두 커버)
+      let match = str.match(/(\d{4})[-./년\s]+(\d{1,2})[-./월\s]+(\d{1,2})/);
+      if (match) {
+        return match[1] + match[2].padStart(2, '0') + match[3].padStart(2, '0');
+      }
+      // 2순위: JS Date 파싱
+      let d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        let yyyy = d.getFullYear();
+        let mm = String(d.getMonth() + 1).padStart(2, '0');
+        let dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}${mm}${dd}`;
+      }
       return "";
     }
 
@@ -291,17 +315,13 @@
     });
     
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
-    
     function showCustomAlert(msg, isError = false) {
       document.getElementById('customAlertTitle').innerText = isError ? "⚠️ 알림" : "✅ 안내";
       document.getElementById('customAlertTitle').style.color = isError ? "#e53e3e" : "#2b7a2b";
       document.getElementById('customAlertMessage').innerText = msg;
       document.getElementById('customAlertModal').style.display = 'flex';
     }
-    
-    function closeCustomAlert() {
-      document.getElementById('customAlertModal').style.display = 'none';
-    }
+    function closeCustomAlert() { document.getElementById('customAlertModal').style.display = 'none'; }
     
     let modalResolve = null;
     function showSaveConfirm() {
@@ -310,12 +330,12 @@
         modalResolve = resolve;
       });
     }
-    
     function resolveModal(choice) {
       document.getElementById('saveConfirmModal').style.display = 'none';
       if (modalResolve) { modalResolve(choice); modalResolve = null; }
     }
     
+    // (일일 출석부 저장/불러오기 로직 - 이전과 동일)
     async function performSave(silent = false) {
       const dateStr = document.getElementById('datePicker').value;
       const inputs = document.querySelectorAll('.note-input');
@@ -327,22 +347,17 @@
         const noteVal = input.value;
         if (originalVal !== noteVal) {
           promises.push(
-            fetch(`${API_URL}?${new URLSearchParams({
-              action: 'saveNote', date: dateStr, id: id, note: noteVal, _t: new Date().getTime()
-            }).toString()}`).then(r => r.json())
+            fetch(`${API_URL}?${new URLSearchParams({ action: 'saveNote', date: dateStr, id: id, note: noteVal, _t: new Date().getTime() }).toString()}`).then(r => r.json())
           );
           input.setAttribute('data-original', noteVal);
         }
       });
       try {
         if (promises.length > 0) await Promise.all(promises);
-        isNoteChanged = false;
-        renderPrintArea(currentDailyData);
-        if(!silent) showLoading(false);
-        return true;
+        isNoteChanged = false; renderPrintArea(currentDailyData);
+        if(!silent) showLoading(false); return true;
       } catch(e) {
-        if(!silent) { showLoading(false); showCustomAlert("저장 중 서버 오류가 발생했습니다.", true); }
-        return false;
+        if(!silent) { showLoading(false); showCustomAlert("저장 중 서버 오류가 발생했습니다.", true); } return false;
       }
     }
     
@@ -353,55 +368,27 @@
         showLoading(true);
         const success = await performSave(true);
         showLoading(false);
-        if (success) { actionCallback(); } else {
-          showCustomAlert("데이터 저장에 실패하여 이동을 취소합니다.", true);
-          if (rollbackCallback) rollbackCallback();
-        }
-      } else if (choice === 'discard') {
-        isNoteChanged = false; actionCallback();
-      } else if (choice === 'cancel') {
-        if (rollbackCallback) rollbackCallback();
-      }
+        if (success) { actionCallback(); } else { showCustomAlert("데이터 저장에 실패하여 이동을 취소합니다.", true); if (rollbackCallback) rollbackCallback(); }
+      } else if (choice === 'discard') { isNoteChanged = false; actionCallback(); } 
+      else if (choice === 'cancel') { if (rollbackCallback) rollbackCallback(); }
     }
     
     async function saveAndPdf() {
       const dateStr = document.getElementById('datePicker').value;
       const dayOfWeek = new Date(dateStr).getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
-        showCustomAlert("❌ 휴업일은 저장할 수 없습니다.", true);
-        return;
-      }
+      if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) { showCustomAlert("❌ 휴업일은 저장할 수 없습니다.", true); return; }
       if(!confirm(`${dateStr} 출석부를 구글드라이브에 PDF로 저장하시겠습니까?\n(약 10~20초 소요)`)) return;
       showLoading(true);
-      if (isNoteChanged) {
-        const saveSuccess = await performSave(true);
-        if (!saveSuccess) {
-          showLoading(false);
-          return;
-        }
-      }
+      if (isNoteChanged) { const saveSuccess = await performSave(true); if (!saveSuccess) { showLoading(false); return; } }
       try {
-        const url = `${API_URL}?${new URLSearchParams({ action: 'saveDailyPdf', date: dateStr, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`;
-        const res = await fetch(url);
+        const res = await fetch(`${API_URL}?${new URLSearchParams({ action: 'saveDailyPdf', date: dateStr, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`);
         const text = await res.text();
         let jsonRes;
-        try { jsonRes = JSON.parse(text); } catch(e) {
-           showLoading(false);
-           showCustomAlert("❌ [서버 내부 오류] 저장 중 구글 서버에서 처리가 중단되었습니다.", true);
-           return;
-        }
+        try { jsonRes = JSON.parse(text); } catch(e) { showLoading(false); showCustomAlert("❌ [서버 내부 오류] 저장 중 처리 중단됨.", true); return; }
         showLoading(false);     
-        if(jsonRes.success) {
-           showCustomAlert(`✅ 출석부가 성공적으로 저장되었습니다!\n\n파일명: ${jsonRes.fileName}`);
-           if(jsonRes.fileUrl) window.open(jsonRes.fileUrl, '_blank');
-        }
-        else {
-           showCustomAlert("❌ 저장 실패: " + jsonRes.message, true);
-        }
-      } catch (err) {
-        showLoading(false);
-        showCustomAlert("❌ [서버 연결 오류] 통신 실패.\n상세: " + err.message, true);
-      }
+        if(jsonRes.success) { showCustomAlert(`✅ 출석부가 성공적으로 저장되었습니다!\n\n파일명: ${jsonRes.fileName}`); if(jsonRes.fileUrl) window.open(jsonRes.fileUrl, '_blank'); }
+        else { showCustomAlert("❌ 저장 실패: " + jsonRes.message, true); }
+      } catch (err) { showLoading(false); showCustomAlert("❌ [서버 연결 오류] 통신 실패: " + err.message, true); }
     }
     
     function checkHomeMove(e) { e.preventDefault(); handleAction(() => { window.location.href = 'index.html'; }); }
@@ -414,9 +401,7 @@
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         btn.classList.add('active');
-        if (tabId === 'tab-individual' || tabId === 'tab-stats') {
-          ensureDataLoaded(tabId);
-        }
+        if (tabId === 'tab-individual' || tabId === 'tab-stats') { ensureDataLoaded(tabId); }
       });
     }
     
@@ -436,10 +421,7 @@
         showLoading(true);
         fetch(`${API_URL}?${new URLSearchParams({ action: 'resetDailyAttendance', date: dateStr, _t: new Date().getTime() }).toString()}`)
           .then(res => res.json()).then(res => {
-            if(res.success) {
-              showCustomAlert(`${dateStr} 출석부가 초기화되었습니다.`);
-              isNoteChanged = false; cacheLoaded = false; loadDailyData();
-            }
+            if(res.success) { showCustomAlert(`${dateStr} 출석부가 초기화되었습니다.`); isNoteChanged = false; cacheLoaded = false; loadDailyData(); }
             else { showLoading(false); showCustomAlert("초기화 실패: " + (res.message || "서버 오류"), true); }
           }).catch(err => { showLoading(false); showCustomAlert("오류: " + err.message, true); });
       });
@@ -452,33 +434,23 @@
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
-      const tempDate = new Date(dateStr);
-      const dayOfWeek = tempDate.getDay();
+      const tempDate = new Date(dateStr); const dayOfWeek = tempDate.getDay();
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
          document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#e53e3e; margin-left:10px; font-weight:bold;">(휴업일 / 출석부 없음)</span>`;
          document.getElementById('rosterBody').innerHTML = '<tr><td colspan="8" style="color:#e53e3e; font-weight:bold; padding:30px; text-align:center;">✅ 지정된 휴업일이므로 출석부를 생성하지 않습니다.</td></tr>';
-         document.getElementById('topStats').innerHTML = '';
-         return;
+         document.getElementById('topStats').innerHTML = ''; return;
       }
       showLoading(true);
       fetch(`${API_URL}?action=getDailyRoster&date=${dateStr}&_t=${new Date().getTime()}`)
-        .then(res => res.json())
-        .then(response => {
-          showLoading(false);
-          isNoteChanged = false;
+        .then(res => res.json()).then(response => {
+          showLoading(false); isNoteChanged = false;
           let rawTeacherStr = response.teacherText || "";
           let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
           let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
           document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
-          if(response.success) {
-            currentDailyData = response;
-            renderTable(response);
-            renderPrintArea(response);
-          } else {
-            showCustomAlert("데이터 불러오기 실패: " + (response.message || "알 수 없는 오류"), true);
-          }
-        })
-        .catch(err => { showLoading(false); showCustomAlert("서버 통신 오류: " + err.message, true); });
+          if(response.success) { currentDailyData = response; renderTable(response); renderPrintArea(response); } 
+          else { showCustomAlert("데이터 불러오기 실패: " + (response.message || "알 수 없는 오류"), true); }
+        }).catch(err => { showLoading(false); showCustomAlert("서버 통신 오류: " + err.message, true); });
     }
     
     function isExcludedMark(val) {
@@ -489,13 +461,11 @@
     }
     
     function renderTable(data) {
-      const tbody = document.getElementById('rosterBody');
-      const topStats = document.getElementById('topStats');
+      const tbody = document.getElementById('rosterBody'); const topStats = document.getElementById('topStats');
       tbody.innerHTML = '';
       if(!data.roster || data.roster.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;">해당 날짜에 등록된 학생이 없습니다.</td></tr>';
-        topStats.innerHTML = '';
-        return;
+        topStats.innerHTML = ''; return;
       }
       data.roster.sort(function(a, b) {
         let aIsAdded = (a.day === "추가등록"); let bIsAdded = (b.day === "추가등록");
@@ -508,8 +478,7 @@
       data.roster.forEach(function(student, index) {
         let isAdded = (student.day === "추가등록");
         if (isAdded) addCount++; else regCount++;
-        let p1Status = '결석', p2Status = '결석';
-        let p1Class = 'status-absent', p2Class = 'status-absent';
+        let p1Status = '결석', p2Status = '결석'; let p1Class = 'status-absent', p2Class = 'status-absent';
         let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
         let isP2Excluded = isExcludedMark(student.p2_exc) || student.p2_exc === "제외";
         if (isP1Excluded) { p1Status = '제외'; p1Class = 'status-excluded'; }
@@ -536,21 +505,14 @@
         const btnStyle1 = "background:#3182ce; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.8rem; cursor:pointer; font-weight:bold;";
         const btnStyle2 = "background:#e53e3e; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.8rem; cursor:pointer; font-weight:bold;";
         const btnStyle3 = "background:#718096; color:white; border:none; padding:4px 6px; border-radius:4px; font-size:0.8rem; cursor:pointer; font-weight:bold;";
-        let p1Btn = '';
-        if (p1Status !== '제외') { p1Btn = `<div style="display:flex; gap:3px; justify-content:center; margin-bottom:4px;"><button style="${btnStyle1}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '수동출석')">1출석</button><button style="${btnStyle2}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '결석')">1결석</button><button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '미출석')" title="초기화">취소</button></div>`; }
-        let p2Btn = '';
-        if (p2Status !== '제외') { p2Btn = `<div style="display:flex; gap:3px; justify-content:center;"><button style="${btnStyle1}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '수동출석')">2출석</button><button style="${btnStyle2}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '결석')">2결석</button><button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '미출석')" title="초기화">취소</button></div>`; }
-        let noteVal = student.note || '';
-        if (isAdded && noteVal === '') noteVal = '추가출석';
+        let p1Btn = ''; if (p1Status !== '제외') { p1Btn = `<div style="display:flex; gap:3px; justify-content:center; margin-bottom:4px;"><button style="${btnStyle1}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '수동출석')">1출석</button><button style="${btnStyle2}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '결석')">1결석</button><button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '1교시', '미출석')" title="초기화">취소</button></div>`; }
+        let p2Btn = ''; if (p2Status !== '제외') { p2Btn = `<div style="display:flex; gap:3px; justify-content:center;"><button style="${btnStyle1}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '수동출석')">2출석</button><button style="${btnStyle2}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '결석')">2결석</button><button style="${btnStyle3}" onclick="processSingle('${student.id}', '${student.name}', '2교시', '미출석')" title="초기화">취소</button></div>`; }
+        let noteVal = student.note || ''; if (isAdded && noteVal === '') noteVal = '추가출석';
         const tr = document.createElement('tr');
         if (isAdded) tr.style.backgroundColor = "#fafcff";
         tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td style="font-weight:bold;">${student.id}</td>
-          <td style="font-weight:bold;">${student.name}</td>
-          <td class="${p1Class}">${p1Status}${p1Time}</td>
-          <td class="${p2Class}">${p2Status}${p2Time}</td>
-          <td>${p1Btn}${p2Btn}</td>
+          <td>${index + 1}</td><td style="font-weight:bold;">${student.id}</td><td style="font-weight:bold;">${student.name}</td>
+          <td class="${p1Class}">${p1Status}${p1Time}</td><td class="${p2Class}">${p2Status}${p2Time}</td><td>${p1Btn}${p2Btn}</td>
           <td><button style="font-size:0.85rem; padding:6px 12px; cursor:pointer; background:#5ab1ea; color:white; border:none; border-radius:6px; font-weight:bold;" onclick="copyIndividualSms(this, '${student.name}', '${p1Status}', '${p2Status}')">✉️복사</button></td>
           <td><input type="text" class="note-input" data-id="${student.id}" data-original="${noteVal}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="특이사항 입력" value="${noteVal}" oninput="isNoteChanged = true;" onchange="updateLocalNoteData('${student.id}', this.value)"></td>
         `;
@@ -559,28 +521,20 @@
       if (topStats) {
         topStats.className = "stats-box-upgraded";
         topStats.innerHTML = `
-          출석인원: <span style="color: #e91e63; font-size: 1.8rem; text-decoration: underline;">${realPresentCount}명</span>
-          <br>
-          <span style="font-size: 1.15rem; font-weight: 600; color: #555;">
-            (오늘출석대상: ${regCount}명, 추가출석: ${addCount}명, 1교시결석: <span style="color:#d32f2f;">${p1AbsCount}명</span>, 2교시결석: <span style="color:#d32f2f;">${p2AbsCount}명</span>)
-          </span>
+          출석인원: <span style="color: #e91e63; font-size: 1.8rem; text-decoration: underline;">${realPresentCount}명</span><br>
+          <span style="font-size: 1.15rem; font-weight: 600; color: #555;">(오늘출석대상: ${regCount}명, 추가출석: ${addCount}명, 1교시결석: <span style="color:#d32f2f;">${p1AbsCount}명</span>, 2교시결석: <span style="color:#d32f2f;">${p2AbsCount}명</span>)</span>
         `;
       }
     }
     
     function updateLocalNoteData(id, noteVal) {
-      if (currentDailyData && currentDailyData.roster) {
-        let student = currentDailyData.roster.find(s => s.id === id);
-        if (student) { student.note = noteVal; renderPrintArea(currentDailyData); }
-      }
+      if (currentDailyData && currentDailyData.roster) { let student = currentDailyData.roster.find(s => s.id === id); if (student) { student.note = noteVal; renderPrintArea(currentDailyData); } }
     }
     
     function executeProcessSingle(id, name, periodStr, statusParam) {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      if (dateStr !== localToday) {
-        if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출결 데이터를 수정하시겠습니까?`)) return;
-      }
+      if (dateStr !== localToday) { if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출결 데이터를 수정하시겠습니까?`)) return; }
       showLoading(true);
       fetch(`${API_URL}?${new URLSearchParams({ action: 'markAttendance', date: dateStr, id: id, name: name, period: periodStr, status: statusParam, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
       .then(res => res.json()).then(res => {
@@ -592,16 +546,10 @@
     function executeAddDailyStudent() {
       const dateStr = document.getElementById('datePicker').value;
       const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-      if (dateStr !== localToday) {
-        if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출석부에 학생을 추가하시겠습니까?`)) return;
-      }
-      const id = document.getElementById('addId').value.trim();
-      const name = document.getElementById('addName').value.trim();
-      const p1 = document.getElementById('addP1').checked;
-      const p2 = document.getElementById('addP2').checked;
-      if (!id || (!p1 && !p2)) {
-        showCustomAlert("학번을 입력하고 최소 1개의 교시를 선택해주세요.", true); return;
-      }
+      if (dateStr !== localToday) { if(!confirm(`⚠️ 선택된 날짜(${dateStr})가 오늘이 아닙니다.\n과거/미래 출석부에 학생을 추가하시겠습니까?`)) return; }
+      const id = document.getElementById('addId').value.trim(); const name = document.getElementById('addName').value.trim();
+      const p1 = document.getElementById('addP1').checked; const p2 = document.getElementById('addP2').checked;
+      if (!id || (!p1 && !p2)) { showCustomAlert("학번을 입력하고 최소 1개의 교시를 선택해주세요.", true); return; }
       showLoading(true);
       fetch(`${API_URL}?${new URLSearchParams({ action: 'addDailyStudent', date: dateStr, id: id, name: name, p1: p1, p2: p2, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
         .then(res => res.json()).then(res => {
@@ -616,8 +564,7 @@
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
-      let rawTeacherStr = data.teacherText || "";
-      let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
+      let rawTeacherStr = data.teacherText || ""; let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
       const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
       let logMap = {}; let extraRows = [];
       if(data.logs) {
@@ -669,13 +616,11 @@
         <table class="print-table">
           <tr><th class="bg-primary" style="width:6%">번호</th><th class="bg-primary" style="width:14%">학번</th><th class="bg-primary" style="width:15%">이름</th><th class="bg-primary" style="width:20%">1교시</th><th class="bg-primary" style="width:20%">2교시</th><th class="bg-primary" style="width:25%">비고</th></tr>
       `;
-      if(data.roster.length === 0) {
-        html += `<tr><td colspan="6">해당 요일 출석 대상 학생 없음</td></tr>`;
-      } else {
+      if(data.roster.length === 0) { html += `<tr><td colspan="6">해당 요일 출석 대상 학생 없음</td></tr>`; } 
+      else {
         data.roster.forEach((student, idx) => {
           let s1 = getPrintStatusInfo(student, "1교시"); let s2 = getPrintStatusInfo(student, "2교시");
-          let noteVal = student.note || '';
-          if (student.day === "추가등록" && noteVal === '') noteVal = '추가출석';
+          let noteVal = student.note || ''; if (student.day === "추가등록" && noteVal === '') noteVal = '추가출석';
           html += `<tr><td>${idx + 1}</td><td>${student.id}</td><td>${student.name}</td><td class="${s1.type}">${s1.text}</td><td class="${s2.type}">${s2.text}</td><td>${noteVal}</td></tr>`;
         });
       }
@@ -701,8 +646,21 @@
     }
 
     // =========================================================================
-    // ★ [데이터 조회 및 통계 로직 강건화]
+    // ★ [데이터 조회 및 통계 로직 강건화 - 어떤 에러가 발생해도 통계를 보여주도록 개선]
     // =========================================================================
+    
+    // API 통신 시 에러가 나면 빈 배열을 리턴하여 전체가 다운되는 현상 방지
+    const safeFetchJson = async (action, t) => {
+      try {
+        const res = await fetch(`${API_URL}?action=${action}&_t=${t}`);
+        const data = await res.json();
+        return extractArray(data);
+      } catch (e) {
+        console.warn(`API '${action}' 호출 실패:`, e);
+        return []; // 에러 발생 시 빈 배열 반환
+      }
+    };
+
     async function ensureDataLoaded(tabId) {
       if (cacheLoaded) {
         if (tabId === 'tab-individual' && document.getElementById("indivStudentSelect").value !== "") { renderIndividual(); }
@@ -712,20 +670,25 @@
       showLoading(true);
       try {
         const t = new Date().getTime();
-        const fetchJson = async (action) => {
-          const res = await fetch(`${API_URL}?action=${action}&_t=${t}`);
-          return await res.json();
-        };
-        const [stRes, logRes, chRes] = await Promise.all([ fetchJson('getStudents'), fetchJson('getLogs'), fetchJson('getDailyChanges') ]);
-        cachedStudents = Array.isArray(stRes) ? stRes : (stRes.list || []);
-        cachedLogs = Array.isArray(logRes) ? logRes : (logRes.list || []);
-        cachedChanges = Array.isArray(chRes) ? chRes : (chRes.list || []);
+        
+        // 3개의 데이터를 비동기로 모두 가져오되, 하나가 실패해도 나머지는 살림
+        const [stArr, logArr, chArr] = await Promise.all([ 
+          safeFetchJson('getStudents', t), 
+          safeFetchJson('getLogs', t), 
+          safeFetchJson('getDailyChanges', t) 
+        ]);
+        
+        cachedStudents = stArr;
+        cachedLogs = logArr;
+        cachedChanges = chArr;
         cacheLoaded = true;
+        
         populateStudentSelect();
+        
         if (tabId === 'tab-stats') { renderStats(); }
         else if (tabId === 'tab-individual' && document.getElementById("indivStudentSelect").value !== "") { renderIndividual(); }
       } catch(e) {
-        showCustomAlert("❌ 통계 데이터를 불러오는 데 실패했습니다.", true);
+        showCustomAlert("❌ 통계 데이터를 불러오는 데 심각한 오류가 발생했습니다.", true);
       }
       showLoading(false);
     }
@@ -737,13 +700,21 @@
       cachedStudents.forEach(s => map[String(s.id).trim()] = s);
       cachedChanges.forEach(c => { if(!map[String(c.id).trim()]) map[String(c.id).trim()] = { id: c.id, name: c.name, day: '추가등록' }; });
       cachedLogs.forEach(l => { if(!map[String(l.id).trim()]) map[String(l.id).trim()] = { id: l.id, name: l.name || "알수없음", day: '추가등록' }; });
-      Object.values(map).sort((a,b) => String(a.id).localeCompare(String(b.id))).forEach(s => {
+      
+      const stList = Object.values(map).sort((a,b) => String(a.id).localeCompare(String(b.id)));
+      if (stList.length === 0) {
+        sel.innerHTML = '<option value="">⚠️ 등록된 학생 또는 기록이 없습니다.</option>';
+        return;
+      }
+      
+      stList.forEach(s => {
         const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
       });
     }
     
     function getDatesInRange(start, end) {
       const dateArray = [];
+      if (!start || !end) return dateArray;
       let currentDate = new Date(start); const stopDate = new Date(end);
       const days = ["일", "월", "화", "수", "목", "금", "토"];
       while (currentDate <= stopDate) {
@@ -758,13 +729,12 @@
       return dateArray;
     }
 
-    // 🌟 특정 날짜/학생의 상태를 최신 로그 기준으로 정확하게 추출 (날짜 강건성 적용)
     function getStudentStatusForDate(id, sDay, p1_exc, p2_exc, dateStr, dayStr) {
       let safeDay = String(sDay || "").trim();
       let isP1Target = (safeDay.includes(dayStr) && !isExcludedMark(p1_exc) && p1_exc !== '제외');
       let isP2Target = (safeDay.includes(dayStr) && !isExcludedMark(p2_exc) && p2_exc !== '제외');
       
-      let targetNum = extractDateNum(dateStr); // "20260901"
+      let targetNum = extractDateNum(dateStr); // 예: 20260901
       
       let changes = cachedChanges.filter(c => extractDateNum(c.date) === targetNum && String(c.id).trim() === String(id).trim());
       let lastChange = changes.length > 0 ? changes[changes.length - 1] : null;
@@ -800,6 +770,7 @@
       const id = document.getElementById("indivStudentSelect").value;
       const tbody = document.getElementById("indivBody"); const title = document.getElementById("indivName");
       tbody.innerHTML = "";
+      
       if(!id) { title.innerText = "학생을 선택해주세요"; return; }
       
       let sMap = {}; 
@@ -813,8 +784,11 @@
       cachedLogs.forEach(l => { if(!sMap[String(l.id).trim()]) sMap[String(l.id).trim()] = { id: l.id, name: l.name || '알수없음', day: '명단외(로그)', p1_exc: '제외', p2_exc: '제외' }; });
       
       const st = sMap[String(id).trim()];
+      if (!st) { title.innerText = "학생 데이터를 찾을 수 없습니다."; return; }
+      
       title.innerText = `🧑‍🎓 ${st.name} (${st.id}) 학생 출결 현황`;
       const dateArr = getDatesInRange(document.getElementById("indivStartDate").value, document.getElementById("indivEndDate").value);
+      
       dateArr.forEach(d => {
         let stat = getStudentStatusForDate(st.id, st.day, st.p1_exc, st.p2_exc, d.date, d.day);
         if(stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded' || stat.p1.type === 'present' || stat.p2.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'extra') {
@@ -853,11 +827,7 @@
           plugins: {
             legend: { position: 'top', labels: { font: { size: 14, family: 'Malgun Gothic' } } },
             title: { display: true, text: '일별 글마루 참여 및 결석 현황 (실인원 기준)', font: { size: 18, weight: 'bold', family: 'Malgun Gothic' }, padding: { bottom: 20 }, color: '#333' },
-            datalabels: {
-              color: '#333', anchor: 'end', align: 'top', offset: 2,
-              font: { weight: 'bold', size: 12 },
-              formatter: function(value) { return value > 0 ? value : ''; }
-            }
+            datalabels: { color: '#333', anchor: 'end', align: 'top', offset: 2, font: { weight: 'bold', size: 12 }, formatter: function(value) { return value > 0 ? value : ''; } }
           },
           scales: {
             y: { beginAtZero: true, grace: '10%', ticks: { stepSize: 5 }, grid: { color: '#f0f0f0' }, border: { display: false } },
@@ -867,34 +837,34 @@
       });
     }
     
-    // 🌟 통계 로직 (요일 병합 및 예외 허용 로직 적용)
     function renderStats() {
       const start = document.getElementById("statStartDate").value;
       const end = document.getElementById("statEndDate").value;
       const dateArr = getDatesInRange(start, end);
+      const tbody = document.getElementById("statsBody");
+      
+      // 만약 데이터가 완전히 비어있다면
+      if (cachedStudents.length === 0 && cachedLogs.length === 0 && cachedChanges.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='8' style='padding: 30px; font-weight:bold; color:#e53e3e;'>⚠️ 서버에서 데이터를 가져오지 못했거나 등록된 명단/기록이 없습니다.</td></tr>";
+          drawStatsChart([], [], []);
+          return;
+      }
       
       let sMap = {};
       cachedStudents.forEach(s => { 
-        let sid = String(s.id).trim();
-        let sDayStr = String(s.day || "").trim();
-        if(!sMap[sid]) {
-            sMap[sid] = { id: s.id, name: s.name, day: sDayStr, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; 
-        } else {
+        let sid = String(s.id).trim(); let sDayStr = String(s.day || "").trim();
+        if(!sMap[sid]) { sMap[sid] = { id: s.id, name: s.name, day: sDayStr, p1_exc: s.p1_exc, p2_exc: s.p2_exc, target: 0, present: 0, absent: 0, extra: 0 }; } 
+        else {
             if(!sMap[sid].day.includes(sDayStr)) sMap[sid].day += ", " + sDayStr;
             if(sMap[sid].p1_exc === '제외' && s.p1_exc !== '제외') sMap[sid].p1_exc = s.p1_exc;
             if(sMap[sid].p2_exc === '제외' && s.p2_exc !== '제외') sMap[sid].p2_exc = s.p2_exc;
         }
       });
-      cachedChanges.forEach(c => { 
-        let sid = String(c.id).trim();
-        if(!sMap[sid]) sMap[sid] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; 
-      });
-      cachedLogs.forEach(l => { 
-        let sid = String(l.id).trim();
-        if(!sMap[sid]) sMap[sid] = { id: l.id, name: l.name || "알수없음", day: '명단외(로그)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; 
-      });
+      cachedChanges.forEach(c => { let sid = String(c.id).trim(); if(!sMap[sid]) sMap[sid] = { id: c.id, name: c.name, day: '명단외(추가)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; });
+      cachedLogs.forEach(l => { let sid = String(l.id).trim(); if(!sMap[sid]) sMap[sid] = { id: l.id, name: l.name || "알수없음", day: '명단외(로그)', p1_exc: '제외', p2_exc: '제외', target: 0, present: 0, absent: 0, extra: 0 }; });
 
       let chartLabels = []; let chartPresentData = []; let chartAbsentData = [];
+      
       dateArr.forEach(d => {
         let dailyPresentCount = 0; let dailyAbsentCount = 0;
         Object.values(sMap).forEach(st => {
@@ -913,12 +883,8 @@
           
           let isTargetToday = (stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded');
           let attendedToday = (stat.p1.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'present' || stat.p2.type === 'extra');
-          if (isTargetToday) {
-            if (attendedToday) dailyPresentCount++;
-            else dailyAbsentCount++;
-          } else if (attendedToday) {
-            dailyPresentCount++; 
-          }
+          if (isTargetToday) { if (attendedToday) dailyPresentCount++; else dailyAbsentCount++; } 
+          else if (attendedToday) { dailyPresentCount++; }
         });
         
         const shortDate = d.date.substring(5).replace('-', '/');
@@ -929,7 +895,6 @@
       
       drawStatsChart(chartLabels, chartPresentData, chartAbsentData);
       
-      const tbody = document.getElementById("statsBody");
       tbody.innerHTML = "";
       Object.values(sMap).sort((a,b) => String(a.id).localeCompare(String(b.id))).forEach(st => {
         if(st.target === 0 && st.present === 0) return; 
@@ -957,7 +922,8 @@
         `;
         tbody.appendChild(tr);
       });
-      if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8' style='padding: 20px;'>해당 기간에 출석 데이터가 없습니다.</td></tr>";
+      
+      if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8' style='padding: 20px;'>해당 기간에 조회할 수 있는 출석 데이터가 없습니다.</td></tr>";
     }
     
     function printStats() {
@@ -1010,39 +976,23 @@
           });
           container.innerHTML = html;
         })
-        .catch(err => {
-          container.innerHTML = `<div style="text-align:center; padding: 20px; color:red;">데이터를 불러오는 중 오류가 발생했습니다.<br>${err.message}</div>`;
-        });
+        .catch(err => { container.innerHTML = `<div style="text-align:center; padding: 20px; color:red;">데이터를 불러오는 중 오류가 발생했습니다.<br>${err.message}</div>`; });
     }
     
     function processAbsence(row, status, date, id, name, reason) {
       if(!confirm(`해당 학생의 결석 사유를 [${status}] 처리하시겠습니까?`)) return;
       showLoading(true);
-      fetch(`${API_URL}?${new URLSearchParams({
-        action: 'processAbsence', row: row, status: status, date: date, id: id, name: name, reason: reason, _t: new Date().getTime()
-      }).toString()}`)
-      .then(res => res.json())
-      .then(res => {
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'processAbsence', row: row, status: status, date: date, id: id, name: name, reason: reason, _t: new Date().getTime() }).toString()}`)
+      .then(res => res.json()).then(res => {
         showLoading(false);
         if(res.success) {
-          showCustomAlert(`처리가 완료되었습니다.`);
-          openAbsenceModal();
-          if(document.getElementById('datePicker').value === date) {
-             loadDailyData();
-          }
-        } else {
-          showCustomAlert("처리 실패: " + res.message, true);
-        }
-      })
-      .catch(err => {
-        showLoading(false);
-        showCustomAlert("서버 오류가 발생했습니다.", true);
-      });
+          showCustomAlert(`처리가 완료되었습니다.`); openAbsenceModal();
+          if(document.getElementById('datePicker').value === date) { loadDailyData(); }
+        } else { showCustomAlert("처리 실패: " + res.message, true); }
+      }).catch(err => { showLoading(false); showCustomAlert("서버 오류가 발생했습니다.", true); });
     }
     
-    function closeAbsenceModal() {
-      document.getElementById('absenceModal').style.display = 'none';
-    }
+    function closeAbsenceModal() { document.getElementById('absenceModal').style.display = 'none'; }
   </script>
 </body>
 </html>
