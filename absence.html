@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>꿈꾸는 글마루 결석 신청</title>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box; }
+    h2 { color: #d32f2f; text-align: center; margin-top: 0; margin-bottom: 25px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; }
+    input[type="text"], input[type="date"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+    .btn { width: 100%; padding: 15px; background: #d32f2f; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn:disabled { background: #999; }
+    #result-msg { text-align: center; font-weight: bold; margin-top: 20px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📝 사전 결석 신청</h2>
+    <p style="text-align: center; font-size: 0.9em; color: #666; margin-bottom: 20px;">결석 사유를 입력하면 감독교사의 확인 후 처리됩니다.</p>
+    
+    <div class="form-group">
+      <label>결석 대상 날짜</label>
+      <input type="date" id="req-date" required>
+    </div>
+    <div class="form-group">
+      <label>학번 (예: 10101)</label>
+      <input type="text" id="req-id" placeholder="학번 5자리 입력" required>
+    </div>
+    <div class="form-group">
+      <label>이름</label>
+      <input type="text" id="req-name" placeholder="본인 이름 입력" required>
+    </div>
+    <div class="form-group">
+      <label>결석 사유</label>
+      <input type="text" id="req-reason" placeholder="예: 병원진료, 가족행사 등 상세히 입력" required>
+    </div>
+    
+    <button class="btn" id="submit-btn" onclick="submitAbsence()">신청서 제출하기</button>
+    <div id="result-msg"></div>
+  </div>
+
+  <script>
+    // 오늘 날짜를 기본값으로 세팅
+    document.getElementById('req-date').value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    
+    function submitAbsence() {
+      const date = document.getElementById('req-date').value;
+      const id = document.getElementById('req-id').value.trim();
+      const name = document.getElementById('req-name').value.trim();
+      const reason = document.getElementById('req-reason').value.trim();
+      
+      if(!date || !id || !name || !reason) return alert("모든 항목을 입력해주세요.");
+      
+      document.getElementById('submit-btn').innerText = "제출 중...";
+      document.getElementById('submit-btn').disabled = true;
+      
+      // 현재 URL 구조를 파악해 API로 요청을 보냄
+      const apiUrl = location.href.split('?')[0]; 
+      
+      fetch(`${apiUrl}?action=submitAbsence&date=${date}&id=${id}&name=${name}&reason=${reason}`, {
+        method: "GET", redirect: "follow"
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.success) {
+          const msg = document.getElementById('result-msg');
+          msg.innerHTML = "✅ 결석 신청이 접수되었습니다.<br>선생님 확인 후 처리됩니다.";
+          msg.style.color = "#2e7d32";
+          msg.style.display = "block";
+          document.getElementById('submit-btn').style.display = "none";
+        } else {
+          alert("오류 발생: " + data.message);
+          document.getElementById('submit-btn').innerText = "신청서 제출하기";
+          document.getElementById('submit-btn').disabled = false;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
