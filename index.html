@@ -10,43 +10,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
-    
     /* 배경 패딩 조정 및 중앙 정렬 */
     body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; color:var(--text-main); }
-    
     /* 컨테이너 가로폭 조금 더 확대 (540px) */
     .container { background:white; padding:25px; border-radius:15px; box-shadow:0 8px 30px rgba(85,139,47,.08); width:100%; max-width:540px; text-align:center; box-sizing:border-box; }
-    
     h1 { font-size:1.4em; line-height:1.4; margin:0 0 15px 0; }
-    
     /* 시계 및 폰트 크기 확대 */
     .clock-container { background:#e8f5e9; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #c8e6c9; }
     .date-text { font-size:1.1em; color:#558b2f; font-weight:700; }
     .time-text { font-size:2.3em; font-weight:900; color:#2e7d32; line-height:1.2; }
-    
     /* 안내문구 폰트 및 여백 확대 */
     .notice { background:#fffde7; border:1px solid #fff59d; padding:12px; border-radius:8px; font-size:0.95em; color:#795548; margin-bottom:15px; line-height:1.5; font-weight: 500; }
-    
     /* 폼 그룹 및 인풋창 확대 */
     .login-form { display:flex; flex-direction:column; gap:12px; margin-top:15px; text-align:center; align-items: center; justify-content: center; }
     input[type="text"], input[type="password"] { padding:14px; font-size:1em; border:2px solid #c8e6c9; border-radius:8px; outline:none; width:100%; box-sizing:border-box; text-align: center;}
-    
     /* 기본 버튼 설정 - 🌟 white-space: nowrap 으로 텍스트 줄바꿈 원천 차단 */
     .btn { padding:12px; font-size:1.05em; font-weight:bold; border-radius:8px; cursor:pointer; width:100%; border:none; min-height:48px; transition:.2s; text-decoration:none; box-sizing:border-box; display:flex; align-items:center; justify-content:center; margin-top:8px; white-space: nowrap; }
     .btn-solid { background:var(--primary-color); color:white; }
     .btn-outline { background:white; border:2px solid var(--primary-color); color:var(--primary-dark); }
     .btn-danger { background:white; border:2px solid #e57373; color:#c62828; }
-    
     /* 버튼 그룹 나란히 배치 */
     .btn-group { display:flex; gap:10px; margin-bottom:10px; }
     .btn-group .btn { flex:1; margin-top:0; padding:10px 4px; font-size:0.95em; min-height:45px; }
-    
     .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
-    
     /* 학생 명단 요약 박스 */
     #student-list { margin-top:15px; padding:15px; border-radius:8px; background:#e8f5e9; display:none; font-size:1em; }
     .footer { margin-top:20px; font-size:0.85em; color:#7f8c8d; text-align:center; }
-    
     /* 모달 및 로딩 */
     .pdf-loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
     .pdf-spinner-text { font-size: 1.2em; font-weight: bold; color: var(--text-main); background: white; padding: 25px 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary-color); line-height: 1.5; }
@@ -72,7 +61,6 @@
   <div id="pdf-loading" class="pdf-loading-overlay">
     <div class="pdf-spinner-text">학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳</div>
   </div>
-  
   <!-- 로그인 화면 -->
   <div class="container" id="login-screen">
     <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
@@ -83,39 +71,40 @@
       <button type="button" class="btn btn-solid" onclick="login()">로그인</button>
     </div>
   </div>
-  
   <!-- 메인 스크린 -->
   <div class="container" id="main-screen" style="display:none;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
       <div id="current-time" class="time-text"></div>
     </div>
-    
     <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
     
-    <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50; margin-bottom: 12px; margin-top: 0; min-height: 48px;" onclick="location.href='dashboard.html'">📊 기간별 통계 및 출석부 인쇄(감독교사용)</button>
+    <!-- 🌟 버튼 이름 변경, 폰트 크기 및 두께 조정 -->
+    <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50; margin-bottom: 12px; margin-top: 0; min-height: 55px; font-size: 1.25em; font-weight: 900; color: #2e7d32;" onclick="location.href='dashboard.html'">📊 감독교사 출석부 관리</button>
     
     <div class="btn-group">
       <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
       <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
     </div>
-    
     <div class="btn-group">
       <label class="btn btn-outline" id="upload-btn" for="excel-upload">📤 명단 업로드</label>
       <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" style="display:none;">
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
-    
     <div class="btn-group" id="admin-manage-group" style="display:none;">
       <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리 (추가/수정/삭제)</button>
     </div>
     
+    <!-- 🌟 QR 버튼들 구조 2행 2열로 깔끔하게 정리 (결석 신청 QR 추가) -->
     <div class="btn-group">
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 스캔 QR</button>
       <button class="btn btn-outline" style="border-color:#8e44ad; color:#8e44ad;" onclick="downloadStudentAccessQR()">📱 학생 QR 발급</button>
-      <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 코드</button>
     </div>
-
+    <div class="btn-group">
+      <button class="btn btn-outline" style="border-color:#e67e22; color:#e67e22;" onclick="downloadAbsenceQR()">📩 결석 신청 QR</button>
+      <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 출력</button>
+    </div>
+    
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px; font-size:1em;">로그아웃</button>
     <div id="student-list"></div>
   </div>
@@ -154,7 +143,6 @@
       </div>
     </div>
   </div>
-  
   <div class="footer">Copyright 2026. 서현고등학교 All Rights Reserved.</div>
   
   <script>
@@ -304,7 +292,7 @@
       let sortedList = Object.values(grouped).sort((a,b) => String(a.id).localeCompare(String(b.id)));
       sortedList.forEach(st => {
         st.day.sort((a,b) => (dayOrder[a]||99) - (dayOrder[b]||99));
-        const daysStr = st.day.join(','); 
+        const daysStr = st.day.join(',');
         const displayDays = st.day.join(', ');
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -535,11 +523,9 @@
       reader.readAsArrayBuffer(file);
       e.target.value = '';
     });
-    
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
-    
     function downloadTeacherQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
@@ -570,7 +556,6 @@
         pdf.save("감독교사_전용QR.pdf");
       }, 100);
     }
-
     function downloadStudentAccessQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
@@ -580,7 +565,7 @@
         text: `${baseUrl}student.html`,
         width: 256,
         height: 256,
-        colorDark: "#8e44ad", 
+        colorDark: "#8e44ad",
         correctLevel: QRCode.CorrectLevel.H
       });
       setTimeout(() => {
@@ -599,6 +584,38 @@
         ctx.fillText("카메라로 스캔하여 출석 QR코드를 발급받으세요", 175, 380);
         pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
         pdf.save("학생_발급페이지_접속QR.pdf");
+      }, 100);
+    }
+    
+    // 🌟 결석 신청 QR 다운로드 기능 추가
+    function downloadAbsenceQR() {
+      const targetUrl = "https://bongjaekim91-wq.github.io/check/absence";
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const qrDiv = document.createElement("div");
+      new QRCode(qrDiv, {
+        text: targetUrl,
+        width: 256,
+        height: 256,
+        colorDark: "#e67e22",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      setTimeout(() => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 350;
+        canvas.height = 420;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 350, 420);
+        ctx.fillStyle = "#e67e22";
+        ctx.font = "bold 24px Noto Sans KR";
+        ctx.textAlign = "center";
+        ctx.fillText("결석 신청 안내", 175, 50);
+        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
+        ctx.font = "bold 14px Noto Sans KR";
+        ctx.fillText("스마트폰 카메라로 스캔하여 결석을 신청하세요", 175, 380);
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
+        pdf.save("결석_신청_접속QR.pdf");
       }, 100);
     }
 
