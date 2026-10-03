@@ -46,7 +46,7 @@
     // 오늘 날짜를 기본값으로 세팅
     document.getElementById('req-date').value = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
     
-    function submitAbsence() {
+      function submitAbsence() {
       const date = document.getElementById('req-date').value;
       const id = document.getElementById('req-id').value.trim();
       const name = document.getElementById('req-name').value.trim();
@@ -57,27 +57,15 @@
       document.getElementById('submit-btn').innerText = "제출 중...";
       document.getElementById('submit-btn').disabled = true;
       
-      // 현재 URL 구조를 파악해 API로 요청을 보냄
-      const apiUrl = location.href.split('?')[0]; 
+      // ★ 중요: 여기에 선생님의 구글 배포 URL을 직접 넣으세요! (끝이 /exec 로 끝나는 주소)
+      const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec"; 
       
-      fetch(`${apiUrl}?action=submitAbsence&date=${date}&id=${id}&name=${name}&reason=${reason}`, {
+      fetch(`${API_URL}?action=submitAbsence&date=${date}&id=${id}&name=${name}&reason=${reason}`, {
         method: "GET", redirect: "follow"
       })
       .then(res => res.json())
       .then(data => {
-        if(data.success) {
-          const msg = document.getElementById('result-msg');
-          msg.innerHTML = "✅ 결석 신청이 접수되었습니다.<br>선생님 확인 후 처리됩니다.";
-          msg.style.color = "#2e7d32";
-          msg.style.display = "block";
-          document.getElementById('submit-btn').style.display = "none";
-        } else {
-          alert("오류 발생: " + data.message);
-          document.getElementById('submit-btn').innerText = "신청서 제출하기";
-          document.getElementById('submit-btn').disabled = false;
-        }
-      });
-    }
+        // ... 이하 동일
   </script>
 </body>
 </html>
