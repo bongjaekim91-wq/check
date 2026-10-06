@@ -78,10 +78,7 @@
       <div id="current-time" class="time-text"></div>
     </div>
     <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
-    
-    <!-- 🌟 버튼 이름 변경, 폰트 크기 및 두께 조정 -->
     <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50; margin-bottom: 12px; margin-top: 0; min-height: 55px; font-size: 1.25em; font-weight: 900; color: #2e7d32;" onclick="location.href='dashboard.html'">📊 감독교사 출석부 관리</button>
-    
     <div class="btn-group">
       <button class="btn btn-outline" onclick="downloadTemplate()">📥 양식 다운로드</button>
       <button class="btn btn-outline" onclick="downloadExistingRoster()">📋 명단 다운로드</button>
@@ -94,8 +91,6 @@
     <div class="btn-group" id="admin-manage-group" style="display:none;">
       <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리 (추가/수정/삭제)</button>
     </div>
-    
-    <!-- 🌟 QR 버튼들 구조 2행 2열로 깔끔하게 정리 (결석 신청 QR 추가) -->
     <div class="btn-group">
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 스캔 QR</button>
       <button class="btn btn-outline" style="border-color:#8e44ad; color:#8e44ad;" onclick="downloadStudentAccessQR()">📱 학생 QR 발급</button>
@@ -104,11 +99,9 @@
       <button class="btn btn-outline" style="border-color:#e67e22; color:#e67e22;" onclick="downloadAbsenceQR()">📩 결석 신청 QR</button>
       <button class="btn btn-solid" id="pdf-btn" disabled onclick="generatePDF()">🖨️ 학생 QR 출력</button>
     </div>
-    
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px; font-size:1em;">로그아웃</button>
     <div id="student-list"></div>
   </div>
-  
   <!-- 명단 개별 관리 모달 -->
   <div id="manage-modal" class="modal-overlay">
     <div class="modal-content">
@@ -144,7 +137,6 @@
     </div>
   </div>
   <div class="footer">Copyright 2026. 서현고등학교 All Rights Reserved.</div>
-  
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let studentsData = [];
@@ -403,126 +395,131 @@
       });
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
-    document.getElementById("excel-upload").addEventListener("change", function(e) {
+
+    // =========================================================================
+    // ★ 엑셀 업로드: 여러 탭 통합 및 3행 제목줄 분석 반영 함수 (수정 완료)
+    // =========================================================================
+    document.getElementById("excel-upload").addEventListener("change", async function(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      alert("엑셀 파일을 분석하여 요일별 데이터를 하나로 통합하는 중입니다.\n잠시만 기다려주세요...");
+
       const reader = new FileReader();
+      
       reader.onload = async function(ev) {
         try {
-          const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
-          studentsData = [];
-          wb.SheetNames.forEach(sn => {
-            const sheet = wb.Sheets[sn];
-            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-            if (json.length === 0) return;
-            let sheetDay = "공통";
-            const dayMatch = sn.match(/[월화수목금토일]/);
-            if (dayMatch) {
-              sheetDay = dayMatch[0];
-            } else {
-              const firstRowText = json.length > 0 ? String(json[0].join("")) : "";
-              const titleMatch = firstRowText.match(/[월화수목금토일]/);
-              if (titleMatch) sheetDay = titleMatch[0];
-            }
-            let colId = -1, colName = -1, colP1 = -1, colP2 = -1;
-            for (let i = 0; i < Math.min(json.length, 10); i++) {
-              const row = json[i];
-              if (!row) continue;
-              for (let j = 0; j < row.length; j++) {
-                const val = String(row[j] || "").replace(/\s+/g, "");
-                if (val.includes("학번")) colId = j;
-                if (val.includes("이름") || val.includes("성명")) colName = j;
-                if (val.includes("1교시")) colP1 = j;
-                if (val.includes("2교시")) colP2 = j;
-              }
-              if (colId !== -1 && colName !== -1) break;
-            }
-            for (let i = 0; i < json.length; i++) {
-              const row = json[i];
-              if (!row || row.length < 2) continue;
-              let foundId = "", foundName = "", isP1Exc = "", isP2Exc = "";
-              if (colId !== -1 && colName !== -1) {
-                const idVal = String(row[colId] || "").replace(/\s+/g, "");
-                const nameVal = String(row[colName] || "").trim();
-                if (idVal.match(/^\d{4,5}$/) && nameVal && !nameVal.includes("이름")) {
-                  foundId = idVal;
-                  foundName = nameVal;
-                  if (colP1 !== -1) {
-                    const p1Mark = String(row[colP1] || "").trim();
-                    isP1Exc = (p1Mark !== "") ? "제외" : "";
-                  }
-                  if (colP2 !== -1) {
-                    const p2Mark = String(row[colP2] || "").trim();
-                    isP2Exc = (p2Mark !== "") ? "제외" : "";
-                  }
-                  studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
-                  continue;
+          const data = new Uint8Array(ev.target.result);
+          const workbook = XLSX.read(data, {type: 'array'});
+          
+          let studentMap = {}; 
+          const targetDays = ['월', '화', '수', '목', '금'];
+          
+          // 1. 월~금 탭을 순회하며 데이터 긁어오기
+          targetDays.forEach(function(day) {
+            if (workbook.SheetNames.includes(day)) {
+              const sheet = workbook.Sheets[day];
+              const jsonArr = XLSX.utils.sheet_to_json(sheet, {header: 1}); 
+              
+              let headerRowIdx = -1;
+              
+              // 2. 제목줄(3행) 찾기 ('학번', '이름'이 포함된 줄)
+              for (let i = 0; i < jsonArr.length; i++) {
+                if (jsonArr[i] && (jsonArr[i].includes('학번') || jsonArr[i].includes('이름'))) {
+                  headerRowIdx = i;
+                  break;
                 }
               }
-              if (!foundId) {
-                let idColIndex = -1;
-                for (let j = 0; j < row.length; j++) {
-                  const cellVal = String(row[j] || "").replace(/\s+/g, "");
-                  const idMatch = cellVal.match(/\d{4,5}/);
-                  if (idMatch && cellVal.length <= 6) {
-                    foundId = idMatch[0];
-                    idColIndex = j;
-                    break;
+              
+              // 3. 학생 데이터 추출 시작
+              if (headerRowIdx !== -1) {
+                const headers = jsonArr[headerRowIdx];
+                const gradeIdx = headers.indexOf('학년');
+                const idIdx = headers.indexOf('학번');
+                const nameIdx = headers.indexOf('이름');
+                const p1Idx = headers.indexOf('1교시');
+                const p2Idx = headers.indexOf('2교시');
+                
+                for (let i = headerRowIdx + 1; i < jsonArr.length; i++) {
+                  const row = jsonArr[i];
+                  if (!row || row.length === 0) continue; 
+                  
+                  const id = row[idIdx];
+                  const name = row[nameIdx];
+                  if (!id || !name) continue; 
+                  
+                  const strId = String(id).trim();
+                  
+                  // 해당 학생이 처음 나타났다면 기본 틀 만들기
+                  if (!studentMap[strId]) {
+                    studentMap[strId] = {
+                      grade: (gradeIdx > -1 && row[gradeIdx] !== undefined) ? String(row[gradeIdx]).trim() : "",
+                      id: strId,
+                      name: String(name).trim(),
+                      mon: "", tue: "", wed: "", thu: "", fri: "",
+                      exc1: "", exc2: ""
+                    };
                   }
-                }
-                if (foundId && idColIndex !== -1) {
-                  for (let k = idColIndex + 1; k < row.length; k++) {
-                    const nextCell = String(row[k] || "").trim();
-                    if (nextCell && !nextCell.includes("이름") && nextCell.length >= 2 && /[가-힣a-zA-Z]/.test(nextCell)) {
-                      foundName = nextCell;
-                      const p1Mark = String(row[k+1] || "").trim();
-                      const p2Mark = String(row[k+2] || "").trim();
-                      isP1Exc = (p1Mark !== "") ? "제외" : "";
-                      isP2Exc = (p2Mark !== "") ? "제외" : "";
-                      studentsData.push({ id: foundId, name: foundName, day: sheetDay, p1_exc: isP1Exc, p2_exc: isP2Exc });
-                      break;
-                    }
+                  
+                  // 발견된 요일 탭에 출석 플래그('O') 세우기
+                  if (day === '월') studentMap[strId].mon = "O";
+                  if (day === '화') studentMap[strId].tue = "O";
+                  if (day === '수') studentMap[strId].wed = "O";
+                  if (day === '목') studentMap[strId].thu = "O";
+                  if (day === '금') studentMap[strId].fri = "O";
+                  
+                  // 제외 여부 체크 (빈칸은 출석으로 자동 인식)
+                  if (p1Idx > -1 && row[p1Idx] && String(row[p1Idx]).trim().includes('제외')) {
+                    studentMap[strId].exc1 = "제외";
+                  }
+                  if (p2Idx > -1 && row[p2Idx] && String(row[p2Idx]).trim().includes('제외')) {
+                    studentMap[strId].exc2 = "제외";
                   }
                 }
               }
             }
           });
-          if (studentsData.length === 0) {
-            alert("업로드할 학생 데이터가 없습니다.\n(원인: 엑셀 파일 내에서 학번과 이름 패턴을 전혀 찾지 못했습니다. 엑셀의 빈 셀 병합이나 서식을 확인해주세요.)");
+          
+          // 4. 합쳐진 데이터를 배열로 변환
+          const finalData = Object.values(studentMap);
+          
+          if (finalData.length === 0) {
+            alert("업로드 실패: 엑셀 파일에서 학생 명단을 찾을 수 없습니다.\n엑셀 하단 탭 이름이 '월','화'... 인지, '학번/이름' 열이 있는지 확인해주세요.");
             e.target.value = '';
             return;
           }
-          const idCounts = {};
-          studentsData.forEach(s => {
-            idCounts[s.id] = (idCounts[s.id] || 0) + 1;
-          });
-          const duplicates = Object.keys(idCounts).filter(id => idCounts[id] > 1);
-          if (duplicates.length > 0) {
-            const dupMsg = duplicates.map(id => `${id}(${idCounts[id]}번)`).join(", ");
-            const confirmMsg = `⚠️ 엑셀 명단에 중복된 학번이 발견되었습니다.\n\n[중복 학번]\n${dupMsg}\n\n* 학생이 여러 요일에 출석하는 경우 중복 표시될 수 있습니다.\n이대로 명단 업로드를 진행하시겠습니까?`;
-            if (!confirm(confirmMsg)) {
-              e.target.value = '';
-              return;
-            }
-          }
+          
+          // 진행 상황 표시
           document.getElementById("student-list").style.display = "block";
-          document.getElementById("student-list").innerHTML = `⏳ 데이터를 서버로 전송 중입니다... (${studentsData.length}명)`;
-          await fetch(API_URL, {
+          document.getElementById("student-list").innerHTML = `⏳ 명단 병합 완료! 서버로 전송 중입니다... (총 ${finalData.length}명)`;
+          
+          // 5. 서버로 통합 데이터 전송
+          const response = await fetch(API_URL, {
             method: "POST",
             body: JSON.stringify({
               action: "uploadStudents",
-              students: studentsData
+              data: finalData // 백엔드(Code.gs)와 맞춘 변수명
             })
           });
-          alert(`${studentsData.length}건의 명단을 정상적으로 업로드했습니다.`);
-          location.reload();
+          
+          const resJson = await response.json();
+          alert(resJson.message);
+          
+          if (resJson.success) {
+            location.reload(); 
+          } else {
+             document.getElementById("student-list").innerHTML = `❌ 업로드 실패: ${resJson.message}`;
+          }
+          
         } catch (error) {
           alert("명단 업로드 중 오류가 발생했습니다: " + error.message);
         }
       };
+      
       reader.readAsArrayBuffer(file);
-      e.target.value = '';
+      e.target.value = ''; // 같은 파일을 다시 올릴 수 있도록 초기화
     });
+
     function getBaseUrl() {
       return location.href.substring(0, location.href.lastIndexOf("/") + 1);
     }
@@ -586,8 +583,6 @@
         pdf.save("학생_발급페이지_접속QR.pdf");
       }, 100);
     }
-    
-    // 🌟 결석 신청 QR 다운로드 기능 추가
     function downloadAbsenceQR() {
       const targetUrl = "https://bongjaekim91-wq.github.io/check/absence";
       const { jsPDF } = window.jspdf;
@@ -618,7 +613,6 @@
         pdf.save("결석_신청_접속QR.pdf");
       }, 100);
     }
-
     async function generatePDF() {
       if (studentsData.length === 0) return alert("학생명단이 없습니다.");
       document.getElementById("pdf-loading").style.display = "flex";
