@@ -86,6 +86,7 @@
 </head>
 <body>
   <div id="loading" class="loading-overlay">데이터를 처리 중입니다... ⏳</div>
+  
   <div id="saveConfirmModal" class="modal-overlay">
     <div class="modal-box">
       <h3>⚠️ 출석부 저장 확인</h3>
@@ -97,6 +98,7 @@
       </div>
     </div>
   </div>
+  
   <div id="absenceModal" class="modal-overlay">
     <div class="modal-box" style="min-width: 600px; max-height: 80vh; overflow-y: auto;">
       <h3 style="color:#2b7a2b; border-bottom:2px solid #e8f5e9; padding-bottom:10px;">📩 결석 신청 승인 대기열</h3>
@@ -106,6 +108,34 @@
       </div>
     </div>
   </div>
+
+  <!-- ★ QR 인식 시간 설정 모달 -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-box" style="min-width: 400px;">
+      <h3 style="color:#2b7a2b; border-bottom:2px solid #e8f5e9; padding-bottom:10px;">⚙️ QR 인식 시간 설정</h3>
+      <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">학생들이 QR코드를 찍을 수 있는 시간을 설정합니다.</p>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px;">
+        <strong style="width: 80px; text-align: left;">1교시</strong>
+        <input type="time" id="set_p1_start" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+        <span>~</span>
+        <input type="time" id="set_p1_end" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px; background: #f9f9f9; padding: 10px; border-radius: 8px;">
+        <strong style="width: 80px; text-align: left;">2교시</strong>
+        <input type="time" id="set_p2_start" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+        <span>~</span>
+        <input type="time" id="set_p2_end" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+      </div>
+
+      <div class="modal-btns">
+        <button style="background:#38a169; color:white; border:none; padding:10px 18px; border-radius:8px; font-size:1.05rem; font-weight:bold; cursor:pointer;" onclick="saveTimeSettings()">💾 변경사항 저장</button>
+        <button class="btn-cancel" onclick="closeSettingsModal()">닫기</button>
+      </div>
+    </div>
+  </div>
+  
   <div id="customAlertModal" class="modal-overlay" style="z-index: 3000;">
     <div class="modal-box" style="min-width: 350px;">
       <h3 id="customAlertTitle" style="color:#2b7a2b; margin-top:0; border-bottom: 2px solid #f0f0f0; padding-bottom:10px;">알림</h3>
@@ -120,7 +150,7 @@
       <a href="#" class="btn-home" onclick="checkHomeMove(event)">⬅️ 메인으로 돌아가기</a>
     </div>
     <div class="info-box">
-      출석 인정 시간: 1교시 17:50~18:10 / 2교시 19:40~20:10<br>
+      출석 인정 시간 설정은 대시보드 내 <b>[⚙️ 시간설정]</b> 버튼을 통해 변경할 수 있습니다.<br>
       당일 출석부에서는 학생 추가 및 <b>수동 출석/결석 처리</b>, 비고 작성 및 저장이 가능합니다.
     </div>
     
@@ -143,6 +173,8 @@
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
+            <!-- ★ 시간 설정 버튼 추가 -->
+            <button style="background-color: #4a5568; color: white;" onclick="openSettingsModal()">⚙️ 시간설정</button>
             <button class="btn-absence" onclick="openAbsenceModal()">📩 결석 승인</button>
             <button class="btn-save-doc" onclick="saveAndPdf()">💾 출석부 저장</button>
             <button class="btn-reset" onclick="resetDailyData()">🗑️ 출결 초기화</button>
@@ -715,7 +747,6 @@
       return dateArray;
     }
     
-    // ★ 개선된 통계 핵심 로직 (특정 요일의 개별 제외 설정을 완벽히 반영)
     function getStudentStatusForDate(id, dateStr, dayStr) {
       let targetNum = extractDateNum(dateStr); 
       
@@ -972,6 +1003,65 @@
     }
     
     function closeAbsenceModal() { document.getElementById('absenceModal').style.display = 'none'; }
+    
+    // ★ 새로 추가된 모달 자바스크립트 함수 (시간 설정)
+    function openSettingsModal() {
+      document.getElementById('settingsModal').style.display = 'flex';
+      showLoading(true);
+      fetch(`${API_URL}?action=getSettings&_t=${new Date().getTime()}`)
+        .then(res => res.json())
+        .then(data => {
+          showLoading(false);
+          if (data.success) {
+            document.getElementById('set_p1_start').value = data.p1_start;
+            document.getElementById('set_p1_end').value = data.p1_end;
+            document.getElementById('set_p2_start').value = data.p2_start;
+            document.getElementById('set_p2_end').value = data.p2_end;
+          }
+        })
+        .catch(err => {
+          showLoading(false);
+          showCustomAlert("설정을 불러오지 못했습니다.", true);
+        });
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    function saveTimeSettings() {
+      const p1s = document.getElementById('set_p1_start').value;
+      const p1e = document.getElementById('set_p1_end').value;
+      const p2s = document.getElementById('set_p2_start').value;
+      const p2e = document.getElementById('set_p2_end').value;
+
+      if(!p1s || !p1e || !p2s || !p2e) {
+        showCustomAlert("모든 시간을 입력해주세요.", true);
+        return;
+      }
+
+      showLoading(true);
+      fetch(`${API_URL}?${new URLSearchParams({
+        action: 'saveSettings',
+        p1_start: p1s, p1_end: p1e,
+        p2_start: p2s, p2_end: p2e,
+        _t: new Date().getTime()
+      }).toString()}`)
+      .then(res => res.json())
+      .then(res => {
+        showLoading(false);
+        if(res.success) {
+          showCustomAlert(res.message);
+          closeSettingsModal();
+        } else {
+          showCustomAlert("저장 실패: " + res.message, true);
+        }
+      })
+      .catch(err => {
+        showLoading(false);
+        showCustomAlert("서버 오류: " + err.message, true);
+      });
+    }
   </script>
 </body>
 </html>
