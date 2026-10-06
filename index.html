@@ -10,33 +10,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root { --primary-color:#81c784; --primary-dark:#558b2f; --bg-color:#f1f8e9; --text-main:#33691e; }
-    /* 배경 패딩 조정 및 중앙 정렬 */
     body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; color:var(--text-main); }
-    /* 컨테이너 가로폭 조금 더 확대 (540px) */
     .container { background:white; padding:25px; border-radius:15px; box-shadow:0 8px 30px rgba(85,139,47,.08); width:100%; max-width:540px; text-align:center; box-sizing:border-box; }
     h1 { font-size:1.4em; line-height:1.4; margin:0 0 15px 0; }
-    /* 시계 및 폰트 크기 확대 */
     .clock-container { background:#e8f5e9; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #c8e6c9; }
     .date-text { font-size:1.1em; color:#558b2f; font-weight:700; }
     .time-text { font-size:2.3em; font-weight:900; color:#2e7d32; line-height:1.2; }
-    /* 안내문구 폰트 및 여백 확대 */
     .notice { background:#fffde7; border:1px solid #fff59d; padding:12px; border-radius:8px; font-size:0.95em; color:#795548; margin-bottom:15px; line-height:1.5; font-weight: 500; }
-    /* 폼 그룹 및 인풋창 확대 */
     .login-form { display:flex; flex-direction:column; gap:12px; margin-top:15px; text-align:center; align-items: center; justify-content: center; }
     input[type="text"], input[type="password"] { padding:14px; font-size:1em; border:2px solid #c8e6c9; border-radius:8px; outline:none; width:100%; box-sizing:border-box; text-align: center;}
-    /* 기본 버튼 설정 - 🌟 white-space: nowrap 으로 텍스트 줄바꿈 원천 차단 */
     .btn { padding:12px; font-size:1.05em; font-weight:bold; border-radius:8px; cursor:pointer; width:100%; border:none; min-height:48px; transition:.2s; text-decoration:none; box-sizing:border-box; display:flex; align-items:center; justify-content:center; margin-top:8px; white-space: nowrap; }
     .btn-solid { background:var(--primary-color); color:white; }
     .btn-outline { background:white; border:2px solid var(--primary-color); color:var(--primary-dark); }
     .btn-danger { background:white; border:2px solid #e57373; color:#c62828; }
-    /* 버튼 그룹 나란히 배치 */
     .btn-group { display:flex; gap:10px; margin-bottom:10px; }
     .btn-group .btn { flex:1; margin-top:0; padding:10px 4px; font-size:0.95em; min-height:45px; }
     .btn-disabled { background:#f5f5f5!important; border-color:#ddd!important; color:#aaa!important; cursor:not-allowed!important; }
-    /* 학생 명단 요약 박스 */
     #student-list { margin-top:15px; padding:15px; border-radius:8px; background:#e8f5e9; display:none; font-size:1em; }
     .footer { margin-top:20px; font-size:0.85em; color:#7f8c8d; text-align:center; }
-    /* 모달 및 로딩 */
     .pdf-loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
     .pdf-spinner-text { font-size: 1.2em; font-weight: bold; color: var(--text-main); background: white; padding: 25px 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid var(--primary-color); line-height: 1.5; }
     .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9990; }
@@ -61,7 +52,7 @@
   <div id="pdf-loading" class="pdf-loading-overlay">
     <div class="pdf-spinner-text">학생 QR코드 PDF를 생성 중입니다.<br>잠시만 기다려주세요... ⏳</div>
   </div>
-  <!-- 로그인 화면 -->
+  
   <div class="container" id="login-screen">
     <h1>서현고등학교<br>꿈꾸는 글마루 출석관리 시스템</h1>
     <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
@@ -71,7 +62,7 @@
       <button type="button" class="btn btn-solid" onclick="login()">로그인</button>
     </div>
   </div>
-  <!-- 메인 스크린 -->
+  
   <div class="container" id="main-screen" style="display:none;">
     <div class="clock-container">
       <div id="current-date" class="date-text"></div>
@@ -89,7 +80,7 @@
       <button class="btn btn-danger" id="delete-all-btn" onclick="deleteExistingRoster()">🗑️ 명단 초기화</button>
     </div>
     <div class="btn-group" id="admin-manage-group" style="display:none;">
-      <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리 (추가/수정/삭제)</button>
+      <button class="btn btn-outline" style="border-color:#f5b041; color:#d68910;" onclick="openManageModal()">👨‍🔧 학생 명단 개별 관리</button>
     </div>
     <div class="btn-group">
       <button class="btn btn-outline" style="border-color:#1976d2; color:#1976d2;" onclick="downloadTeacherQR()">👨‍🏫 감독교사 스캔 QR</button>
@@ -102,7 +93,7 @@
     <button class="btn btn-outline" onclick="logout()" style="margin-top:10px; font-size:1em;">로그아웃</button>
     <div id="student-list"></div>
   </div>
-  <!-- 명단 개별 관리 모달 -->
+  
   <div id="manage-modal" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
@@ -136,10 +127,13 @@
       </div>
     </div>
   </div>
+  
   <div class="footer">Copyright 2026. 서현고등학교 All Rights Reserved.</div>
+  
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     let studentsData = [];
+    
     window.onload = function() {
       const pwInput = document.getElementById("login-pw");
       const idInput = document.getElementById("login-id");
@@ -189,10 +183,7 @@
     function login() {
       const id = document.getElementById("login-id").value.trim();
       const pw = document.getElementById("login-pw").value.trim();
-      if (!id || !pw) {
-        alert("아이디와 비밀번호를 모두 입력해주세요.");
-        return;
-      }
+      if (!id || !pw) return alert("아이디와 비밀번호를 모두 입력해주세요.");
       if (id === "admin" && pw === "7895301") {
         sessionStorage.setItem("userRole", "admin");
         sessionStorage.setItem("teacherName", "관리자(admin)");
@@ -200,10 +191,7 @@
         return;
       }
       const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const todayString = `${yyyy}${mm}${dd}`;
+      const todayString = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       if (pw === todayString) {
         sessionStorage.setItem("userRole", "supervisor");
         sessionStorage.setItem("teacherName", id);
@@ -218,49 +206,53 @@
       sessionStorage.removeItem("teacherName");
       location.reload();
     }
+    
     async function loadExistingStudents() {
       try {
         const res = await fetch(`${API_URL}?action=getStudents`);
         const data = await res.json();
         studentsData = Array.isArray(data) ? data : (data.list || []);
+        
         if (studentsData.length > 0) {
           const dayCounts = { "월": 0, "화": 0, "수": 0, "목": 0, "금": 0, "토": 0, "일": 0 };
           studentsData.forEach(s => {
-            if (s.day && dayCounts[s.day] !== undefined) {
-              dayCounts[s.day]++;
-            }
+            if (s.day && dayCounts[s.day] !== undefined) dayCounts[s.day]++;
           });
-          const daysOrder = ["월", "화", "수", "목", "금", "토", "일"];
+          
           let summaryParts = [];
-          daysOrder.forEach(day => {
-            if (dayCounts[day] > 0) {
-              summaryParts.push(`<b>${day}</b>: ${dayCounts[day]}명`);
-            }
+          ["월", "화", "수", "목", "금"].forEach(day => {
+            if (dayCounts[day] > 0) summaryParts.push(`<b>${day}</b>: ${dayCounts[day]}명`);
           });
+          
           const daySummaryText = summaryParts.length > 0 ? summaryParts.join(' &nbsp;|&nbsp; ') : '요일 정보 없음';
           document.getElementById("student-list").innerHTML =
             `<div style="font-weight:bold; font-size:1.05em; color:var(--text-main); margin-bottom:8px;">
-              ✅ ${studentsData.length}건 로드 완료
+              ✅ ${studentsData.length}건 등록 완료
              </div>
              <div style="font-size:0.9em; color:#555; margin-bottom:10px;">
-              최근 업데이트: ${data.lastUploadTime || "기록 없음"}
+              최근 업데이트: <span style="color:#d32f2f; font-weight:bold;">${data.lastUploadTime || "기록 없음"}</span>
              </div>
-             <div style="background:#fff; padding:10px; border-radius:8px; font-size:0.9em; color:var(--primary-dark); border:1px solid #c8e6c9;">
+             <div style="background:#fff; padding:10px; border-radius:8px; font-size:0.9em; color:var(--primary-dark); border:1px solid #c8e6c9; line-height: 1.5;">
                ${daySummaryText}
              </div>`;
           document.getElementById("student-list").style.display = "block";
           document.getElementById("pdf-btn").disabled = false;
+        } else {
+          document.getElementById("student-list").innerHTML = "현재 등록된 학생이 없습니다.";
+          document.getElementById("student-list").style.display = "block";
         }
       } catch (e) {
         alert("학생명단을 불러오지 못했습니다.");
       }
     }
+    
     async function deleteExistingRoster() {
       if (sessionStorage.getItem("userRole") !== "admin") return alert("관리자 권한이 없습니다.");
       if (!confirm("학생명단만 초기화됩니다. 기존 출결기록은 유지됩니다. 계속하시겠습니까?")) return;
       await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "resetRosterOnly" }) });
       location.reload();
     }
+    
     function openManageModal() { document.getElementById("manage-modal").style.display = "flex"; renderManageTable(); }
     function closeManageModal() { document.getElementById("manage-modal").style.display = "none"; clearManageForm(); }
     function clearManageForm() {
@@ -272,6 +264,7 @@
       document.getElementById("m-p1-chk").checked = true;
       document.getElementById("m-p2-chk").checked = true;
     }
+    
     function renderManageTable() {
       const tbody = document.getElementById("manage-tbody");
       tbody.innerHTML = "";
@@ -322,41 +315,25 @@
       const btn = event.target;
       btn.innerText = "처리 중...";
       btn.disabled = true;
-      const url = `${API_URL}?${new URLSearchParams({
-        action: 'manageStudent', mode: 'save', id: id, name: name, day: checkedDays, p1_exc: p1, p2_exc: p2
-      }).toString()}`;
+      const url = `${API_URL}?${new URLSearchParams({ action: 'manageStudent', mode: 'save', id: id, name: name, day: checkedDays, p1_exc: p1, p2_exc: p2 }).toString()}`;
       fetch(url)
         .then(res => res.json())
         .then(res => {
-          if (res.success) {
-            alert(res.message);
-            clearManageForm();
-            loadExistingStudents().then(() => renderManageTable());
-          } else {
-            alert("오류: " + res.message);
-          }
-        })
-        .finally(() => {
-          btn.innerText = "저장 (추가/수정)";
-          btn.disabled = false;
-        });
+          if (res.success) { alert(res.message); clearManageForm(); loadExistingStudents().then(() => renderManageTable()); } 
+          else { alert("오류: " + res.message); }
+        }).finally(() => { btn.innerText = "저장 (추가/수정)"; btn.disabled = false; });
     }
     function deleteStudent(id, name) {
       if(!confirm(`[${id} ${name}] 학생을 명단에서 완전히 삭제하시겠습니까?`)) return;
-      const url = `${API_URL}?${new URLSearchParams({
-        action: 'manageStudent', mode: 'delete', id: id
-      }).toString()}`;
+      const url = `${API_URL}?${new URLSearchParams({ action: 'manageStudent', mode: 'delete', id: id }).toString()}`;
       fetch(url)
         .then(res => res.json())
         .then(res => {
-          if (res.success) {
-            alert(res.message);
-            loadExistingStudents().then(() => renderManageTable());
-          } else {
-            alert("삭제 실패: " + res.message);
-          }
+          if (res.success) { alert(res.message); loadExistingStudents().then(() => renderManageTable()); } 
+          else { alert("삭제 실패: " + res.message); }
         });
     }
+    
     function downloadTemplate() {
       const wb = XLSX.utils.book_new();
       ["월","화","수","목","금"].forEach(day => {
@@ -397,13 +374,13 @@
     }
 
     // =========================================================================
-    // ★ 엑셀 업로드: 여러 탭 통합 및 3행 제목줄 분석 반영 함수 (수정 완료)
+    // ★ 엑셀 업로드: 각 탭별로 중복 학생도 요일별 개별 데이터로 생성 (수정 완료)
     // =========================================================================
     document.getElementById("excel-upload").addEventListener("change", async function(e) {
       const file = e.target.files[0];
       if (!file) return;
 
-      alert("엑셀 파일을 분석하여 요일별 데이터를 하나로 통합하는 중입니다.\n잠시만 기다려주세요...");
+      alert("엑셀 파일을 분석하여 요일별 데이터를 가져오고 있습니다.\n잠시만 기다려주세요...");
 
       const reader = new FileReader();
       
@@ -412,10 +389,10 @@
           const data = new Uint8Array(ev.target.result);
           const workbook = XLSX.read(data, {type: 'array'});
           
-          let studentMap = {}; 
+          let parsedStudents = []; // 요일별 개별 데이터가 담길 배열
           const targetDays = ['월', '화', '수', '목', '금'];
           
-          // 1. 월~금 탭을 순회하며 데이터 긁어오기
+          // 1. 월~금 탭을 순회
           targetDays.forEach(function(day) {
             if (workbook.SheetNames.includes(day)) {
               const sheet = workbook.Sheets[day];
@@ -423,7 +400,7 @@
               
               let headerRowIdx = -1;
               
-              // 2. 제목줄(3행) 찾기 ('학번', '이름'이 포함된 줄)
+              // 2. 제목줄(3행) 찾기
               for (let i = 0; i < jsonArr.length; i++) {
                 if (jsonArr[i] && (jsonArr[i].includes('학번') || jsonArr[i].includes('이름'))) {
                   headerRowIdx = i;
@@ -431,7 +408,7 @@
                 }
               }
               
-              // 3. 학생 데이터 추출 시작
+              // 3. 학생 데이터 추출 (해당 요일로 1건씩 생성)
               if (headerRowIdx !== -1) {
                 const headers = jsonArr[headerRowIdx];
                 const gradeIdx = headers.indexOf('학년');
@@ -450,55 +427,41 @@
                   
                   const strId = String(id).trim();
                   
-                  // 해당 학생이 처음 나타났다면 기본 틀 만들기
-                  if (!studentMap[strId]) {
-                    studentMap[strId] = {
-                      grade: (gradeIdx > -1 && row[gradeIdx] !== undefined) ? String(row[gradeIdx]).trim() : "",
-                      id: strId,
-                      name: String(name).trim(),
-                      mon: "", tue: "", wed: "", thu: "", fri: "",
-                      exc1: "", exc2: ""
-                    };
-                  }
+                  // 제외 여부 체크
+                  let isP1Exc = "";
+                  let isP2Exc = "";
+                  if (p1Idx > -1 && row[p1Idx] && String(row[p1Idx]).trim().includes('제외')) isP1Exc = "제외";
+                  if (p2Idx > -1 && row[p2Idx] && String(row[p2Idx]).trim().includes('제외')) isP2Exc = "제외";
                   
-                  // 발견된 요일 탭에 출석 플래그('O') 세우기
-                  if (day === '월') studentMap[strId].mon = "O";
-                  if (day === '화') studentMap[strId].tue = "O";
-                  if (day === '수') studentMap[strId].wed = "O";
-                  if (day === '목') studentMap[strId].thu = "O";
-                  if (day === '금') studentMap[strId].fri = "O";
-                  
-                  // 제외 여부 체크 (빈칸은 출석으로 자동 인식)
-                  if (p1Idx > -1 && row[p1Idx] && String(row[p1Idx]).trim().includes('제외')) {
-                    studentMap[strId].exc1 = "제외";
-                  }
-                  if (p2Idx > -1 && row[p2Idx] && String(row[p2Idx]).trim().includes('제외')) {
-                    studentMap[strId].exc2 = "제외";
-                  }
+                  // ★ 핵심: 읽어온 탭의 '요일'을 그대로 박아서 배열에 푸시 (한 학생이 2개 요일이면 배열에 2개 객체가 들어감)
+                  parsedStudents.push({
+                    grade: (gradeIdx > -1 && row[gradeIdx] !== undefined) ? String(row[gradeIdx]).trim() : "",
+                    id: strId,
+                    name: String(name).trim(),
+                    day: day, // 해당 탭의 요일 (월, 화, 수...)
+                    p1_exc: isP1Exc,
+                    p2_exc: isP2Exc
+                  });
                 }
               }
             }
           });
           
-          // 4. 합쳐진 데이터를 배열로 변환
-          const finalData = Object.values(studentMap);
-          
-          if (finalData.length === 0) {
-            alert("업로드 실패: 엑셀 파일에서 학생 명단을 찾을 수 없습니다.\n엑셀 하단 탭 이름이 '월','화'... 인지, '학번/이름' 열이 있는지 확인해주세요.");
+          if (parsedStudents.length === 0) {
+            alert("업로드 실패: 엑셀 파일에서 학생 명단을 찾을 수 없습니다.\n하단 탭 이름이 '월','화'... 인지, '학번/이름' 열이 있는지 확인해주세요.");
             e.target.value = '';
             return;
           }
           
-          // 진행 상황 표시
           document.getElementById("student-list").style.display = "block";
-          document.getElementById("student-list").innerHTML = `⏳ 명단 병합 완료! 서버로 전송 중입니다... (총 ${finalData.length}명)`;
+          document.getElementById("student-list").innerHTML = `⏳ 명단 병합 완료! 서버로 전송 중입니다... (총 ${parsedStudents.length}건)`;
           
-          // 5. 서버로 통합 데이터 전송
+          // 4. 서버로 요일별 개별 객체 배열 전송
           const response = await fetch(API_URL, {
             method: "POST",
             body: JSON.stringify({
               action: "uploadStudents",
-              data: finalData // 백엔드(Code.gs)와 맞춘 변수명
+              data: parsedStudents // 서버로 전송
             })
           });
           
@@ -517,102 +480,59 @@
       };
       
       reader.readAsArrayBuffer(file);
-      e.target.value = ''; // 같은 파일을 다시 올릴 수 있도록 초기화
+      e.target.value = ''; // 초기화
     });
 
-    function getBaseUrl() {
-      return location.href.substring(0, location.href.lastIndexOf("/") + 1);
-    }
+    // =========================================================================
+    // 기타 QR 및 PDF 기능들
+    // =========================================================================
+    function getBaseUrl() { return location.href.substring(0, location.href.lastIndexOf("/") + 1); }
+    
     function downloadTeacherQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("p", "mm", "a4");
       const qrDiv = document.createElement("div");
-      new QRCode(qrDiv, {
-        text: `${baseUrl}scan.html`,
-        width: 256,
-        height: 256,
-        colorDark: "#1976d2",
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      new QRCode(qrDiv, { text: `${baseUrl}scan.html`, width: 256, height: 256, colorDark: "#1976d2", correctLevel: QRCode.CorrectLevel.H });
       setTimeout(() => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 350;
-        canvas.height = 420;
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, 350, 420);
-        ctx.fillStyle = "#1976d2";
-        ctx.font = "bold 24px Noto Sans KR";
-        ctx.textAlign = "center";
-        ctx.fillText("감독교사 로그인 QR", 175, 50);
-        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
-        ctx.font = "bold 14px Noto Sans KR";
-        ctx.fillText("1교시 18:00~19:40 / 2교시 20:40~21:40", 175, 380);
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
-        pdf.save("감독교사_전용QR.pdf");
+        const canvas = document.createElement("canvas"); canvas.width = 350; canvas.height = 420; const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 350, 420); ctx.fillStyle = "#1976d2"; ctx.font = "bold 24px Noto Sans KR";
+        ctx.textAlign = "center"; ctx.fillText("감독교사 로그인 QR", 175, 50); ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
+        ctx.font = "bold 14px Noto Sans KR"; ctx.fillText("1교시 18:00~19:40 / 2교시 20:40~21:40", 175, 380);
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145); pdf.save("감독교사_전용QR.pdf");
       }, 100);
     }
+    
     function downloadStudentAccessQR() {
       const baseUrl = getBaseUrl();
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("p", "mm", "a4");
       const qrDiv = document.createElement("div");
-      new QRCode(qrDiv, {
-        text: `${baseUrl}student.html`,
-        width: 256,
-        height: 256,
-        colorDark: "#8e44ad",
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      new QRCode(qrDiv, { text: `${baseUrl}student.html`, width: 256, height: 256, colorDark: "#8e44ad", correctLevel: QRCode.CorrectLevel.H });
       setTimeout(() => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 350;
-        canvas.height = 420;
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, 350, 420);
-        ctx.fillStyle = "#8e44ad";
-        ctx.font = "bold 24px Noto Sans KR";
-        ctx.textAlign = "center";
-        ctx.fillText("학생 QR발급 접속 안내", 175, 50);
-        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
-        ctx.font = "bold 14px Noto Sans KR";
-        ctx.fillText("카메라로 스캔하여 출석 QR코드를 발급받으세요", 175, 380);
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
-        pdf.save("학생_발급페이지_접속QR.pdf");
+        const canvas = document.createElement("canvas"); canvas.width = 350; canvas.height = 420; const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 350, 420); ctx.fillStyle = "#8e44ad"; ctx.font = "bold 24px Noto Sans KR";
+        ctx.textAlign = "center"; ctx.fillText("학생 QR발급 접속 안내", 175, 50); ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
+        ctx.font = "bold 14px Noto Sans KR"; ctx.fillText("카메라로 스캔하여 출석 QR코드를 발급받으세요", 175, 380);
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145); pdf.save("학생_발급페이지_접속QR.pdf");
       }, 100);
     }
+    
     function downloadAbsenceQR() {
       const targetUrl = "https://bongjaekim91-wq.github.io/check/absence";
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF("p", "mm", "a4");
       const qrDiv = document.createElement("div");
-      new QRCode(qrDiv, {
-        text: targetUrl,
-        width: 256,
-        height: 256,
-        colorDark: "#e67e22",
-        correctLevel: QRCode.CorrectLevel.H
-      });
+      new QRCode(qrDiv, { text: targetUrl, width: 256, height: 256, colorDark: "#e67e22", correctLevel: QRCode.CorrectLevel.H });
       setTimeout(() => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 350;
-        canvas.height = 420;
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, 350, 420);
-        ctx.fillStyle = "#e67e22";
-        ctx.font = "bold 24px Noto Sans KR";
-        ctx.textAlign = "center";
-        ctx.fillText("결석 신청 안내", 175, 50);
-        ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
-        ctx.font = "bold 14px Noto Sans KR";
-        ctx.fillText("스마트폰 카메라로 스캔하여 결석을 신청하세요", 175, 380);
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145);
-        pdf.save("결석_신청_접속QR.pdf");
+        const canvas = document.createElement("canvas"); canvas.width = 350; canvas.height = 420; const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 350, 420); ctx.fillStyle = "#e67e22"; ctx.font = "bold 24px Noto Sans KR";
+        ctx.textAlign = "center"; ctx.fillText("결석 신청 안내", 175, 50); ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
+        ctx.font = "bold 14px Noto Sans KR"; ctx.fillText("스마트폰 카메라로 스캔하여 결석을 신청하세요", 175, 380);
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145); pdf.save("결석_신청_접속QR.pdf");
       }, 100);
     }
+    
     async function generatePDF() {
       if (studentsData.length === 0) return alert("학생명단이 없습니다.");
       document.getElementById("pdf-loading").style.display = "flex";
@@ -627,61 +547,27 @@
           if (uniqueMap.has(s.id)) {
             const ex = uniqueMap.get(s.id);
             let days = ex.day.split(", ").map(d => d.trim());
-            if (!days.includes(s.day)) {
-              days.push(s.day);
-            }
+            if (!days.includes(s.day)) { days.push(s.day); }
             days.sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
             ex.day = days.join(", ");
-          } else {
-            uniqueMap.set(s.id, { ...s });
-          }
+          } else { uniqueMap.set(s.id, { ...s }); }
         });
-        const finalList = Array.from(uniqueMap.values())
-          .sort((a,b) => String(a.id).localeCompare(String(b.id)));
+        const finalList = Array.from(uniqueMap.values()).sort((a,b) => String(a.id).localeCompare(String(b.id)));
         for (let i = 0; i < finalList.length; i++) {
           const s = finalList[i];
           const qrDiv = document.createElement("div");
-          new QRCode(qrDiv, {
-            text: `${baseUrl}scan.html?id=${encodeURIComponent(s.id)}`,
-            width: 256,
-            height: 256,
-            colorDark: "#33691e",
-            correctLevel: QRCode.CorrectLevel.H
-          });
+          new QRCode(qrDiv, { text: `${baseUrl}scan.html?id=${encodeURIComponent(s.id)}`, width: 256, height: 256, colorDark: "#33691e", correctLevel: QRCode.CorrectLevel.H });
           await new Promise(r => setTimeout(r, 40));
-          const canvas = document.createElement("canvas");
-          canvas.width = 256;
-          canvas.height = 380;
-          const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, 256, 380);
-          ctx.fillStyle = "#33691e";
-          ctx.textAlign = "center";
-          ctx.font = "bold 18px Noto Sans KR";
-          ctx.fillText("꿈꾸는글마루 출석 QR코드", 128, 35);
-          ctx.drawImage(qrDiv.querySelector("canvas"), 0, 45);
-          ctx.font = "bold 25px Noto Sans KR";
-          ctx.fillText(`${s.id} ${s.name}`, 128, 335);
-          ctx.font = "bold 18px Noto Sans KR";
-          ctx.fillText(`(${s.day})`, 128, 365);
-          pdf.addImage(
-            canvas.toDataURL("image/png"),
-            "PNG",
-            20 + (i % 3) * 60,
-            20 + Math.floor((i % 9) / 3) * 82,
-            45,
-            67
-          );
-          if ((i + 1) % 9 === 0 && i < finalList.length - 1) {
-            pdf.addPage();
-          }
+          const canvas = document.createElement("canvas"); canvas.width = 256; canvas.height = 380; const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 380); ctx.fillStyle = "#33691e"; ctx.textAlign = "center"; ctx.font = "bold 18px Noto Sans KR";
+          ctx.fillText("꿈꾸는글마루 출석 QR코드", 128, 35); ctx.drawImage(qrDiv.querySelector("canvas"), 0, 45); ctx.font = "bold 25px Noto Sans KR";
+          ctx.fillText(`${s.id} ${s.name}`, 128, 335); ctx.font = "bold 18px Noto Sans KR"; ctx.fillText(`(${s.day})`, 128, 365);
+          pdf.addImage(canvas.toDataURL("image/png"), "PNG", 20 + (i % 3) * 60, 20 + Math.floor((i % 9) / 3) * 82, 45, 67);
+          if ((i + 1) % 9 === 0 && i < finalList.length - 1) { pdf.addPage(); }
         }
         pdf.save("학생_QR명단.pdf");
-      } catch (error) {
-        alert("PDF 생성 중 오류가 발생했습니다: " + error.message);
-      } finally {
-        document.getElementById("pdf-loading").style.display = "none";
-      }
+      } catch (error) { alert("PDF 생성 중 오류가 발생했습니다: " + error.message); } 
+      finally { document.getElementById("pdf-loading").style.display = "none"; }
     }
   </script>
 </body>
