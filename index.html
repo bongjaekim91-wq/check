@@ -69,7 +69,7 @@
       <div id="current-time" class="time-text"></div>
     </div>
     
-    <div class="notice">출석 인정 시간<br>1교시 18:00~19:40 / 2교시 20:40~21:40</div>
+    <div class="notice">출석 인정 시간 설정은<br>대시보드 내 <b>[⚙️ 시간설정]</b>에서 변경 가능합니다.</div>
     
     <button class="btn btn-outline" style="background:#e8f5e9; border-color:#4caf50; margin-bottom: 12px; margin-top: 0; min-height: 55px; font-size: 1.25em; font-weight: 900; color: #2e7d32;" onclick="location.href='dashboard.html'">📊 감독교사 출석부 관리</button>
     
@@ -415,9 +415,6 @@
       XLSX.writeFile(wb, "현재_출석명단.xlsx");
     }
     
-    // =========================================================================
-    // ★ 엑셀 업로드: 각 탭별로 중복 학생도 요일별 개별 데이터로 생성
-    // =========================================================================
     document.getElementById("excel-upload").addEventListener("change", async function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -513,9 +510,6 @@
       e.target.value = ''; 
     });
     
-    // =========================================================================
-    // 기타 QR 및 PDF 기능들
-    // =========================================================================
     function getBaseUrl() { return location.href.substring(0, location.href.lastIndexOf("/") + 1); }
     
     function downloadTeacherQR() {
@@ -529,7 +523,7 @@
         const canvas = document.createElement("canvas"); canvas.width = 350; canvas.height = 420; const ctx = canvas.getContext("2d");
         ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 350, 420); ctx.fillStyle = "#1976d2"; ctx.font = "bold 24px Noto Sans KR";
         ctx.textAlign = "center"; ctx.fillText("감독교사 로그인 QR", 175, 50); ctx.drawImage(qrDiv.querySelector("canvas"), 47, 90);
-        ctx.font = "bold 14px Noto Sans KR"; ctx.fillText("1교시 18:00~19:40 / 2교시 20:40~21:40", 175, 380);
+        ctx.font = "bold 14px Noto Sans KR"; ctx.fillText("시간 설정은 대시보드에서 변경할 수 있습니다.", 175, 380);
         pdf.addImage(canvas.toDataURL("image/png"), "PNG", 45, 25, 120, 145); pdf.save("감독교사_전용QR.pdf");
       }, 100);
     }
@@ -605,7 +599,6 @@
           ctx.fillText("꿈꾸는글마루 출석 QR코드", 128, 35); ctx.drawImage(qrDiv.querySelector("canvas"), 0, 45); ctx.font = "bold 25px Noto Sans KR";
           ctx.fillText(`${s.id} ${s.name}`, 128, 335); ctx.font = "bold 18px Noto Sans KR"; ctx.fillText(`(${s.day})`, 128, 365);
           
-          // ★ 오타 수정된 부분: 언더바(_)를 곱하기(*)로 변경
           pdf.addImage(canvas.toDataURL("image/png"), "PNG", 20 + (i % 3) * 60, 20 + Math.floor((i % 9) / 3) * 82, 45, 67);
           
           if ((i + 1) % 9 === 0 && i < finalList.length - 1) { pdf.addPage(); }
