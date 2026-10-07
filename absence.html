@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>꿈꾸는 글마루 결석 신청</title>
   <style>
-    /* 스마트폰 화면(QR코드 접속)에 최적화된 모바일 친화적 디자인 */
+    /* 기존 스타일 동일 */
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f0f4f8; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
     .form-container { background: white; padding: 30px 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); width: 100%; max-width: 420px; box-sizing: border-box; }
     h2 { color: #2b7a2b; margin-top: 0; text-align: center; border-bottom: 2px solid #e8f5e9; padding-bottom: 15px; font-size: 1.4rem; }
@@ -22,10 +22,9 @@
     .btn-submit { width: 100%; background: #38a169; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 5px; }
     .btn-submit:hover { background: #2f855a; }
     .btn-submit:disabled { background: #a0aec0; cursor: not-allowed; }
-    
-    /* 입력창 에러 시 흔들리는 애니메이션 효과 */
     .shake { animation: shake 0.4s 1; border-color: #e53e3e !important; }
     @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+    .auto-filled { background-color: #e8f5e9 !important; border-color: #38a169 !important; color: #2b7a2b; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -38,7 +37,6 @@
       </ul>
     </div>
     
-    <!-- 에러 메시지 표시 영역 -->
     <div id="error-msg"></div>
     
     <div class="form-group">
@@ -47,11 +45,12 @@
     </div>
     <div class="form-group">
       <label for="req-id">🔢 학번 (5자리 숫자)</label>
-      <input type="tel" id="req-id" placeholder="예: 10101" maxlength="5" autocomplete="off">
+      <!-- 데이터를 불러오기 전까지 입력할 수 없도록 disabled 처리 -->
+      <input type="tel" id="req-id" placeholder="명단을 불러오는 중입니다..." maxlength="5" autocomplete="off" disabled>
     </div>
     <div class="form-group">
       <label for="req-name">👤 이름</label>
-      <input type="text" id="req-name" placeholder="학생 본인 이름" maxlength="10" autocomplete="off">
+      <input type="text" id="req-name" placeholder="학번을 입력하면 자동으로 나타납니다." maxlength="10" autocomplete="off" readonly>
     </div>
     <div class="form-group">
       <label for="req-reason">📝 결석 사유 (상세히 작성)</label>
@@ -61,15 +60,62 @@
   </div>
 
   <script>
-    // 오늘 날짜를 기본값으로 설정
+    const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    
+    // 빈 객체로 시작하여 구글 시트에서 데이터를 받아와 채울 예정
+    let studentData = {};
+
     window.onload = function() {
+      // 1. 오늘 날짜를 기본값으로 설정
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
       document.getElementById('req-date').value = localToday;
+
+      // 2. 서버(구글 시트)에서 실시간 명단 불러오기
+      fetch(`${API_URL}?action=getStudents`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.students) {
+            studentData = data.students; // 시트의 명단으로 업데이트
+            
+            // 학번 입력창 활성화
+            const idInput = document.getElementById('req-id');
+            idInput.disabled = false;
+            idInput.placeholder = "예: 10101";
+          }
+        })
+        .catch(err => {
+          console.error("명단을 불러오지 못했습니다.", err);
+          document.getElementById('req-id').placeholder = "오류: 새로고침 해주세요.";
+        });
+
+      // 3. 학번 입력 시 이름 자동 완성 이벤트
+      const idInput = document.getElementById('req-id');
+      const nameInput = document.getElementById('req-name');
+      const errorDiv = document.getElementById('error-msg');
+
+      idInput.addEventListener('input', function() {
+        const idVal = idInput.value.trim();
+        
+        if (idVal.length === 5) {
+          if (studentData[idVal]) {
+            nameInput.value = studentData[idVal];
+            nameInput.classList.add('auto-filled');
+            errorDiv.style.display = 'none';
+          } else {
+            nameInput.value = "";
+            nameInput.classList.remove('auto-filled');
+            showError('등록되지 않은 학번입니다. 학번을 다시 확인해주세요.', 'req-id');
+          }
+        } else {
+          nameInput.value = "";
+          nameInput.classList.remove('auto-filled');
+          errorDiv.style.display = 'none';
+        }
+      });
     };
 
-    // 에러 메세지를 띄우고 해당 칸으로 포커스 이동하는 함수 (alert 제거)
     function showError(message, elementId) {
       const errorDiv = document.getElementById('error-msg');
       const inputEl = document.getElementById(elementId);
@@ -78,11 +124,10 @@
       errorDiv.innerHTML = "⚠️ " + message;
       
       inputEl.classList.remove('shake');
-      void inputEl.offsetWidth; // 애니메이션 리셋(리플로우 강제 발생)
+      void inputEl.offsetWidth;
       inputEl.classList.add('shake');
       inputEl.focus();
       
-      // 흔들림 애니메이션 후 클래스 제거
       setTimeout(() => inputEl.classList.remove('shake'), 400);
     }
 
@@ -98,39 +143,15 @@
       const name = nameEl.value.trim();
       const reason = reasonEl.value.trim();
       
-      // 에러 메시지 초기화
       errorDiv.style.display = 'none';
 
-      // 1. 날짜 입력 확인
-      if (!date) {
-        return showError('결석할 날짜를 선택해주세요.', 'req-date');
-      }
-      // 2. 학번 입력 확인 (비어있는지, 숫자인지, 5자리인지)
-      if (!id) {
-        return showError('학번을 입력해주세요.', 'req-id');
-      }
-      if (isNaN(id) || id.length !== 5) {
-        return showError('학번은 정확히 5자리 숫자로 입력해주세요. (예: 10101)', 'req-id');
-      }
-      // 3. 이름 입력 확인
-      if (!name) {
-        return showError('이름을 입력해주세요.', 'req-name');
-      }
-      if (name.length < 2) {
-        return showError('이름을 정확하게 입력해주세요.', 'req-name');
-      }
-      // 4. 사유 입력 확인
-      if (!reason) {
-        return showError('결석 사유를 입력해주세요.', 'req-reason');
-      }
-      if (reason.length < 3) {
-        return showError('사유를 조금 더 구체적으로 작성해주세요.', 'req-reason');
-      }
+      if (!date) return showError('결석할 날짜를 선택해주세요.', 'req-date');
+      if (!id) return showError('학번을 입력해주세요.', 'req-id');
+      if (isNaN(id) || id.length !== 5) return showError('학번은 정확히 5자리 숫자로 입력해주세요.', 'req-id');
+      if (!name || !studentData[id]) return showError('등록되지 않은 학번입니다. 올바른 학번을 입력해주세요.', 'req-id');
+      if (!reason) return showError('결석 사유를 입력해주세요.', 'req-reason');
+      if (reason.length < 3) return showError('사유를 조금 더 구체적으로 작성해주세요.', 'req-reason');
 
-      // 선생님의 구글 앱스 스크립트 웹앱 주소 반영
-      const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
-      
-      // 모든 검증을 통과하면 제출 시작 (버튼 비활성화)
       const btn = document.getElementById('submit-btn');
       btn.innerText = "제출 중입니다... ⏳";
       btn.disabled = true;
@@ -141,10 +162,10 @@
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            alert(`✅ ${name} 학생의 결석 신청이 완료되었습니다.\n선생님 승인 후 처리됩니다.`);
-            // 제출 성공 시 폼 내용 비우기 (날짜는 오늘로 유지)
+            alert(`✅ ${name} 학생의 결석 신청이 완료되었습니다.`);
             idEl.value = '';
             nameEl.value = '';
+            nameEl.classList.remove('auto-filled');
             reasonEl.value = '';
           } else {
             alert("❌ 신청 실패: " + data.message);
@@ -154,7 +175,6 @@
           alert("서버 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         })
         .finally(() => {
-          // 버튼 상태 복구
           btn.innerText = "신청서 제출하기";
           btn.disabled = false;
         });
