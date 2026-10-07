@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>꿈꾸는 글마루 결석 신청</title>
   <style>
-    /* 기존 스타일 동일 */
+    /* 기존 스타일 동일하게 유지 */
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f0f4f8; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
     .form-container { background: white; padding: 30px 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); width: 100%; max-width: 420px; box-sizing: border-box; }
     h2 { color: #2b7a2b; margin-top: 0; text-align: center; border-bottom: 2px solid #e8f5e9; padding-bottom: 15px; font-size: 1.4rem; }
@@ -45,7 +45,7 @@
     </div>
     <div class="form-group">
       <label for="req-id">🔢 학번 (5자리 숫자)</label>
-      <!-- 데이터를 불러오기 전까지 입력할 수 없도록 disabled 처리 -->
+      <!-- 데이터를 불러오기 전까지 입력을 막아둡니다. -->
       <input type="tel" id="req-id" placeholder="명단을 불러오는 중입니다..." maxlength="5" autocomplete="off" disabled>
     </div>
     <div class="form-group">
@@ -60,26 +60,30 @@
   </div>
 
   <script>
+    // ★ 선생님의 배포된 웹앱 주소로 변경해주세요. (선생님 환경에 맞게 입력)
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     
-    // 빈 객체로 시작하여 구글 시트에서 데이터를 받아와 채울 예정
-    let studentData = {};
+    let studentData = {}; // 서버에서 받아온 명단을 저장할 객체
 
     window.onload = function() {
-      // 1. 오늘 날짜를 기본값으로 설정
+      // 1. 오늘 날짜 세팅
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
       document.getElementById('req-date').value = localToday;
 
-      // 2. 서버(구글 시트)에서 실시간 명단 불러오기
+      // 2. 서버(code.gs)의 getStudents_() 함수에서 명단 불러오기
       fetch(`${API_URL}?action=getStudents`)
         .then(res => res.json())
         .then(data => {
-          if (data.success && data.students) {
-            studentData = data.students; // 시트의 명단으로 업데이트
+          // 기존 code.gs는 data.list 안에 배열 형태로 학생 정보를 줍니다.
+          if (data.success && data.list) {
+            // 배열을 { "학번": "이름" } 형태의 딕셔너리로 변환
+            data.list.forEach(student => {
+              studentData[student.id] = student.name;
+            });
             
-            // 학번 입력창 활성화
+            // 데이터 로딩 완료 시 입력창 활성화
             const idInput = document.getElementById('req-id');
             idInput.disabled = false;
             idInput.placeholder = "예: 10101";
@@ -87,10 +91,10 @@
         })
         .catch(err => {
           console.error("명단을 불러오지 못했습니다.", err);
-          document.getElementById('req-id').placeholder = "오류: 새로고침 해주세요.";
+          document.getElementById('req-id').placeholder = "오류: 페이지를 새로고침 해주세요.";
         });
 
-      // 3. 학번 입력 시 이름 자동 완성 이벤트
+      // 3. 학번 입력 시 자동완성 로직
       const idInput = document.getElementById('req-id');
       const nameInput = document.getElementById('req-name');
       const errorDiv = document.getElementById('error-msg');
@@ -156,6 +160,7 @@
       btn.innerText = "제출 중입니다... ⏳";
       btn.disabled = true;
 
+      // 기존 code.gs의 submitAbsence_() 함수가 처리하도록 요청
       const submitUrl = `${API_URL}?action=submitAbsence&date=${date}&id=${id}&name=${encodeURIComponent(name)}&reason=${encodeURIComponent(reason)}`;
       
       fetch(submitUrl, { method: "GET", redirect: "follow" })
