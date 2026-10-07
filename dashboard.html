@@ -149,9 +149,11 @@
       <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
       <a href="#" class="btn-home" onclick="checkHomeMove(event)">⬅️ 메인으로 돌아가기</a>
     </div>
+    
+    <!-- ★ 실시간 시간이 반영되는 상단 안내 박스 -->
     <div class="info-box">
-      출석 인정 시간 설정은 대시보드 내 <b>[⚙️ 시간설정]</b> 버튼을 통해 변경할 수 있습니다.<br>
-      당일 출석부에서는 학생 추가 및 <b>수동 출석/결석 처리</b>, 비고 작성 및 저장이 가능합니다.
+      현재 출석 인정 시간 ➡️ <span id="display-time-p1" style="font-weight:bold; color:#1976d2;">불러오는 중...</span> / <span id="display-time-p2" style="font-weight:bold; color:#1976d2;">불러오는 중...</span><br>
+      당일 출석부에서는 학생 추가 및 <b>수동 출석/결석 처리</b>, 비고 작성 및 저장이 가능하며 <b>[⚙️ 출석시간설정]</b>에서 시간을 변경할 수 있습니다.
     </div>
     
     <div class="tab-container">
@@ -173,8 +175,8 @@
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
-            <!-- ★ 시간 설정 버튼 추가 -->
-            <button style="background-color: #4a5568; color: white;" onclick="openSettingsModal()">⚙️ 시간설정</button>
+            <!-- ★ 이름이 변경된 버튼 -->
+            <button style="background-color: #4a5568; color: white;" onclick="openSettingsModal()">⚙️ 출석시간설정</button>
             <button class="btn-absence" onclick="openAbsenceModal()">📩 결석 승인</button>
             <button class="btn-save-doc" onclick="saveAndPdf()">💾 출석부 저장</button>
             <button class="btn-reset" onclick="resetDailyData()">🗑️ 출결 초기화</button>
@@ -332,7 +334,10 @@
       document.getElementById('indivEndDate').value = localToday;
       document.getElementById('statStartDate').value = localFirst;
       document.getElementById('statEndDate').value = localToday;
+      
       loadDailyData();
+      loadTimeSettings(); // ★ 접속 시 설정된 시간 불러오기 실행
+      
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
     
@@ -1004,7 +1009,24 @@
     
     function closeAbsenceModal() { document.getElementById('absenceModal').style.display = 'none'; }
     
-    // ★ 새로 추가된 모달 자바스크립트 함수 (시간 설정)
+    // ★ 시간 설정 불러오기
+    function loadTimeSettings() {
+      fetch(`${API_URL}?action=getSettings&_t=${new Date().getTime()}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            updateInfoBoxTime(data.p1_start, data.p1_end, data.p2_start, data.p2_end);
+          }
+        })
+        .catch(err => console.error("시간 설정을 불러오는 중 오류 발생:", err));
+    }
+    
+    // ★ 상단 UI 실시간 업데이트 함수
+    function updateInfoBoxTime(p1s, p1e, p2s, p2e) {
+      document.getElementById('display-time-p1').innerText = `1교시 ${p1s}~${p1e}`;
+      document.getElementById('display-time-p2').innerText = `2교시 ${p2s}~${p2e}`;
+    }
+
     function openSettingsModal() {
       document.getElementById('settingsModal').style.display = 'flex';
       showLoading(true);
@@ -1029,6 +1051,7 @@
       document.getElementById('settingsModal').style.display = 'none';
     }
 
+    // ★ 시간 저장 후 UI 즉시 반영
     function saveTimeSettings() {
       const p1s = document.getElementById('set_p1_start').value;
       const p1e = document.getElementById('set_p1_end').value;
@@ -1052,6 +1075,7 @@
         showLoading(false);
         if(res.success) {
           showCustomAlert(res.message);
+          updateInfoBoxTime(p1s, p1e, p2s, p2e); // ★ 바로 화면 UI 반영
           closeSettingsModal();
         } else {
           showCustomAlert("저장 실패: " + res.message, true);
