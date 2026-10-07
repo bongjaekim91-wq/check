@@ -169,7 +169,7 @@
             <button class="btn-absence" onclick="openAbsenceModal()">📩 결석 승인</button>
             <button class="btn-save-doc" onclick="saveAndPdf()">💾 출석부 저장</button>
             <button class="btn-reset" onclick="resetDailyData()">🗑️ 출결 초기화</button>
-            <button class="btn-qr" onclick="refreshDailyData()">🔄 새로고침</button>
+            //<button class="btn-qr" onclick="refreshDailyData()">🔄 새로고침</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
             <button class="btn-print" onclick="window.print()">🖨️ 출석부 인쇄</button>
             <button class="btn-global-sms" onclick="copyGlobalSms()">📩 문자발송내용</button>
@@ -411,7 +411,7 @@
       const newDate = datePicker.value;
       handleAction(() => { previousDate = newDate; loadDailyData(); }, () => { datePicker.value = previousDate; });
     }
-    function refreshDailyData() { handleAction(() => { loadDailyData(); }); }
+    //function refreshDailyData() { handleAction(() => { loadDailyData(); }); }
     function processSingle(id, name, periodStr, statusParam) { handleAction(() => { executeProcessSingle(id, name, periodStr, statusParam); }); }
     function addDailyStudent() { handleAction(() => { executeAddDailyStudent(); }); }
     function resetDailyData() {
