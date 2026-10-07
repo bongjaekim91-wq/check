@@ -101,7 +101,7 @@
   <!-- 로딩 오버레이 -->
   <div id="loading" class="loading-overlay">데이터를 처리 중입니다... ⏳</div>
 
-  <!-- ★ 로그인 화면 (설명 텍스트 삭제 및 엔터키 이벤트 안전하게 수정) -->
+  <!-- ★ 로그인 화면 -->
   <div id="loginScreen">
     <div class="login-box">
       <h2>글마루 감독교사 로그인</h2>
@@ -386,7 +386,7 @@
             document.getElementById("mainDashboard").style.display = "block";
             initDashboard();
           } else {
-            alert("로그인 실패: " + data.message);
+            alert("로그인 실패: \n" + data.message);
           }
         })
         .catch(err => {
@@ -627,11 +627,12 @@
         .then(response => {
           showLoading(false); 
           isNoteChanged = false;
-          let rawTeacherStr = response.teacherText || "";
-          let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
-          let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+          
+          // ★ 화면 제목 표시에 무조건 로그인한 선생님 이름(loggedInUser)이 찍히게 만듦
+          let teacherName = loggedInUser;
           
           document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
+          
           if(response.success) { 
             currentDailyData = response; 
             renderTable(response); 
@@ -851,9 +852,9 @@
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
-      let rawTeacherStr = data.teacherText || ""; 
-      let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
-      const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+      
+      // ★ 인쇄될 때도 무조건 로그인한 유저 이름이 찍히도록 수정
+      const teacherText = loggedInUser;
       
       let logMap = {}; let extraRows = [];
       if(data.logs) {
