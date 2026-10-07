@@ -46,7 +46,7 @@
     .status-present { color: #3182ce; font-weight: bold; }
     .status-extra { color: #3182ce; font-weight: bold; }
     .status-absent { color: #e53e3e; font-weight: bold; }
-    .status-approved { color: #d69e2e; font-weight: bold; } /* 결석승인 텍스트 색상 추가 */
+    .status-approved { color: #d69e2e; font-weight: bold; }
     .status-excluded { color: #a0aec0; font-weight: bold; text-decoration: line-through; }
     .footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #888; }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: bold; color: #2b7a2b; display: none; }
@@ -82,7 +82,7 @@
       .st-present { background-color: #E2F0D9 !important; color: #38761D !important; font-weight: bold; }
       .st-extra { background-color: #D9EAF7 !important; color: #1F4E79 !important; font-weight: bold; }
       .st-absent { background-color: #FCE4D6 !important; color: #C00000 !important; font-weight: bold; }
-      .st-approved { background-color: #FFF9C4 !important; color: #F57F17 !important; font-weight: bold; } /* 인쇄 시 결석승인 색상 */
+      .st-approved { background-color: #FFF9C4 !important; color: #F57F17 !important; font-weight: bold; }
       .st-excluded { background-color: #E7E6E6 !important; color: #666666 !important; font-weight: bold; }
     }
   </style>
@@ -109,7 +109,6 @@
       </div>
     </div>
   </div>
-  <!-- ★ QR 인식 시간 설정 모달 -->
   <div id="settingsModal" class="modal-overlay">
     <div class="modal-box" style="min-width: 400px;">
       <h3 style="color:#2b7a2b; border-bottom:2px solid #e8f5e9; padding-bottom:10px;">⚙️ QR 인식 시간 설정</h3>
@@ -144,7 +143,6 @@
       <h1>📊 서현고등학교 글마루 출결 대시보드</h1>
       <a href="#" class="btn-home" onclick="checkHomeMove(event)">⬅️ 메인으로 돌아가기</a>
     </div>
-    <!-- ★ 실시간 시간이 반영되는 상단 안내 박스 -->
     <div class="info-box">
       현재 출석 인정 시간 ➡️ <span id="display-time-p1" style="font-weight:bold; color:#1976d2;">불러오는 중...</span> / <span id="display-time-p2" style="font-weight:bold; color:#1976d2;">불러오는 중...</span><br>
       당일 출석부에서는 학생 추가 및 <b>수동 출석/결석 처리</b>, 비고 작성 및 저장이 가능하며 <b>[⚙️ 출석시간설정]</b>에서 시간을 변경할 수 있습니다.
@@ -155,7 +153,6 @@
       <button class="tab-btn" id="btn-tab-stats" onclick="switchTab('tab-stats', this)">📈 기간별 통계 현황</button>
     </div>
     <div class="content-box">
-      <!-- [1] 일일 출석부 탭 -->
       <div id="tab-daily" class="tab-content active">
         <div class="dashboard-header-container">
           <div class="date-picker-container" style="margin-bottom: 0;">
@@ -167,7 +164,6 @@
         <div class="table-header-row">
           <h2 id="tableTitle">글마루 출석부</h2>
           <div class="action-btns">
-            <!-- ★ 이름이 변경된 버튼 -->
             <button style="background-color: #4a5568; color: white;" onclick="openSettingsModal()">⚙️ 출석시간설정</button>
             <button class="btn-absence" onclick="openAbsenceModal()">📩 결석 승인</button>
             <button class="btn-save-doc" onclick="saveAndPdf()">💾 출석부 저장</button>
@@ -175,7 +171,6 @@
             <button class="btn-qr" onclick="refreshDailyData()">🔄 새로고침</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
             <button class="btn-print" onclick="window.print()">🖨️ 출석부 인쇄</button>
-            <!-- ★ 공통 문자 발송 버튼 추가됨 -->
             <button class="btn-global-sms" onclick="copyGlobalSms()">📩 문자발송내용</button>
             <button class="btn-riro" onclick="checkRiroMove()">🔗 리로스쿨</button>
           </div>
@@ -200,7 +195,6 @@
               <th style="width: 11%;">1교시</th>
               <th style="width: 11%;">2교시</th>
               <th style="width: 18%;">관리 (개별처리)</th>
-              <!-- ★ 문자메세지 발송내용 헤더 삭제됨, 비고 width 35%로 조정 -->
               <th style="width: 35%;">비고</th>
             </tr>
           </thead>
@@ -208,7 +202,6 @@
           </tbody>
         </table>
       </div>
-      <!-- [2] 개인별 출결 현황 탭 -->
       <div id="tab-individual" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
           <span>조회 기간:</span>
@@ -229,7 +222,6 @@
           </tbody>
         </table>
       </div>
-      <!-- [3] 기간별 통계 현황 탭 -->
       <div id="tab-stats" class="tab-content">
         <div class="date-picker-container" style="display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;">
           <span>조회 기간:</span>
@@ -282,7 +274,10 @@
     let myChart = null;
     let isNoteChanged = false;
     let previousDate = "";
-    const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
+    
+    // ★ 수정됨: 고정값을 전역 변수로 선언만 해둠
+    let loggedInUser = ""; 
+
     function extractArray(res) {
       if (!res) return [];
       if (Array.isArray(res)) return res;
@@ -310,6 +305,22 @@
       return "";
     }
     document.addEventListener("DOMContentLoaded", function() {
+      // ★ 추가됨: 접속 시 감독교사 이름 묻는 팝업 로직
+      let savedName = sessionStorage.getItem("currentTeacherName");
+      
+      // 저장된 이름이 없거나 예전 데이터인 '관리자', 'admin' 텍스트가 포함된 경우 새로 물어봄
+      if (!savedName || savedName.includes("관리자") || savedName.includes("admin")) {
+        let inputName = prompt("오늘 출결 관리를 담당하실 감독교사 성함을 입력해주세요.\n(예: 홍길동)", "");
+        if (inputName && inputName.trim() !== "") {
+          loggedInUser = inputName.trim();
+        } else {
+          loggedInUser = "미입력(관리자)"; // 팝업 취소 시 임시 기본값
+        }
+        sessionStorage.setItem("currentTeacherName", loggedInUser);
+      } else {
+        loggedInUser = savedName; // 이번 세션에 이미 입력한 이름이 있다면 그대로 사용
+      }
+
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
@@ -322,7 +333,7 @@
       document.getElementById('statStartDate').value = localFirst;
       document.getElementById('statEndDate').value = localToday;
       loadDailyData();
-      loadTimeSettings(); // ★ 접속 시 설정된 시간 불러오기 실행
+      loadTimeSettings(); 
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
     window.addEventListener('beforeunload', function (e) {
@@ -450,6 +461,8 @@
           showLoading(false); isNoteChanged = false;
           let rawTeacherStr = response.teacherText || "";
           let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
+          
+          // ★ 수정됨: 만약 서버에서 넘어온 기존 기록 담당자가 없다면, 방금 입력한 loggedInUser를 기본 노출
           let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
           document.getElementById('tableTitle').innerHTML = `${dateStr} 글마루 출석부 <span style="font-size:1rem; color:#666; margin-left:10px; font-weight:normal;">(감독교사: <span style="color:#2b7a2b; font-weight:bold;">${teacherName}</span>)</span>`;
           if(response.success) { currentDailyData = response; renderTable(response); renderPrintArea(response); }
@@ -459,7 +472,6 @@
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
-      // ★ 결석승인, 무단결석 등이 제외(제외대상) 처리되지 않도록 반영됨
       if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '결석' || strVal === '결석승인' || strVal === '무단결석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
       return true;
     }
@@ -492,16 +504,15 @@
             if(String(log.id).trim() === String(student.id).trim()) {
               if(String(log.period).includes('1') && !isExcludedMark(log.status) && log.status !== '제외') {
                   p1Status = (log.status === '미출석') ? '결석' : log.status;
-                  // ★ 결석승인, 무단결석 상태 색상 분기 로직 수정됨
-                  p1Class = (p1Status === '추가출석' || p1Status === '수동입력' || p1Status === '수동출석') ? 'status-extra' : 
-                            (p1Status === '결석' || p1Status === '무단결석') ? 'status-absent' : 
+                  p1Class = (p1Status === '추가출석' || p1Status === '수동입력' || p1Status === '수동출석') ? 'status-extra' :
+                            (p1Status === '결석' || p1Status === '무단결석') ? 'status-absent' :
                             (p1Status === '결석승인') ? 'status-approved' : 'status-present';
                   if (p1Status !== '결석' && p1Status !== '무단결석' && p1Status !== '결석승인' && log.timestamp) p1Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${log.timestamp.split(" ")[1].substring(0, 8)})</span>`;
               }
               if(String(log.period).includes('2') && !isExcludedMark(log.status) && log.status !== '제외') {
                   p2Status = (log.status === '미출석') ? '결석' : log.status;
-                  p2Class = (p2Status === '추가출석' || p2Status === '수동입력' || p2Status === '수동출석') ? 'status-extra' : 
-                            (p2Status === '결석' || p2Status === '무단결석') ? 'status-absent' : 
+                  p2Class = (p2Status === '추가출석' || p2Status === '수동입력' || p2Status === '수동출석') ? 'status-extra' :
+                            (p2Status === '결석' || p2Status === '무단결석') ? 'status-absent' :
                             (p2Status === '결석승인') ? 'status-approved' : 'status-present';
                   if (p2Status !== '결석' && p2Status !== '무단결석' && p2Status !== '결석승인' && log.timestamp) p2Time = `<br><span style="font-size:0.85rem; color:#888; font-weight:normal;">(${log.timestamp.split(" ")[1].substring(0, 8)})</span>`;
               }
@@ -518,8 +529,6 @@
         let noteVal = student.note || ''; if (isAdded && noteVal === '') noteVal = '추가출석';
         const tr = document.createElement('tr');
         if (isAdded) tr.style.backgroundColor = "#fafcff";
-        
-        // ★ 문자메세지 버튼 컬럼 <td> 삭제됨
         tr.innerHTML = `
           <td>${index + 1}</td><td style="font-weight:bold;">${student.id}</td><td style="font-weight:bold;">${student.name}</td>
           <td class="${p1Class}">${p1Status}${p1Time}</td><td class="${p2Class}">${p2Status}${p2Time}</td><td>${p1Btn}${p2Btn}</td>
@@ -570,7 +579,10 @@
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
       let rawTeacherStr = data.teacherText || ""; let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
+      
+      // ★ 인쇄 화면에도 방금 입력한 교사 이름이 반영되도록 수정
       const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+      
       let logMap = {}; let extraRows = [];
       if(data.logs) {
         data.logs.forEach(log => {
@@ -585,7 +597,6 @@
         let log = logMap[String(student.id).trim() + "_" + period];
         if (log) {
           let timeHtml = `<br><span style="font-size:7.5pt; font-weight:normal; color:#555;">(${log.time})</span>`;
-          // ★ 결석승인 상태 인쇄용 처리 추가됨
           if (log.status === '결석' || log.status === '미출석' || log.status === '무단결석') return { text: "결석", type: "st-absent" };
           if (log.status === '결석승인') return { text: "결석승인", type: "st-approved" };
           if (log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") return { text: "추가/수동" + timeHtml, type: "st-extra" };
@@ -895,31 +906,24 @@
       printDiv.innerHTML = html; window.print();
       setTimeout(() => { if(currentDailyData) renderPrintArea(currentDailyData); }, 1000);
     }
-    
-    // ★ 삭제된 개별 문자 복사 함수 대신 공통 문자 복사 함수 추가
     function copyGlobalSms() {
       const dateStr = document.getElementById('datePicker').value;
       if (!dateStr) {
         showCustomAlert("날짜가 선택되지 않았습니다.", true);
         return;
       }
-      
       const d = new Date(dateStr);
       const month = d.getMonth() + 1;
       const day = d.getDate();
-      
       const msg = `안녕하세요. 서현고입니다. 발송내용은 금일(${month}월 ${day}일) 꿈꾸는글마루(야간자기주도학습)에 학생이 불참하였음을 알려드립니다.-서현고등학교-`;
-      
-      const tempArea = document.createElement("textarea"); 
+      const tempArea = document.createElement("textarea");
       tempArea.value = msg;
-      document.body.appendChild(tempArea); 
-      tempArea.select(); 
-      document.execCommand("copy"); 
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand("copy");
       document.body.removeChild(tempArea);
-      
       showCustomAlert(`✅ 문자 내용이 성공적으로 복사되었습니다!\n\n문자 메시지 입력창에 '붙여넣기(Ctrl+V)' 해주세요.\n\n[복사된 내용]\n${msg}`);
     }
-
     function openAbsenceModal() {
       document.getElementById('absenceModal').style.display = 'flex';
       const container = document.getElementById('absenceListContainer');
@@ -963,7 +967,6 @@
       }).catch(err => { showLoading(false); showCustomAlert("서버 오류가 발생했습니다.", true); });
     }
     function closeAbsenceModal() { document.getElementById('absenceModal').style.display = 'none'; }
-    // ★ 시간 설정 불러오기
     function loadTimeSettings() {
       fetch(`${API_URL}?action=getSettings&_t=${new Date().getTime()}`)
         .then(res => res.json())
@@ -974,7 +977,6 @@
         })
         .catch(err => console.error("시간 설정을 불러오는 중 오류 발생:", err));
     }
-    // ★ 상단 UI 실시간 업데이트 함수
     function updateInfoBoxTime(p1s, p1e, p2s, p2e) {
       document.getElementById('display-time-p1').innerText = `1교시 ${p1s}~${p1e}`;
       document.getElementById('display-time-p2').innerText = `2교시 ${p2s}~${p2e}`;
@@ -1001,7 +1003,6 @@
     function closeSettingsModal() {
       document.getElementById('settingsModal').style.display = 'none';
     }
-    // ★ 시간 저장 후 UI 즉시 반영
     function saveTimeSettings() {
       const p1s = document.getElementById('set_p1_start').value;
       const p1e = document.getElementById('set_p1_end').value;
@@ -1023,7 +1024,7 @@
         showLoading(false);
         if(res.success) {
           showCustomAlert(res.message);
-          updateInfoBoxTime(p1s, p1e, p2s, p2e); // ★ 바로 화면 UI 반영
+          updateInfoBoxTime(p1s, p1e, p2s, p2e); 
           closeSettingsModal();
         } else {
           showCustomAlert("저장 실패: " + res.message, true);
