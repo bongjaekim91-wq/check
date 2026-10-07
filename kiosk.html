@@ -18,7 +18,8 @@
     
     /* 스캐너 입력창 */
     .scanner-box { margin: 20px 0; }
-    #scanner-input { padding: 15px; font-size: 1.5em; width: 80%; border: 3px dashed #4caf50; border-radius: 12px; text-align: center; outline: none; background: #e8f5e9; color: #2e7d32; font-weight: bold; }
+    /* 한글 키보드 오류 방지를 위해 type="password"가 적용되어 글자가 가려집니다 */
+    #scanner-input { padding: 15px; font-size: 1.5em; width: 80%; border: 3px dashed #4caf50; border-radius: 12px; text-align: center; outline: none; background: #e8f5e9; color: #2e7d32; font-weight: bold; letter-spacing: 5px;}
     #scanner-input:focus { border-style: solid; box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
     
     /* 결과 메시지 창 */
@@ -28,8 +29,12 @@
     .msg-success { background: #e8f5e9; color: #2e7d32; border: 2px solid #81c784; }
     .msg-error { background: #ffebee; color: #c62828; border: 2px solid #ef9a9a; }
     
-    /* ★ 무단결석 횟수 경고창 (추가됨) */
-    .absence-warning { margin-top: 10px; background-color: #ffebee; border: 2px solid #ef5350; border-radius: 12px; padding: 15px; color: #c62828; font-size: 1.2em; font-weight: bold; display: none; animation: pulse 1s infinite alternate; }
+    /* ★ 무단결석 횟수 단계별 알림창 (추가됨) */
+    .absence-box { margin-top: 15px; border-radius: 12px; padding: 15px; font-size: 1.2em; font-weight: bold; display: none; line-height: 1.4; }
+    .absence-0 { background-color: #e3f2fd; border: 2px solid #64b5f6; color: #1565c0; }
+    .absence-warning { background-color: #fff8e1; border: 2px solid #ffca28; color: #f57f17; }
+    .absence-danger { background-color: #ffebee; border: 2px solid #ef5350; color: #c62828; animation: pulse 1s infinite alternate; }
+    
     @keyframes pulse { from { box-shadow: 0 0 5px rgba(239, 83, 80, 0.3); } to { box-shadow: 0 0 15px rgba(239, 83, 80, 0.6); } }
 
     .instruction { font-size: 1.2em; color: #555; font-weight: bold; }
@@ -61,12 +66,13 @@
     <div class="instruction">스캐너 불빛에 학생증(QR코드)을 비춰주세요</div>
     
     <div class="scanner-box">
-      <input type="text" id="scanner-input" placeholder="스캐너 대기 중... (화면 터치 금지)" autocomplete="off" autofocus>
+      <!-- 한영키 문제 해결을 위해 type="password" 적용 -->
+      <input type="password" id="scanner-input" placeholder="스캐너 대기 중... (화면 터치 금지)" autocomplete="off" autofocus>
     </div>
     
     <!-- 메시지 및 알림창 -->
     <div id="result-msg" class="msg-ready">대기 중... 다음 학생 QR을 스캔하세요</div>
-    <div id="absence-warning" class="absence-warning"></div>
+    <div id="absence-box" class="absence-box"></div>
     
     <!-- 실시간 출석 명단 UI -->
     <div class="recent-list-container">
@@ -84,7 +90,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     const inputField = document.getElementById("scanner-input");
     const resultBox = document.getElementById("result-msg");
-    const warningBox = document.getElementById("absence-warning");
+    const absenceBox = document.getElementById("absence-box");
     const recentListDiv = document.getElementById("recent-list");
     
     let isProcessing = false;
@@ -137,22 +143,38 @@
 
       isProcessing = true;
       showResult("loading", `⏳ [${studentId}] 서버 확인 중...`);
-      warningBox.style.display = "none"; // 통신 중에는 경고창 숨김
+      absenceBox.style.display = "none"; // 통신 중에는 결석 알림창 숨김
 
       const fetchUrl = `${API_URL}?action=scan&id=${encodeURIComponent(studentId)}`;
       
       fetch(fetchUrl)
         .then(res => res.json())
         .then(result => {
-          // ★ 무단결석 횟수 확인 및 경고창 표시
-          if (result.absenceCount && result.absenceCount > 0) {
-            warningBox.innerHTML = `⚠️ <b>현재 누적 무단결석: ${result.absenceCount}회</b> <br><span style="font-size:0.8em; font-weight:normal;">(※ 3회 누적 시 글마루 참여 불가)</span>`;
-            warningBox.style.display = "block";
+          
+          // ★ 무단결석 횟수 단계별 로직 적용
+          // 서버에서 absenceCount를 안 보내준다면 0으로 간주
+          const count = parseInt(result.absenceCount) || 0; 
+          
+          if (count >= 3) {
+            // 3회 이상: 제한 메시지 
+            absenceBox.className = "absence-box absence-danger";
+            absenceBox.innerHTML = `🚨 <b>무단결석 ${count}회</b><br>※ 3회 누적되어 <b>꿈꾸는글마루에 참여하지 못합니다.</b>`;
+            playSound('error'); // 3회 이상은 에러 소리로 강제 지정 가능(선택사항)
+          } else if (count > 0) {
+            // 1회, 2회: 경고 메시지
+            absenceBox.className = "absence-box absence-warning";
+            absenceBox.innerHTML = `⚠️ <b>무단결석 ${count}회</b> <br><span style="font-size:0.8em; font-weight:normal;">(※ 3회 누적 시 참여 불가)</span>`;
+          } else {
+            // 0회: 정상(없음)
+            absenceBox.className = "absence-box absence-0";
+            absenceBox.innerHTML = `✅ <b>무단결석 0회</b>`;
           }
+          absenceBox.style.display = "block";
 
           if (result.success || result.result === "success") {
+            // 출석 처리가 3회 이상으로 막히더라도, 성공 메시지가 따로 있다면 출력
             showResult("success", `✅ ${result.message || '출석 완료!'}`);
-            playSound('success');
+            if(count < 3) playSound('success'); // 결석 3회 이상일 땐 이미 에러 소리 재생함
             
             let sName = result.studentName || result.name || extractNameFromMessage(result.message) || "";
             addRecentStudent(studentId, sName);
@@ -168,9 +190,9 @@
         .finally(() => {
           setTimeout(() => {
             showResult("ready", "대기 중... 다음 학생 QR을 스캔하세요");
-            warningBox.style.display = "none"; // 경고창 초기화
+            absenceBox.style.display = "none"; // 알림창 초기화
             isProcessing = false;
-          }, 3000); // 3초 대기 후 다음 스캔 허용
+          }, 3500); // 3.5초 대기 후 다음 스캔 허용 (메시지를 읽을 시간 확보)
         });
     }
 
