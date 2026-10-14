@@ -277,7 +277,6 @@
     let myChart = null;
     let isNoteChanged = false;
     let previousDate = "";
-    // index.html 에서 로그인하며 저장해둔 이름을 불러옵니다.
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
     function extractArray(res) {
       if (!res) return [];
@@ -446,10 +445,18 @@
         showLoading(false); isNoteChanged = false;
         
         let rawTeacherStr = response.teacherText || "";
-        let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
-        let teacherName = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+        let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
         
-        let displayTeacher = teacherName ? teacherName : "배정된 교사 없음";
+        let displayTeacher = "감독교사 미접속";
+        if (teacherArray.length > 0) {
+          displayTeacher = teacherArray.join(', ');
+        } else {
+          const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+          if (dateStr === localToday && loggedInUser !== "관리자" && loggedInUser !== "관리자(admin)") {
+            displayTeacher = loggedInUser;
+          }
+        }
+        
         document.getElementById('tableTitle').innerHTML = `<span style="font-size: 18px; font-weight: 400; color: #1F4E79;">👨‍🏫 오늘의 감독교사: <span style="color: #3182ce; font-size: 20px;">${displayTeacher}</span></span>`;
         
         if(response.success) { currentDailyData = response; renderTable(response); renderPrintArea(response); }
@@ -480,7 +487,6 @@
       });
       let regCount = 0, addCount = 0, p1AbsCount = 0, p2AbsCount = 0, realPresentCount = 0;
       
-      // ★ 결석 횟수별 학생 명단을 저장할 배열 추가
       let warningAbsence2 = []; 
       let dangerAbsence3 = [];  
 
@@ -488,7 +494,6 @@
         let isAdded = (student.day === "추가등록");
         if (isAdded) addCount++; else regCount++;
         
-        // ★ 결석 누적 횟수에 따라 배열에 학생 이름 추가
         let absCount = student.absenceCount || 0;
         if (absCount === 2) {
           warningAbsence2.push(student.name);
@@ -541,7 +546,6 @@
       });
       
       if (topStats) {
-        // ★ 상단 통계 박스에 결석자 알림 HTML 추가
         let extraHtml = "";
         if (warningAbsence2.length > 0 || dangerAbsence3.length > 0) {
           extraHtml += `<div style="margin-top: 15px; font-size: 1.1rem; padding: 12px; background: #fff5f5; border-radius: 8px; border: 1px solid #fed7d7; text-align: center;">`;
@@ -597,8 +601,20 @@
     function renderPrintArea(data) {
       const printDiv = document.getElementById('printArea');
       const dateStr = data.date; const day = data.day;
-      let rawTeacherStr = data.teacherText || ""; let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '미상' && t !== '미입력');
-      const teacherText = teacherArray.length > 0 ? teacherArray.join(', ') : loggedInUser;
+      
+      let rawTeacherStr = data.teacherText || ""; 
+      let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
+      
+      let teacherText = "감독교사 미접속";
+      if (teacherArray.length > 0) {
+        teacherText = teacherArray.join(', ');
+      } else {
+        const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+        if (dateStr === localToday && loggedInUser !== "관리자" && loggedInUser !== "관리자(admin)") {
+          teacherText = loggedInUser;
+        }
+      }
+      
       let logMap = {}; let extraRows = [];
       if(data.logs) {
         data.logs.forEach(log => {
