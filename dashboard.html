@@ -263,7 +263,6 @@
   </div>
   <div id="printArea"></div>
   <script>
-    // ★ 주의: 실제 사용하시는 백엔드(code.gs)의 배포 URL로 변경해주세요!
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     const skipDates = [
       "2026-08-17", "2026-09-24", "2026-09-25", "2026-09-29", "2026-09-30",
@@ -445,7 +444,7 @@
         showLoading(false); isNoteChanged = false;
         
         let rawTeacherStr = response.teacherText || "";
-        let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
+        let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '키오스크' && t !== '자동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
         
         let displayTeacher = "감독교사 미접속";
         if (teacherArray.length > 0) {
@@ -467,7 +466,7 @@
     function isExcludedMark(val) {
       if (val === undefined || val === null) return false;
       const strVal = String(val).trim();
-      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '결석' || strVal === '결석승인' || strVal === '무단결석' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
+      if (strVal === '' || strVal === '출석' || strVal === '미출석' || strVal === '결석' || strVal === '결석승인' || strVal === '추가출석' || strVal === '수동출석' || strVal === 'O' || strVal === 'o') return false;
       return true;
     }
 
@@ -550,10 +549,10 @@
         if (warningAbsence2.length > 0 || dangerAbsence3.length > 0) {
           extraHtml += `<div style="margin-top: 15px; font-size: 1.1rem; padding: 12px; background: #fff5f5; border-radius: 8px; border: 1px solid #fed7d7; text-align: center;">`;
           if (warningAbsence2.length > 0) {
-            extraHtml += `<div style="color: #dd6b20; font-weight: bold; margin-bottom: 5px;">⚠️ 무단결석 2회 (주의): <span style="font-weight:normal;">${warningAbsence2.join(', ')}</span></div>`;
+            extraHtml += `<div style="color: #dd6b20; font-weight: bold; margin-bottom: 5px;">⚠️ 결석 2회 (주의): <span style="font-weight:normal;">${warningAbsence2.join(', ')}</span></div>`;
           }
           if (dangerAbsence3.length > 0) {
-            extraHtml += `<div style="color: #e53e3e; font-weight: bold;">🚨 무단결석 3회 이상 (참여제한): <span style="font-weight:normal;">${dangerAbsence3.join(', ')}</span></div>`;
+            extraHtml += `<div style="color: #e53e3e; font-weight: bold;">🚨 결석 3회 이상 (참여제한): <span style="font-weight:normal;">${dangerAbsence3.join(', ')}</span></div>`;
           }
           extraHtml += `</div>`;
         }
@@ -603,7 +602,7 @@
       const dateStr = data.date; const day = data.day;
       
       let rawTeacherStr = data.teacherText || ""; 
-      let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
+      let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '키오스크' && t !== '자동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
       
       let teacherText = "감독교사 미접속";
       if (teacherArray.length > 0) {
