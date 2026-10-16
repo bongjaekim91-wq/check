@@ -470,7 +470,7 @@
       return true;
     }
 
-    function renderTable(data) {
+   function renderTable(data) {
       const tbody = document.getElementById('rosterBody'); const topStats = document.getElementById('topStats');
       tbody.innerHTML = '';
       if(!data.roster || data.roster.length === 0) {
@@ -495,9 +495,11 @@
         
         let absCount = student.absenceCount || 0;
         if (absCount === 2) {
-          warningAbsence2.push(student.name);
+          // ★ 이름(학번) 형태로 표시되도록 수정
+          warningAbsence2.push(student.name + "(" + student.id + ")");
         } else if (absCount >= 3) {
-          dangerAbsence3.push(student.name);
+          // ★ 이름(학번) 형태로 표시되도록 수정
+          dangerAbsence3.push(student.name + "(" + student.id + ")");
         }
 
         let p1Status = '결석', p2Status = '결석'; let p1Class = 'status-absent', p2Class = 'status-absent';
