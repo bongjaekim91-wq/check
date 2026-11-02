@@ -30,6 +30,7 @@
     .btn-save-doc { background-color: #805ad5; } .btn-save-doc:hover { background-color: #6b46c1; }
     .btn-qr { background-color: #3182ce; } .btn-qr:hover { background-color: #2b6cb0; }
     .btn-add { background-color: #dd6b20; } .btn-add:hover { background-color: #c05621; }
+    .btn-remove { background-color: #718096; } .btn-remove:hover { background-color: #4a5568; }
     .btn-print { background-color: #38a169; } .btn-print:hover { background-color: #2f855a; }
     .btn-reset { background-color: #e53e3e; } .btn-reset:hover { background-color: #c53030; }
     .btn-global-sms { background-color: #f0ad4e; } .btn-global-sms:hover { background-color: #ec971f; }
@@ -170,6 +171,7 @@
             <button class="btn-save-doc" onclick="saveAndPdf()">💾 출석부 저장</button>
             <button class="btn-reset" onclick="resetDailyData()">🗑️ 출결 초기화</button>
             <button class="btn-add" onclick="toggleAddSection()">➕ 학생추가</button>
+            <button class="btn-remove" onclick="toggleDeleteSection()">➖ 학생삭제</button>
             <button class="btn-print" onclick="window.print()">🖨️ 출석부 인쇄</button>
             <button class="btn-global-sms" onclick="copyGlobalSms()">📩 문자발송내용</button>
             <button class="btn-riro" onclick="checkRiroMove()">🔗 리로스쿨</button>
@@ -184,6 +186,17 @@
             <label style="margin-right:10px;"><input type="checkbox" id="addP1"> 1교시</label>
             <label style="margin-right:15px;"><input type="checkbox" id="addP2"> 2교시</label>
             <button class="btn-add" style="padding: 8px 15px;" onclick="addDailyStudent()">추가 및 출석체크</button>
+          </div>
+        </div>
+        <!-- ★ 새로 추가된 당일 출석부 학생 삭제 메뉴 -->
+        <div id="deleteStudentSection" class="add-student-form" style="background-color: #fff5f5; border-color: #feb2b2; display: none;">
+          <h3 style="margin-top:0; color:#c53030;">➖ 당일 출석부 학생 제외(삭제)</h3>
+          <p style="font-size:0.9rem; color:#666;">오늘 출석부에서 잘못 추가되었거나 제외해야 할 학생을 선택해 삭제합니다.</p>
+          <div style="display:flex; align-items:center;">
+            <select id="deleteStudentSelect" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px; width: 250px;">
+              <option value="">▼ 삭제할 학생을 선택하세요</option>
+            </select>
+            <button class="btn-reset" style="padding: 8px 15px;" onclick="removeDailyStudent()">명단에서 제외</button>
           </div>
         </div>
         <table id="rosterTable">
@@ -374,6 +387,18 @@
     }
     function handleDateChange() { const datePicker = document.getElementById('datePicker'); const newDate = datePicker.value; handleAction(() => { previousDate = newDate; loadDailyData(); }, () => { datePicker.value = previousDate; }); }
     function processSingle(id, name, periodStr, statusParam) { handleAction(() => { executeProcessSingle(id, name, periodStr, statusParam); }); }
+    
+    function toggleAddSection() { 
+      document.getElementById('deleteStudentSection').style.display = 'none';
+      const sec = document.getElementById('addStudentSection'); 
+      sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none'; 
+    }
+    function toggleDeleteSection() { 
+      document.getElementById('addStudentSection').style.display = 'none';
+      const sec = document.getElementById('deleteStudentSection'); 
+      sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none'; 
+    }
+
     function addDailyStudent() { handleAction(() => { executeAddDailyStudent(); }); }
     function resetDailyData() {
       handleAction(() => {
@@ -387,7 +412,31 @@
         }).catch(err => { showLoading(false); showCustomAlert("오류: " + err.message, true); });
       });
     }
-    function toggleAddSection() { const sec = document.getElementById('addStudentSection'); sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none'; }
+
+    // ★ 당일 출석부 삭제 함수
+    function removeDailyStudent() {
+      const dateStr = document.getElementById('datePicker').value;
+      const selectEl = document.getElementById('deleteStudentSelect');
+      const id = selectEl.value;
+      
+      if (!id) { showCustomAlert("삭제할 학생을 선택해주세요.", true); return; }
+      const name = selectEl.options[selectEl.selectedIndex].dataset.name;
+
+      if(!confirm(`[${name}] 학생을 오늘(${dateStr}) 출석부에서 정말 제외(삭제)하시겠습니까?\n(해당 학생의 오늘 출석/결석 기록도 함께 지워집니다)`)) return;
+
+      showLoading(true);
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'removeDailyStudent', date: dateStr, id: id, name: name, _t: new Date().getTime() }).toString()}`)
+      .then(res => res.json()).then(res => {
+        if(res.success) {
+          showCustomAlert(`${name} 학생이 당일 명단에서 깔끔하게 제외되었습니다.`);
+          document.getElementById('deleteStudentSection').style.display = 'none';
+          isNoteChanged = false; cacheLoaded = false;
+          ensureAllDataLoaded().then(() => loadDailyData());
+        } else { 
+          showLoading(false); showCustomAlert(res.message, true); 
+        }
+      }).catch(err => { showLoading(false); showCustomAlert("오류: " + err.message, true); });
+    }
     
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
@@ -407,7 +456,11 @@
       
       window.cachedData.students.forEach(s => { if (s.day.includes(targetDay)) rosterMap[s.id] = { ...s, day: targetDay, note: "" }; });
       window.cachedData.changes.forEach(c => {
-        if (c.date === dateStr) { if (c.status === "ADD") { if (!rosterMap[c.id]) rosterMap[c.id] = { id: c.id, name: c.name, day: "추가등록", p1_exc: c.p1 ? "" : "제외", p2_exc: c.p2 ? "" : "제외", note: "" }; } }
+        if (c.date === dateStr) { 
+          if (c.status === "ADD") { if (!rosterMap[c.id]) rosterMap[c.id] = { id: c.id, name: c.name, day: "추가등록", p1_exc: c.p1 ? "" : "제외", p2_exc: c.p2 ? "" : "제외", note: "" }; }
+          // ★ 캐싱 데이터에서 REMOVE 된 학생을 로컬 화면에서도 제거합니다.
+          else if (c.status === "REMOVE") { delete rosterMap[c.id]; }
+        }
       });
       window.cachedData.notes.forEach(n => { if (n.date === dateStr && rosterMap[n.id]) rosterMap[n.id].note = n.note; });
       
@@ -431,6 +484,15 @@
       
       let response = { success: true, date: dateStr, day: targetDay, roster: roster, logs: dailyLogs, teacherText: rawTeacherStr };
       currentDailyData = response; renderTable(response); renderPrintArea(response);
+      
+      // ★ 삭제 메뉴에 현재 출석부에 있는 학생 목록 세팅하기
+      const delSelect = document.getElementById('deleteStudentSelect');
+      delSelect.innerHTML = '<option value="">▼ 삭제할 학생을 선택하세요</option>';
+      roster.sort((a,b) => String(a.name).localeCompare(String(b.name))).forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.id; opt.text = `${r.name} (${r.id})`; opt.dataset.name = r.name;
+        delSelect.appendChild(opt);
+      });
     }
 
     function isExcludedMark(val) {
