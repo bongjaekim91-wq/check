@@ -271,37 +271,24 @@
       "2026-12-08", "2026-12-09", "2026-12-18", "2026-12-24"
     ];
     let cachedStudents = []; let cachedLogs = []; let cachedChanges = [];
-    let cacheLoaded = false;
-    let currentDailyData = null;
-    let myChart = null;
-    let isNoteChanged = false;
-    let previousDate = "";
+    let cacheLoaded = false; let currentDailyData = null;
+    let myChart = null; let isNoteChanged = false; let previousDate = "";
     const loggedInUser = sessionStorage.getItem("teacherName") || localStorage.getItem("adminName") || localStorage.getItem("teacherName") || "관리자";
     
     document.addEventListener("DOMContentLoaded", function() {
-      const today = new Date();
-      const offset = today.getTimezoneOffset() * 60000;
+      const today = new Date(); const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const localFirst = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
-      document.getElementById('datePicker').value = localToday;
-      previousDate = localToday;
-      document.getElementById('indivStartDate').value = localFirst;
-      document.getElementById('indivEndDate').value = localToday;
-      document.getElementById('statStartDate').value = localFirst;
-      document.getElementById('statEndDate').value = localToday;
+      document.getElementById('datePicker').value = localToday; previousDate = localToday;
+      document.getElementById('indivStartDate').value = localFirst; document.getElementById('indivEndDate').value = localToday;
+      document.getElementById('statStartDate').value = localFirst; document.getElementById('statEndDate').value = localToday;
       
-      // ★ 서버 연산을 획기적으로 줄이는 단 1회의 전체 캐싱 처리
-      ensureAllDataLoaded().then(() => {
-        loadDailyData();
-        loadTimeSettings();
-      });
+      ensureAllDataLoaded().then(() => { loadDailyData(); loadTimeSettings(); });
       try { Chart.register(ChartDataLabels); } catch(e) {}
     });
     
-    window.addEventListener('beforeunload', function (e) {
-      if (isNoteChanged) { e.preventDefault(); e.returnValue = ''; }
-    });
+    window.addEventListener('beforeunload', function (e) { if (isNoteChanged) { e.preventDefault(); e.returnValue = ''; } });
     
     function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
     function showCustomAlert(msg, isError = false) {
@@ -312,90 +299,60 @@
     }
     function closeCustomAlert() { document.getElementById('customAlertModal').style.display = 'none'; }
     let modalResolve = null;
-    function showSaveConfirm() {
-      return new Promise((resolve) => {
-        document.getElementById('saveConfirmModal').style.display = 'flex';
-        modalResolve = resolve;
-      });
-    }
-    function resolveModal(choice) {
-      document.getElementById('saveConfirmModal').style.display = 'none';
-      if (modalResolve) { modalResolve(choice); modalResolve = null; }
-    }
+    function showSaveConfirm() { return new Promise((resolve) => { document.getElementById('saveConfirmModal').style.display = 'flex'; modalResolve = resolve; }); }
+    function resolveModal(choice) { document.getElementById('saveConfirmModal').style.display = 'none'; if (modalResolve) { modalResolve(choice); modalResolve = null; } }
     
-    // ★ 1회 호출로 모든 시트를 로컬에 저장 (속도 10배 상승)
     async function ensureAllDataLoaded() {
       if (cacheLoaded) return;
       showLoading(true);
       try {
         const res = await fetch(`${API_URL}?action=getAllData&_t=${new Date().getTime()}`).then(r => r.json());
         if (res.success) {
-          window.cachedData = res;
-          cachedStudents = res.students;
-          cachedLogs = res.logs;
-          cachedChanges = res.changes;
-          cacheLoaded = true;
-          populateStudentSelect();
-        } else {
-          showCustomAlert("데이터 로드 실패: " + res.message, true);
-        }
-      } catch (e) {
-        showCustomAlert("서버 통신 오류", true);
-      }
+          window.cachedData = res; cachedStudents = res.students; cachedLogs = res.logs; cachedChanges = res.changes;
+          cacheLoaded = true; populateStudentSelect();
+        } else { showCustomAlert("데이터 로드 실패: " + res.message, true); }
+      } catch (e) { showCustomAlert("서버 통신 오류", true); }
       showLoading(false);
     }
     
     async function performSave(silent = false) {
-      const dateStr = document.getElementById('datePicker').value;
-      const inputs = document.querySelectorAll('.note-input');
+      const dateStr = document.getElementById('datePicker').value; const inputs = document.querySelectorAll('.note-input');
       let promises = [];
       if(!silent) showLoading(true);
       inputs.forEach(input => {
-        const id = input.getAttribute('data-id');
-        const originalVal = input.getAttribute('data-original');
-        const noteVal = input.value;
+        const id = input.getAttribute('data-id'); const originalVal = input.getAttribute('data-original'); const noteVal = input.value;
         if (originalVal !== noteVal) {
-          promises.push(
-            fetch(`${API_URL}?${new URLSearchParams({ action: 'saveNote', date: dateStr, id: id, note: noteVal, _t: new Date().getTime() }).toString()}`).then(r => r.json())
-          );
+          promises.push(fetch(`${API_URL}?${new URLSearchParams({ action: 'saveNote', date: dateStr, id: id, note: noteVal, _t: new Date().getTime() }).toString()}`).then(r => r.json()));
           input.setAttribute('data-original', noteVal);
         }
       });
       try {
         if (promises.length > 0) await Promise.all(promises);
-        isNoteChanged = false; 
-        cacheLoaded = false;
-        await ensureAllDataLoaded();
-        loadDailyData();
+        isNoteChanged = false; cacheLoaded = false;
+        await ensureAllDataLoaded(); loadDailyData();
         if(!silent) showLoading(false); return true;
-      } catch(e) {
-        if(!silent) { showLoading(false); showCustomAlert("저장 중 서버 오류가 발생했습니다.", true); } return false;
-      }
+      } catch(e) { if(!silent) { showLoading(false); showCustomAlert("저장 중 서버 오류가 발생했습니다.", true); } return false; }
     }
     
     async function handleAction(actionCallback, rollbackCallback = null) {
       if (!isNoteChanged) { actionCallback(); return; }
       const choice = await showSaveConfirm();
       if (choice === 'save') {
-        showLoading(true);
-        const success = await performSave(true);
-        showLoading(false);
+        showLoading(true); const success = await performSave(true); showLoading(false);
         if (success) { actionCallback(); } else { showCustomAlert("데이터 저장에 실패하여 이동을 취소합니다.", true); if (rollbackCallback) rollbackCallback(); }
       } else if (choice === 'discard') { isNoteChanged = false; actionCallback(); }
       else if (choice === 'cancel') { if (rollbackCallback) rollbackCallback(); }
     }
     
     async function saveAndPdf() {
-      const dateStr = document.getElementById('datePicker').value;
-      const dayOfWeek = new Date(dateStr).getDay();
+      const dateStr = document.getElementById('datePicker').value; const dayOfWeek = new Date(dateStr).getDay();
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) { showCustomAlert("❌ 휴업일은 저장할 수 없습니다.", true); return; }
       if(!confirm(`${dateStr} 출석부를 구글드라이브에 PDF로 저장하시겠습니까?\n(약 10~20초 소요)`)) return;
       showLoading(true);
       if (isNoteChanged) { const saveSuccess = await performSave(true); if (!saveSuccess) { showLoading(false); return; } }
       try {
         const res = await fetch(`${API_URL}?${new URLSearchParams({ action: 'saveDailyPdf', date: dateStr, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`);
-        const text = await res.text();
-        let jsonRes;
+        const text = await res.text(); let jsonRes;
         try { jsonRes = JSON.parse(text); } catch(e) { showLoading(false); showCustomAlert("❌ [서버 내부 오류] 저장 중 처리 중단됨.", true); return; }
         showLoading(false);     
         if(jsonRes.success) { showCustomAlert(`✅ 출석부가 성공적으로 저장되었습니다!\n\n파일명: ${jsonRes.fileName}`); if(jsonRes.fileUrl) window.open(jsonRes.fileUrl, '_blank'); }
@@ -409,21 +366,13 @@
       handleAction(() => {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
         if (tabId === 'tab-individual' || tabId === 'tab-stats') { 
-          if (cacheLoaded) {
-            if (tabId === 'tab-individual' && document.getElementById("indivStudentSelect").value !== "") { renderIndividual(); }
-            else if (tabId === 'tab-stats') { renderStats(); }
-          }
+          if (cacheLoaded) { if (tabId === 'tab-individual' && document.getElementById("indivStudentSelect").value !== "") { renderIndividual(); } else if (tabId === 'tab-stats') { renderStats(); } }
         }
       });
     }
-    function handleDateChange() {
-      const datePicker = document.getElementById('datePicker');
-      const newDate = datePicker.value;
-      handleAction(() => { previousDate = newDate; loadDailyData(); }, () => { datePicker.value = previousDate; });
-    }
+    function handleDateChange() { const datePicker = document.getElementById('datePicker'); const newDate = datePicker.value; handleAction(() => { previousDate = newDate; loadDailyData(); }, () => { datePicker.value = previousDate; }); }
     function processSingle(id, name, periodStr, statusParam) { handleAction(() => { executeProcessSingle(id, name, periodStr, statusParam); }); }
     function addDailyStudent() { handleAction(() => { executeAddDailyStudent(); }); }
     function resetDailyData() {
@@ -433,27 +382,17 @@
         showLoading(true);
         fetch(`${API_URL}?${new URLSearchParams({ action: 'resetDailyAttendance', date: dateStr, _t: new Date().getTime() }).toString()}`)
         .then(res => res.json()).then(res => {
-          if(res.success) { 
-            showCustomAlert(`${dateStr} 출석부가 초기화되었습니다.`); 
-            isNoteChanged = false; cacheLoaded = false; 
-            ensureAllDataLoaded().then(() => loadDailyData());
-          }
+          if(res.success) { showCustomAlert(`${dateStr} 출석부가 초기화되었습니다.`); isNoteChanged = false; cacheLoaded = false; ensureAllDataLoaded().then(() => loadDailyData()); }
           else { showLoading(false); showCustomAlert("초기화 실패: " + (res.message || "서버 오류"), true); }
         }).catch(err => { showLoading(false); showCustomAlert("오류: " + err.message, true); });
       });
     }
-    function toggleAddSection() {
-      const sec = document.getElementById('addStudentSection');
-      sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none';
-    }
+    function toggleAddSection() { const sec = document.getElementById('addStudentSection'); sec.style.display = (sec.style.display === 'none' || sec.style.display === '') ? 'block' : 'none'; }
     
-    // ★ 서버 통신 없이 0초 만에 화면 렌더링하도록 100% 로컬 연산으로 변경
     function loadDailyData() {
       const dateStr = document.getElementById('datePicker').value;
       if(!dateStr) return;
-      
-      const tempDate = new Date(dateStr); 
-      const dayOfWeek = tempDate.getDay();
+      const tempDate = new Date(dateStr); const dayOfWeek = tempDate.getDay();
       
       if (dayOfWeek === 0 || dayOfWeek === 6 || skipDates.includes(dateStr)) {
         document.getElementById('tableTitle').innerHTML = `<span style="font-size: 26px; font-weight: 800; color: #1F4E79;">🚫 휴업일 <span style="color:#e53e3e; font-size: 20px;">(출석부 없음)</span></span>`;
@@ -461,41 +400,21 @@
         document.getElementById('topStats').innerHTML = ''; return;
       }
 
-      if (!cacheLoaded) {
-        ensureAllDataLoaded().then(() => loadDailyData());
-        return;
-      }
+      if (!cacheLoaded) { ensureAllDataLoaded().then(() => loadDailyData()); return; }
       
-      let dateObj = new Date(dateStr);
-      let dayArr = ["일", "월", "화", "수", "목", "금", "토"];
-      let targetDay = dayArr[dateObj.getDay()];
-      let rosterMap = {};
+      let dateObj = new Date(dateStr); let dayArr = ["일", "월", "화", "수", "목", "금", "토"];
+      let targetDay = dayArr[dateObj.getDay()]; let rosterMap = {};
       
-      window.cachedData.students.forEach(s => {
-        if (s.day.includes(targetDay)) rosterMap[s.id] = { ...s, day: targetDay, note: "" };
-      });
-      
+      window.cachedData.students.forEach(s => { if (s.day.includes(targetDay)) rosterMap[s.id] = { ...s, day: targetDay, note: "" }; });
       window.cachedData.changes.forEach(c => {
-        if (c.date === dateStr) {
-          if (c.status === "ADD") {
-            if (!rosterMap[c.id]) rosterMap[c.id] = { id: c.id, name: c.name, day: "추가등록", p1_exc: c.p1 ? "" : "제외", p2_exc: c.p2 ? "" : "제외", note: "" };
-          }
-        }
+        if (c.date === dateStr) { if (c.status === "ADD") { if (!rosterMap[c.id]) rosterMap[c.id] = { id: c.id, name: c.name, day: "추가등록", p1_exc: c.p1 ? "" : "제외", p2_exc: c.p2 ? "" : "제외", note: "" }; } }
       });
+      window.cachedData.notes.forEach(n => { if (n.date === dateStr && rosterMap[n.id]) rosterMap[n.id].note = n.note; });
       
-      window.cachedData.notes.forEach(n => {
-        if (n.date === dateStr && rosterMap[n.id]) rosterMap[n.id].note = n.note;
-      });
-      
-      let dailyLogs = [];
-      let teachers = new Set();
+      let dailyLogs = []; let teachers = new Set();
       let excludeList = ["수동처리", "키오스크", "관리자", "관리자(admin)", "감독교사승인", "자동처리"];
-      
       window.cachedData.logs.forEach(log => {
-        if (log.date === dateStr) {
-          if (log.teacher && !excludeList.includes(log.teacher)) teachers.add(log.teacher);
-          dailyLogs.push(log);
-        }
+        if (log.date === dateStr) { if (log.teacher && !excludeList.includes(log.teacher)) teachers.add(log.teacher); dailyLogs.push(log); }
       });
       
       let roster = Object.values(rosterMap);
@@ -508,13 +427,10 @@
         const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
         if (dateStr === localToday && loggedInUser !== "관리자" && loggedInUser !== "관리자(admin)") displayTeacher = loggedInUser;
       }
-      
       document.getElementById('tableTitle').innerHTML = `<span style="font-size: 18px; font-weight: 400; color: #1F4E79;">👨‍🏫 오늘의 감독교사: <span style="color: #3182ce; font-size: 20px;">${displayTeacher}</span></span>`;
       
       let response = { success: true, date: dateStr, day: targetDay, roster: roster, logs: dailyLogs, teacherText: rawTeacherStr };
-      currentDailyData = response; 
-      renderTable(response); 
-      renderPrintArea(response);
+      currentDailyData = response; renderTable(response); renderPrintArea(response);
     }
 
     function isExcludedMark(val) {
@@ -539,20 +455,12 @@
         return String(a.id).localeCompare(String(b.id));
       });
       let regCount = 0, addCount = 0, p1AbsCount = 0, p2AbsCount = 0, realPresentCount = 0;
-      
-      let warningAbsence2 = []; 
-      let dangerAbsence3 = [];  
+      let warningAbsence2 = []; let dangerAbsence3 = [];  
 
       data.roster.forEach(function(student, index) {
-        let isAdded = (student.day === "추가등록");
-        if (isAdded) addCount++; else regCount++;
-        
+        let isAdded = (student.day === "추가등록"); if (isAdded) addCount++; else regCount++;
         let absCount = student.absenceCount || 0;
-        if (absCount === 2) {
-          warningAbsence2.push(student.name + "(" + student.id + ")");
-        } else if (absCount >= 3) {
-          dangerAbsence3.push(student.name + "(" + student.id + ")");
-        }
+        if (absCount === 2) { warningAbsence2.push(student.name + "(" + student.id + ")"); } else if (absCount >= 3) { dangerAbsence3.push(student.name + "(" + student.id + ")"); }
 
         let p1Status = '결석', p2Status = '결석'; let p1Class = 'status-absent', p2Class = 'status-absent';
         let isP1Excluded = isExcludedMark(student.p1_exc) || student.p1_exc === "제외";
@@ -602,15 +510,10 @@
         let extraHtml = "";
         if (warningAbsence2.length > 0 || dangerAbsence3.length > 0) {
           extraHtml += `<div style="margin-top: 15px; font-size: 1.1rem; padding: 12px; background: #fff5f5; border-radius: 8px; border: 1px solid #fed7d7; text-align: center;">`;
-          if (warningAbsence2.length > 0) {
-            extraHtml += `<div style="color: #dd6b20; font-weight: bold; margin-bottom: 5px;">⚠️ 결석 2회 (주의): <span style="font-weight:normal;">${warningAbsence2.join(', ')}</span></div>`;
-          }
-          if (dangerAbsence3.length > 0) {
-            extraHtml += `<div style="color: #e53e3e; font-weight: bold;">🚨 결석 3회 이상 (참여제한): <span style="font-weight:normal;">${dangerAbsence3.join(', ')}</span></div>`;
-          }
+          if (warningAbsence2.length > 0) { extraHtml += `<div style="color: #dd6b20; font-weight: bold; margin-bottom: 5px;">⚠️ 결석 2회 (주의): <span style="font-weight:normal;">${warningAbsence2.join(', ')}</span></div>`; }
+          if (dangerAbsence3.length > 0) { extraHtml += `<div style="color: #e53e3e; font-weight: bold;">🚨 결석 3회 이상 (참여제한): <span style="font-weight:normal;">${dangerAbsence3.join(', ')}</span></div>`; }
           extraHtml += `</div>`;
         }
-
         topStats.className = "stats-box-upgraded";
         topStats.innerHTML = `
           출석인원: <span style="color: #e91e63; font-size: 1.8rem; text-decoration: underline;">${realPresentCount}명</span><br>
@@ -630,10 +533,7 @@
       showLoading(true);
       fetch(`${API_URL}?${new URLSearchParams({ action: 'markAttendance', date: dateStr, id: id, name: name, period: periodStr, status: statusParam, teacher: loggedInUser, _t: new Date().getTime() }).toString()}`)
       .then(res => res.json()).then(res => {
-        if(res.success) { 
-          isNoteChanged = false; cacheLoaded = false; 
-          ensureAllDataLoaded().then(() => loadDailyData());
-        }
+        if(res.success) { isNoteChanged = false; cacheLoaded = false; ensureAllDataLoaded().then(() => loadDailyData()); }
         else { showLoading(false); showCustomAlert("처리 실패: " + res.message, true); }
       }).catch(err => { showLoading(false); showCustomAlert("서버 오류: " + err.message, true); });
     }
@@ -650,8 +550,7 @@
         if(res.success) {
           document.getElementById('addId').value = ''; document.getElementById('addName').value = '';
           document.getElementById('addP1').checked = false; document.getElementById('addP2').checked = false;
-          isNoteChanged = false; cacheLoaded = false; 
-          ensureAllDataLoaded().then(() => loadDailyData());
+          isNoteChanged = false; cacheLoaded = false; ensureAllDataLoaded().then(() => loadDailyData());
         } else { showLoading(false); showCustomAlert(res.message, true); }
       }).catch(err => { showLoading(false); showCustomAlert("오류: " + err.message, true); });
     }
@@ -663,13 +562,10 @@
       let teacherArray = rawTeacherStr.split(',').map(t => t.trim()).filter(t => t !== '' && t !== '수동처리' && t !== '키오스크' && t !== '자동처리' && t !== '관리자' && t !== '관리자(admin)' && t !== '미상' && t !== '미입력');
       
       let teacherText = "감독교사 미접속";
-      if (teacherArray.length > 0) {
-        teacherText = teacherArray.join(', ');
-      } else {
+      if (teacherArray.length > 0) { teacherText = teacherArray.join(', '); } 
+      else {
         const localToday = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-        if (dateStr === localToday && loggedInUser !== "관리자" && loggedInUser !== "관리자(admin)") {
-          teacherText = loggedInUser;
-        }
+        if (dateStr === localToday && loggedInUser !== "관리자" && loggedInUser !== "관리자(admin)") { teacherText = loggedInUser; }
       }
       
       let logMap = {}; let extraRows = [];
@@ -677,9 +573,7 @@
         data.logs.forEach(log => {
           let time = log.timestamp.split(" ")[1].substring(0, 8);
           logMap[String(log.id).trim() + "_" + String(log.period).trim()] = { time: time, status: log.status, teacher: log.teacher || "미상" };
-          if(log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") {
-            extraRows.push({ id: log.id, name: log.name, period: log.period, time: time, teacher: log.teacher || "미상" });
-          }
+          if(log.status === "추가출석" || log.status === "수동입력" || log.status === "수동출석") { extraRows.push({ id: log.id, name: log.name, period: log.period, time: time, teacher: log.teacher || "미상" }); }
         });
       }
       function getPrintStatusInfo(student, period) {
@@ -760,25 +654,16 @@
       cachedChanges.forEach(c => { if(!map[String(c.id).trim()]) map[String(c.id).trim()] = { id: c.id, name: c.name, day: '추가등록' }; });
       cachedLogs.forEach(l => { if(!map[String(l.id).trim()]) map[String(l.id).trim()] = { id: l.id, name: l.name || "알수없음", day: '추가등록' }; });
       const stList = Object.values(map).sort((a,b) => String(a.id).localeCompare(String(b.id)));
-      if (stList.length === 0) {
-        sel.innerHTML = '<option value="">⚠️ 등록된 학생 또는 기록이 없습니다.</option>';
-        return;
-      }
-      stList.forEach(s => {
-        const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt);
-      });
+      if (stList.length === 0) { sel.innerHTML = '<option value="">⚠️ 등록된 학생 또는 기록이 없습니다.</option>'; return; }
+      stList.forEach(s => { const opt = document.createElement("option"); opt.value = s.id; opt.text = `${s.id} ${s.name}`; sel.appendChild(opt); });
     }
     function getDatesInRange(start, end) {
-      const dateArray = [];
-      if (!start || !end) return dateArray;
+      const dateArray = []; if (!start || !end) return dateArray;
       let currentDate = new Date(start); const stopDate = new Date(end);
       const days = ["일", "월", "화", "수", "목", "금", "토"];
       while (currentDate <= stopDate) {
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const day = String(currentDate.getDate()).padStart(2, '0');
-        const localD = `${year}-${month}-${day}`;
-        const dayOfWeek = currentDate.getDay();
+        const year = currentDate.getFullYear(); const month = String(currentDate.getMonth() + 1).padStart(2, '0'); const day = String(currentDate.getDate()).padStart(2, '0');
+        const localD = `${year}-${month}-${day}`; const dayOfWeek = currentDate.getDay();
         if (dayOfWeek !== 0 && dayOfWeek !== 6 && !skipDates.includes(localD)) { dateArray.push({ date: localD, day: days[dayOfWeek] }); }
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -793,15 +678,9 @@
       let lastChange = changes.length > 0 ? changes[changes.length - 1] : null;
       if (lastChange) {
         if (lastChange.status === 'REMOVE') { isP1Target = false; isP2Target = false; }
-        else if (lastChange.status === 'ADD') {
-          isP1Target = (String(lastChange.p1) === 'true' || lastChange.p1 === true);
-          isP2Target = (String(lastChange.p2) === 'true' || lastChange.p2 === true);
-        }
+        else if (lastChange.status === 'ADD') { isP1Target = (String(lastChange.p1) === 'true' || lastChange.p1 === true); isP2Target = (String(lastChange.p2) === 'true' || lastChange.p2 === true); }
       }
-      let dayLogs = cachedLogs.filter(l => {
-        let logNum = extractDateNum(l.timestamp || l.date);
-        return logNum === targetNum && String(l.id).trim() === String(id).trim();
-      });
+      let dayLogs = cachedLogs.filter(l => { return extractDateNum(l.timestamp || l.date) === targetNum && String(l.id).trim() === String(id).trim(); });
       let p1Log = dayLogs.filter(l => String(l.period).includes('1')).pop();
       let p2Log = dayLogs.filter(l => String(l.period).includes('2')).pop();
       function calcStatus(isTarget, log) {
@@ -823,8 +702,7 @@
       let sMap = {};
       cachedStudents.forEach(s => {
         let sid = String(s.id).trim(); let dStr = String(s.day || "").trim();
-        if(!sMap[sid]) { sMap[sid] = { id: s.id, name: s.name, day: dStr }; }
-        else { if(!sMap[sid].day.includes(dStr)) sMap[sid].day += ", " + dStr; }
+        if(!sMap[sid]) { sMap[sid] = { id: s.id, name: s.name, day: dStr }; } else { if(!sMap[sid].day.includes(dStr)) sMap[sid].day += ", " + dStr; }
       });
       cachedChanges.forEach(c => { if(!sMap[String(c.id).trim()]) sMap[String(c.id).trim()] = { id: c.id, name: c.name, day: '명단외(추가)' }; });
       cachedLogs.forEach(l => { if(!sMap[String(l.id).trim()]) sMap[String(l.id).trim()] = { id: l.id, name: l.name || '알수없음', day: '명단외(로그)' }; });
@@ -855,16 +733,9 @@
       if (myChart) myChart.destroy();
       myChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            { label: '참여 학생 수 (명)', data: presentData, backgroundColor: '#4caf50', borderRadius: 4, barPercentage: 0.7 },
-            { label: '결석 학생 수 (명)', data: absentData, backgroundColor: '#f44336', borderRadius: 4, barPercentage: 0.7 }
-          ]
-        },
+        data: { labels: labels, datasets: [ { label: '참여 학생 수 (명)', data: presentData, backgroundColor: '#4caf50', borderRadius: 4, barPercentage: 0.7 }, { label: '결석 학생 수 (명)', data: absentData, backgroundColor: '#f44336', borderRadius: 4, barPercentage: 0.7 } ] },
         options: {
-          responsive: true,
-          layout: { padding: { top: 30 } },
+          responsive: true, layout: { padding: { top: 30 } },
           plugins: {
             legend: { position: 'top', labels: { font: { size: 14, family: 'Malgun Gothic' } } },
             title: { display: true, text: '일별 글마루 참여 및 결석 현황 (실인원 기준)', font: { size: 18, weight: 'bold', family: 'Malgun Gothic' }, padding: { bottom: 20 }, color: '#333' },
@@ -878,10 +749,8 @@
       });
     }
     function renderStats() {
-      const start = document.getElementById("statStartDate").value;
-      const end = document.getElementById("statEndDate").value;
-      const dateArr = getDatesInRange(start, end);
-      const tbody = document.getElementById("statsBody");
+      const start = document.getElementById("statStartDate").value; const end = document.getElementById("statEndDate").value;
+      const dateArr = getDatesInRange(start, end); const tbody = document.getElementById("statsBody");
       if (cachedStudents.length === 0 && cachedLogs.length === 0 && cachedChanges.length === 0) {
         tbody.innerHTML = "<tr><td colspan='8' style='padding: 30px; font-weight:bold; color:#e53e3e;'>⚠️ 서버에서 데이터를 가져오지 못했거나 등록된 명단/기록이 없습니다.</td></tr>";
         drawStatsChart([], [], []); return;
@@ -899,25 +768,13 @@
         let dailyPresentCount = 0; let dailyAbsentCount = 0;
         Object.values(sMap).forEach(st => {
           let stat = getStudentStatusForDate(st.id, d.date, d.day);
-          if(stat.p1.type !== 'excluded') {
-            st.target++;
-            if(stat.p1.type === 'present' || stat.p1.type === 'extra') { st.present++; if(stat.p1.type === 'extra') st.extra++; }
-            else if(stat.p1.type === 'absent') { st.absent++; }
-          }
-          if(stat.p2.type !== 'excluded') {
-            st.target++;
-            if(stat.p2.type === 'present' || stat.p2.type === 'extra') { st.present++; if(stat.p2.type === 'extra') st.extra++; }
-            else if(stat.p2.type === 'absent') { st.absent++; }
-          }
+          if(stat.p1.type !== 'excluded') { st.target++; if(stat.p1.type === 'present' || stat.p1.type === 'extra') { st.present++; if(stat.p1.type === 'extra') st.extra++; } else if(stat.p1.type === 'absent') { st.absent++; } }
+          if(stat.p2.type !== 'excluded') { st.target++; if(stat.p2.type === 'present' || stat.p2.type === 'extra') { st.present++; if(stat.p2.type === 'extra') st.extra++; } else if(stat.p2.type === 'absent') { st.absent++; } }
           let isTargetToday = (stat.p1.type !== 'excluded' || stat.p2.type !== 'excluded');
           let attendedToday = (stat.p1.type === 'present' || stat.p1.type === 'extra' || stat.p2.type === 'present' || stat.p2.type === 'extra');
-          if (isTargetToday) { if (attendedToday) dailyPresentCount++; else dailyAbsentCount++; }
-          else if (attendedToday) { dailyPresentCount++; }
+          if (isTargetToday) { if (attendedToday) dailyPresentCount++; else dailyAbsentCount++; } else if (attendedToday) { dailyPresentCount++; }
         });
-        const shortDate = d.date.substring(5).replace('-', '/');
-        chartLabels.push(`${shortDate}(${d.day})`);
-        chartPresentData.push(dailyPresentCount);
-        chartAbsentData.push(dailyAbsentCount);
+        const shortDate = d.date.substring(5).replace('-', '/'); chartLabels.push(`${shortDate}(${d.day})`); chartPresentData.push(dailyPresentCount); chartAbsentData.push(dailyAbsentCount);
       });
       drawStatsChart(chartLabels, chartPresentData, chartAbsentData);
       tbody.innerHTML = "";
@@ -935,16 +792,7 @@
          </div>
        `;
         let tr = document.createElement("tr");
-        tr.innerHTML = `
-         <td>${st.id}</td>
-         <td style="font-weight:bold; font-size:1.05rem;">${st.name}</td>
-         <td style="color:#555;">${st.day}</td>
-         <td style="font-weight:bold; background:#f8fafc;">${st.target}</td>
-         <td class="status-present" style="font-size:1.1rem;">${st.present}</td>
-         <td class="status-absent" style="font-size:1.1rem;">${st.absent}</td>
-         <td class="status-extra">${st.extra}</td>
-         <td style="background:#fff;">${barHtml}</td>
-       `;
+        tr.innerHTML = `<td>${st.id}</td><td style="font-weight:bold; font-size:1.05rem;">${st.name}</td><td style="color:#555;">${st.day}</td><td style="font-weight:bold; background:#f8fafc;">${st.target}</td><td class="status-present" style="font-size:1.1rem;">${st.present}</td><td class="status-absent" style="font-size:1.1rem;">${st.absent}</td><td class="status-extra">${st.extra}</td><td style="background:#fff;">${barHtml}</td>`;
         tbody.appendChild(tr);
       });
       if(tbody.innerHTML === "") tbody.innerHTML = "<tr><td colspan='8' style='padding: 20px;'>해당 기간에 조회할 수 있는 출석 데이터가 없습니다.</td></tr>";
@@ -959,8 +807,7 @@
     function copyGlobalSms() {
       const dateStr = document.getElementById('datePicker').value;
       if (!dateStr) { showCustomAlert("날짜가 선택되지 않았습니다.", true); return; }
-      const d = new Date(dateStr);
-      const month = d.getMonth() + 1; const day = d.getDate();
+      const d = new Date(dateStr); const month = d.getMonth() + 1; const day = d.getDate();
       const msg = `안녕하세요. 서현고입니다. 오늘 (${month}월 ${day}일) 꿈꾸는글마루(야간자기주도학습)에 학생이 불참하였음을 알려드립니다.-서현고등학교-`;
       const tempArea = document.createElement("textarea");
       tempArea.value = msg; document.body.appendChild(tempArea); tempArea.select(); document.execCommand("copy"); document.body.removeChild(tempArea);
@@ -973,17 +820,13 @@
       fetch(`${API_URL}?action=getPendingAbsences&_t=${new Date().getTime()}`)
       .then(res => res.json())
       .then(data => {
-        if (!data.list || data.list.length === 0) {
-          container.innerHTML = '<div style="text-align:center; padding: 30px; color:#666;">승인 대기 중인 결석 신청이 없습니다.🎉</div>';
-          return;
-        }
+        if (!data.list || data.list.length === 0) { container.innerHTML = '<div style="text-align:center; padding: 30px; color:#666;">승인 대기 중인 결석 신청이 없습니다.🎉</div>'; return; }
         let html = "";
         data.list.forEach(req => {
           html += `
              <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 12px; background: #fafafa;">
                <div style="font-size: 1.05rem; margin-bottom: 8px;">
-                 📅 <b>${req.date}</b> | 👤 <b>${req.id} ${req.name}</b><br>
-                 사유: <span style="color:#e53e3e; font-weight:bold;">${req.reason}</span>
+                 📅 <b>${req.date}</b> | 👤 <b>${req.id} ${req.name}</b><br>사유: <span style="color:#e53e3e; font-weight:bold;">${req.reason}</span>
                </div>
                <div style="text-align: right; margin-top: 10px;">
                  <button style="background:#38a169; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="processAbsence(${req.row}, '인정결석', '${req.date}', '${req.id}', '${req.name}', '${req.reason}')">✅ 인정결석 승인</button>
@@ -1002,39 +845,24 @@
       fetch(`${API_URL}?${new URLSearchParams({ action: 'processAbsence', row: row, status: status, date: date, id: id, name: name, reason: reason, _t: new Date().getTime() }).toString()}`)
       .then(res => res.json()).then(res => {
         showLoading(false);
-        if(res.success) {
-          showCustomAlert(`처리가 완료되었습니다.`); openAbsenceModal();
-          if(document.getElementById('datePicker').value === date) { 
-            cacheLoaded = false;
-            ensureAllDataLoaded().then(() => loadDailyData());
-          }
-        } else { showCustomAlert("처리 실패: " + res.message, true); }
+        if(res.success) { showCustomAlert(`처리가 완료되었습니다.`); openAbsenceModal(); if(document.getElementById('datePicker').value === date) { cacheLoaded = false; ensureAllDataLoaded().then(() => loadDailyData()); } } 
+        else { showCustomAlert("처리 실패: " + res.message, true); }
       }).catch(err => { showLoading(false); showCustomAlert("서버 오류가 발생했습니다.", true); });
     }
     function closeAbsenceModal() { document.getElementById('absenceModal').style.display = 'none'; }
     function loadTimeSettings() {
       fetch(`${API_URL}?action=getSettings&_t=${new Date().getTime()}`)
-      .then(res => res.json())
-      .then(data => { if (data.success) { updateInfoBoxTime(data.p1_start, data.p1_end, data.p2_start, data.p2_end); } })
-      .catch(err => console.error("시간 설정을 불러오는 중 오류 발생:", err));
+      .then(res => res.json()).then(data => { if (data.success) { updateInfoBoxTime(data.p1_start, data.p1_end, data.p2_start, data.p2_end); } }).catch(err => console.error("시간 설정을 불러오는 중 오류 발생:", err));
     }
-    function updateInfoBoxTime(p1s, p1e, p2s, p2e) {
-      document.getElementById('display-time-p1').innerText = `1교시 ${p1s}~${p1e}`;
-      document.getElementById('display-time-p2').innerText = `2교시 ${p2s}~${p2e}`;
-    }
+    function updateInfoBoxTime(p1s, p1e, p2s, p2e) { document.getElementById('display-time-p1').innerText = `1교시 ${p1s}~${p1e}`; document.getElementById('display-time-p2').innerText = `2교시 ${p2s}~${p2e}`; }
     function openSettingsModal() {
       document.getElementById('settingsModal').style.display = 'flex';
       showLoading(true);
       fetch(`${API_URL}?action=getSettings&_t=${new Date().getTime()}`)
-      .then(res => res.json())
-      .then(data => {
+      .then(res => res.json()).then(data => {
         showLoading(false);
-        if (data.success) {
-          document.getElementById('set_p1_start').value = data.p1_start; document.getElementById('set_p1_end').value = data.p1_end;
-          document.getElementById('set_p2_start').value = data.p2_start; document.getElementById('set_p2_end').value = data.p2_end;
-        }
-      })
-      .catch(err => { showLoading(false); showCustomAlert("설정을 불러오지 못했습니다.", true); });
+        if (data.success) { document.getElementById('set_p1_start').value = data.p1_start; document.getElementById('set_p1_end').value = data.p1_end; document.getElementById('set_p2_start').value = data.p2_start; document.getElementById('set_p2_end').value = data.p2_end; }
+      }).catch(err => { showLoading(false); showCustomAlert("설정을 불러오지 못했습니다.", true); });
     }
     function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
     function saveTimeSettings() {
@@ -1042,17 +870,11 @@
       const p2s = document.getElementById('set_p2_start').value; const p2e = document.getElementById('set_p2_end').value;
       if(!p1s || !p1e || !p2s || !p2e) { showCustomAlert("모든 시간을 입력해주세요.", true); return; }
       showLoading(true);
-      fetch(`${API_URL}?${new URLSearchParams({
-        action: 'saveSettings', p1_start: p1s, p1_end: p1e, p2_start: p2s, p2_end: p2e, _t: new Date().getTime()
-      }).toString()}`)
-      .then(res => res.json())
-      .then(res => {
+      fetch(`${API_URL}?${new URLSearchParams({ action: 'saveSettings', p1_start: p1s, p1_end: p1e, p2_start: p2s, p2_end: p2e, _t: new Date().getTime() }).toString()}`)
+      .then(res => res.json()).then(res => {
         showLoading(false);
-        if(res.success) {
-          showCustomAlert(res.message); updateInfoBoxTime(p1s, p1e, p2s, p2e); closeSettingsModal();
-        } else { showCustomAlert("저장 실패: " + res.message, true); }
-      })
-      .catch(err => { showLoading(false); showCustomAlert("서버 오류: " + err.message, true); });
+        if(res.success) { showCustomAlert(res.message); updateInfoBoxTime(p1s, p1e, p2s, p2e); closeSettingsModal(); } else { showCustomAlert("저장 실패: " + res.message, true); }
+      }).catch(err => { showLoading(false); showCustomAlert("서버 오류: " + err.message, true); });
     }
   </script>
 </body>
