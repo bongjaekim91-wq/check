@@ -18,7 +18,6 @@
     
     /* 스캐너 입력창 */
     .scanner-box { margin: 20px 0; }
-    /* 한글 키보드 오류 방지를 위해 type="password"가 적용되어 글자가 가려집니다 */
     #scanner-input { padding: 15px; font-size: 1.5em; width: 80%; border: 3px dashed #4caf50; border-radius: 12px; text-align: center; outline: none; background: #e8f5e9; color: #2e7d32; font-weight: bold; letter-spacing: 5px;}
     #scanner-input:focus { border-style: solid; box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
     
@@ -29,7 +28,7 @@
     .msg-success { background: #e8f5e9; color: #2e7d32; border: 2px solid #81c784; }
     .msg-error { background: #ffebee; color: #c62828; border: 2px solid #ef9a9a; }
     
-    /* ★ 무단결석 횟수 단계별 알림창 */
+    /* 무단결석 횟수 단계별 알림창 */
     .absence-box { margin-top: 15px; border-radius: 12px; padding: 15px; font-size: 1.2em; font-weight: bold; display: none; line-height: 1.4; }
     .absence-0 { background-color: #e3f2fd; border: 2px solid #64b5f6; color: #1565c0; }
     .absence-warning { background-color: #fff8e1; border: 2px solid #ffca28; color: #f57f17; }
@@ -85,8 +84,9 @@
   </div>
 
   <script>
-    // 본인의 앱스 스크립트 웹앱 URL
+    // ★ 주의: 실제 사용하시는 code.gs 배포 URL로 꼭 변경해주세요!
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
+    
     const inputField = document.getElementById("scanner-input");
     const resultBox = document.getElementById("result-msg");
     const absenceBox = document.getElementById("absence-box");
@@ -119,12 +119,17 @@
 
     function processScan(data) {
       if (isProcessing) return;
-      let studentId = "";
       
+      let studentId = "";
+      let studentName = ""; // ★ 신규 등록을 위해 이름(name)을 분리할 변수 추가
+      
+      // QR 데이터에서 학번(id)과 이름(name) 동시 추출 로직
       if (data.includes("id=")) {
         try {
-          const params = new URLSearchParams(data.substring(data.indexOf("?")));
-          studentId = params.get("id");
+          const qs = data.includes("?") ? data.substring(data.indexOf("?")) : "?" + data;
+          const params = new URLSearchParams(qs);
+          studentId = params.get("id") || "";
+          studentName = params.get("name") || ""; // ★ QR코드에서 이름 가져오기
         } catch (e) { }
       } else {
         studentId = data;
@@ -140,7 +145,8 @@
       showResult("loading", `⏳ [${studentId}] 서버 확인 중...`);
       absenceBox.style.display = "none"; 
 
-      const fetchUrl = `${API_URL}?action=scan&id=${encodeURIComponent(studentId)}`;
+      // ★ 서버로 요청할 때 id와 name을 함께 전송하도록 파라미터 추가!
+      const fetchUrl = `${API_URL}?action=scan&id=${encodeURIComponent(studentId)}&name=${encodeURIComponent(studentName)}`;
       
       fetch(fetchUrl)
         .then(res => res.json())
@@ -148,7 +154,6 @@
           
           const count = parseInt(result.absenceCount) || 0; 
           
-          // ★ '무단' 텍스트 제거 및 3회 이상 정상 출석 안내 반영
           if (count >= 3) {
             absenceBox.className = "absence-box absence-danger";
             absenceBox.innerHTML = `🚨 <b>결석 ${count}회</b><br>※ 결석 누적 3회 이상입니다. (출석 정상 처리됨)`;
@@ -163,7 +168,7 @@
 
           if (result.success || result.result === "success") {
             showResult("success", `✅ ${result.message || '출석 완료!'}`);
-            playSound('success'); // ★ 횟수에 상관없이 항상 성공음 재생
+            playSound('success'); 
             
             let sName = result.studentName || result.name || extractNameFromMessage(result.message) || "";
             addRecentStudent(studentId, sName);
