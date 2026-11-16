@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>꿈꾸는 글마루 결석 신청</title>
   <style>
-    /* 기존 스타일 동일하게 유지 */
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f0f4f8; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
     .form-container { background: white; padding: 30px 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); width: 100%; max-width: 420px; box-sizing: border-box; }
     h2 { color: #2b7a2b; margin-top: 0; text-align: center; border-bottom: 2px solid #e8f5e9; padding-bottom: 15px; font-size: 1.4rem; }
@@ -24,7 +23,6 @@
     .btn-submit:disabled { background: #a0aec0; cursor: not-allowed; }
     .shake { animation: shake 0.4s 1; border-color: #e53e3e !important; }
     @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-    .auto-filled { background-color: #e8f5e9 !important; border-color: #38a169 !important; color: #2b7a2b; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -33,7 +31,7 @@
     <div class="notice">
       <ul>
         <li>결석 신청은 감독 교사의 승인 후 최종 반영됩니다.</li>
-        <li class="warning">무단 결석이 3회가 되면 꿈꾸는글마루에 참여할 수 없습니다.</li>
+        <li class="warning">결석이 3회가 되면 꿈꾸는글마루에 참여할 수 없습니다.</li>
       </ul>
     </div>
     
@@ -44,13 +42,14 @@
       <input type="date" id="req-date">
     </div>
     <div class="form-group">
+      <!-- disabled 속성을 제거하여 바로 입력 가능하게 변경 -->
       <label for="req-id">🔢 학번 (5자리 숫자)</label>
-      <!-- 데이터를 불러오기 전까지 입력을 막아둡니다. -->
-      <input type="tel" id="req-id" placeholder="명단을 불러오는 중입니다..." maxlength="5" autocomplete="off" disabled>
+      <input type="tel" id="req-id" placeholder="예: 10101" maxlength="5" autocomplete="off">
     </div>
     <div class="form-group">
+      <!-- readonly 속성을 제거하여 학생이 직접 입력할 수 있게 변경 -->
       <label for="req-name">👤 이름</label>
-      <input type="text" id="req-name" placeholder="학번을 입력하면 자동으로 나타납니다." maxlength="10" autocomplete="off" readonly>
+      <input type="text" id="req-name" placeholder="예: 홍길동" maxlength="10" autocomplete="off">
     </div>
     <div class="form-group">
       <label for="req-reason">📝 결석 사유 (상세히 작성)</label>
@@ -60,64 +59,15 @@
   </div>
 
   <script>
-    // ★ 선생님의 배포된 웹앱 주소로 변경해주세요. (선생님 환경에 맞게 입력)
+    // ★ 선생님의 배포된 웹앱 주소로 유지됩니다.
     const API_URL = "https://script.google.com/macros/s/AKfycbzjDSKEEcwfST6HRxOsQdARUOvhdM8VWUeqTetrcoIDV8_IvrTRHJkgJl9BvLuhd78l/exec";
     
-    let studentData = {}; // 서버에서 받아온 명단을 저장할 객체
-
     window.onload = function() {
       // 1. 오늘 날짜 세팅
       const today = new Date();
       const offset = today.getTimezoneOffset() * 60000;
       const localToday = new Date(today.getTime() - offset).toISOString().split('T')[0];
       document.getElementById('req-date').value = localToday;
-
-      // 2. 서버(code.gs)의 getStudents_() 함수에서 명단 불러오기
-      fetch(`${API_URL}?action=getStudents`)
-        .then(res => res.json())
-        .then(data => {
-          // 기존 code.gs는 data.list 안에 배열 형태로 학생 정보를 줍니다.
-          if (data.success && data.list) {
-            // 배열을 { "학번": "이름" } 형태의 딕셔너리로 변환
-            data.list.forEach(student => {
-              studentData[student.id] = student.name;
-            });
-            
-            // 데이터 로딩 완료 시 입력창 활성화
-            const idInput = document.getElementById('req-id');
-            idInput.disabled = false;
-            idInput.placeholder = "예: 10101";
-          }
-        })
-        .catch(err => {
-          console.error("명단을 불러오지 못했습니다.", err);
-          document.getElementById('req-id').placeholder = "오류: 페이지를 새로고침 해주세요.";
-        });
-
-      // 3. 학번 입력 시 자동완성 로직
-      const idInput = document.getElementById('req-id');
-      const nameInput = document.getElementById('req-name');
-      const errorDiv = document.getElementById('error-msg');
-
-      idInput.addEventListener('input', function() {
-        const idVal = idInput.value.trim();
-        
-        if (idVal.length === 5) {
-          if (studentData[idVal]) {
-            nameInput.value = studentData[idVal];
-            nameInput.classList.add('auto-filled');
-            errorDiv.style.display = 'none';
-          } else {
-            nameInput.value = "";
-            nameInput.classList.remove('auto-filled');
-            showError('등록되지 않은 학번입니다. 학번을 다시 확인해주세요.', 'req-id');
-          }
-        } else {
-          nameInput.value = "";
-          nameInput.classList.remove('auto-filled');
-          errorDiv.style.display = 'none';
-        }
-      });
     };
 
     function showError(message, elementId) {
@@ -152,7 +102,7 @@
       if (!date) return showError('결석할 날짜를 선택해주세요.', 'req-date');
       if (!id) return showError('학번을 입력해주세요.', 'req-id');
       if (isNaN(id) || id.length !== 5) return showError('학번은 정확히 5자리 숫자로 입력해주세요.', 'req-id');
-      if (!name || !studentData[id]) return showError('등록되지 않은 학번입니다. 올바른 학번을 입력해주세요.', 'req-id');
+      if (!name) return showError('이름을 입력해주세요.', 'req-name'); // 명단 검증 제거, 이름 입력 여부만 확인
       if (!reason) return showError('결석 사유를 입력해주세요.', 'req-reason');
       if (reason.length < 3) return showError('사유를 조금 더 구체적으로 작성해주세요.', 'req-reason');
 
@@ -160,7 +110,6 @@
       btn.innerText = "제출 중입니다... ⏳";
       btn.disabled = true;
 
-      // 기존 code.gs의 submitAbsence_() 함수가 처리하도록 요청
       const submitUrl = `${API_URL}?action=submitAbsence&date=${date}&id=${id}&name=${encodeURIComponent(name)}&reason=${encodeURIComponent(reason)}`;
       
       fetch(submitUrl, { method: "GET", redirect: "follow" })
@@ -170,7 +119,6 @@
             alert(`✅ ${name} 학생의 결석 신청이 완료되었습니다.`);
             idEl.value = '';
             nameEl.value = '';
-            nameEl.classList.remove('auto-filled');
             reasonEl.value = '';
           } else {
             alert("❌ 신청 실패: " + data.message);
