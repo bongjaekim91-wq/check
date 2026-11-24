@@ -8,16 +8,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root { --primary-color:#81c784; --primary-dark:#33691e; --bg-color:#f1f8e9; }
-    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:20px; display:flex; justify-content:center; align-items:center; min-height:100vh; color:var(--primary-dark); }
+    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-color); margin:0; padding:20px; display:flex; justify-content:center; align-items:center; min-height:100vh; color:var(--primary-dark); box-sizing:border-box; }
     .container { background:white; padding:35px 25px; border-radius:20px; box-shadow:0 8px 30px rgba(85,139,47,.15); width:100%; max-width:350px; text-align:center; box-sizing:border-box; }
-    h1 { font-size:1.4em; margin-bottom:15px; line-height:1.4; color: var(--primary-dark); }
+    h1 { font-size:1.4em; margin-bottom:15px; line-height:1.4; color: var(--primary-dark); margin-top: 0; }
     .input-group { display:flex; flex-direction:column; gap:12px; margin-bottom:25px; }
-    input[type="text"] { padding:15px; font-size:1.05em; border:2px solid #c8e6c9; border-radius:10px; outline:none; text-align:center; font-weight:bold; color: #333; }
+    input[type="text"] { padding:15px; font-size:1.05em; border:2px solid #c8e6c9; border-radius:10px; outline:none; text-align:center; font-weight:bold; color: #333; box-sizing:border-box; width:100%; }
     input[type="text"]:focus { border-color:var(--primary-color); box-shadow: 0 0 8px rgba(129,199,132,0.3); }
     
-    .btn { padding:15px; font-size:1.1em; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; border:none; transition:.2s; background:var(--primary-color); color:white; }
+    .btn { display:block; padding:15px; font-size:1.1em; font-weight:bold; border-radius:10px; cursor:pointer; width:100%; border:none; transition:.2s; background:var(--primary-color); color:white; text-decoration:none; box-sizing:border-box; text-align:center; }
     .btn:active { background:var(--primary-dark); }
-    #result-area { display:none; margin-top:20px; padding-top:20px; border-top:2px dashed #c8e6c9; }
+    .btn:disabled { background:#bdbdbd; cursor:not-allowed; }
     .instruction { font-size:0.95em; color:#e53935; font-weight:bold; margin-bottom:20px; word-break: keep-all; line-height: 1.4; }
     #final-image { width:100%; max-width:260px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.12); margin-bottom:20px; }
     .btn-download { background:#1976d2; margin-bottom:10px; }
@@ -30,91 +30,100 @@
     <p style="font-size:0.9em; color:#666; margin-bottom:25px;">본인의 학번과 이름을 정확히 입력하세요.</p>
     
     <div class="input-group">
-      <input type="text" id="student-id" placeholder="학번 5자리 (예: 10101)" inputmode="numeric" maxlength="5">
-      <input type="text" id="student-name" placeholder="이름 입력 (예: 홍길동)">
+      <input type="text" id="student-id" placeholder="학번 5자리 (예: 10101)" inputmode="numeric" maxlength="5" autocomplete="off">
+      <input type="text" id="student-name" placeholder="이름 입력 (예: 홍길동)" maxlength="10" autocomplete="off">
     </div>
 
-    <button class="btn" onclick="generateStudentQR()">QR코드 생성하기</button>
+    <button class="btn" id="gen-btn" onclick="generateStudentQR()">QR코드 생성하기</button>
   </div>
 
   <div class="container" id="result-step" style="display:none;">
     <h1>🎉 발급 완료!</h1>
     <p class="instruction">👇 아래 이미지를 '꾹 눌러서' 스마트폰 사진첩에 저장하세요.</p>
     <img id="final-image" alt="내 출석 QR코드">
-    <a id="download-link" download="내_출석_QR코드.png" style="text-decoration:none;">
-      <button class="btn btn-download">📥 갤러리에 저장하기</button>
-    </a>
+    <a id="download-link" class="btn btn-download" download="내_출석_QR코드.png">📥 갤러리에 저장하기</a>
     <button class="btn btn-reset" onclick="resetPage()">다시 발급하기</button>
   </div>
   
   <div id="temp-qr" style="display:none;"></div>
 
   <script>
+    // 엔터 키로 바로 생성 지원
+    document.getElementById("student-name").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") generateStudentQR();
+    });
+
     function generateStudentQR() {
       const id = document.getElementById("student-id").value.trim();
       const name = document.getElementById("student-name").value.trim();
       
       if (!id || !name) return alert("학번과 이름을 모두 입력해주세요.");
       if (!/^\d{5}$/.test(id)) return alert("학번은 정확히 5자리 숫자로 입력해주세요. (예: 10101)");
+      if (!/^[가-힣a-zA-Z\s]{2,10}$/.test(name)) return alert("이름은 한글 또는 영문 2~10자로 정확히 입력해주세요.");
 
-      const btn = document.querySelector("#input-step .btn");
-      btn.innerText = "생성 중..."; btn.disabled = true;
+      const btn = document.getElementById("gen-btn");
+      btn.innerText = "생성 중...";
+      btn.disabled = true;
 
-      const currentUrl = location.href.split('?')[0];
-      const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf("/") + 1);
-      
-      // QR코드에 심어질 링크 주소 (kiosk.html 로 연결되면서 학번, 이름 전송)
-      const scanUrl = `${baseUrl}kiosk.html?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`;
+      // ★ 개선: 긴 URL 주소를 제거하여 스캐너 전송 길이 절반 이상 단축 (글자 깨짐 방지)
+      const qrData = `id=${id}&name=${encodeURIComponent(name)}`;
       
       const tempQrDiv = document.getElementById("temp-qr");
       tempQrDiv.innerHTML = "";
       
-      new QRCode(tempQrDiv, { text: scanUrl, width: 256, height: 256, colorDark: "#1b5e20", correctLevel: QRCode.CorrectLevel.H });
+      // ★ 개선: 검정색(#000000) + 오류복원 M등급으로 스캐너 인식률 극대화
+      new QRCode(tempQrDiv, {
+        text: qrData,
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
       
       setTimeout(() => {
-        // 캔버스 크기 지정
         const canvas = document.createElement("canvas");
         canvas.width = 320; 
         canvas.height = 420; 
         const ctx = canvas.getContext("2d");
         
-        // 배경색 흰색으로 칠하기
+        // 배경 흰색
         ctx.fillStyle = "#ffffff"; 
         ctx.fillRect(0, 0, 320, 420);
         
         // 상단 타이틀
         ctx.fillStyle = "#33691e"; 
         ctx.textAlign = "center";
-        ctx.font = "bold 20px Noto Sans KR"; 
+        ctx.font = "bold 20px 'Noto Sans KR', sans-serif"; 
         ctx.fillText("꿈꾸는글마루 출석 QR코드", 160, 45);
         
-        // QR코드 이미지 합성
-        const qrCanvas = tempQrDiv.querySelector("canvas");
-        if(qrCanvas) ctx.drawImage(qrCanvas, 32, 65, 256, 256);
+        // QR코드 합성 (canvas 또는 img 폴백 지원)
+        const qrSource = tempQrDiv.querySelector("canvas") || tempQrDiv.querySelector("img");
+        if (qrSource) {
+          ctx.drawImage(qrSource, 32, 65, 256, 256);
+        }
         
-        // ★ 하단 학번, 이름 텍스트 추가 (이모지 포함)
+        // 하단 학번, 이름 텍스트
         ctx.fillStyle = "#1b5e20";
-        ctx.font = "bold 32px Noto Sans KR"; 
+        ctx.font = "bold 32px 'Noto Sans KR', sans-serif"; 
         ctx.fillText(`🎓 ${id} ${name}`, 160, 375);
 
-        // 완성된 캔버스를 이미지 파일로 변환
         const finalImgUrl = canvas.toDataURL("image/png");
         document.getElementById("final-image").src = finalImgUrl;
         document.getElementById("download-link").href = finalImgUrl;
         document.getElementById("download-link").download = `글마루_QR_${id}_${name}.png`;
         
-        // 화면 전환
         document.getElementById("input-step").style.display = "none";
         document.getElementById("result-step").style.display = "block";
         
-        btn.innerText = "QR코드 생성하기"; btn.disabled = false;
+        btn.innerText = "QR코드 생성하기";
+        btn.disabled = false;
       }, 300);
     }
     
     function resetPage() {
       document.getElementById("student-id").value = "";
       document.getElementById("student-name").value = "";
-      
       document.getElementById("result-step").style.display = "none";
       document.getElementById("input-step").style.display = "block";
     }
